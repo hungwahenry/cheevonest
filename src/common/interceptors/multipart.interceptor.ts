@@ -7,7 +7,7 @@ import {
 import { Observable } from 'rxjs';
 import type { FastifyRequest } from 'fastify';
 import '@fastify/multipart';
-import { UploadedFile } from './uploaded-file';
+import { UploadedFile } from '../http/uploaded-file';
 
 interface MultipartValue {
   type: 'field' | 'file';

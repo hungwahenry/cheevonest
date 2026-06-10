@@ -6,12 +6,13 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule, seconds } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter';
-import { MultipartInterceptor } from './common/http/multipart.interceptor';
+import { MultipartInterceptor } from './common/interceptors/multipart.interceptor';
 import { ApiEnvelopeInterceptor } from './common/interceptors/api-envelope.interceptor';
 import { validationExceptionFactory } from './common/validation/validation-exception.factory';
 import { Env, validateEnv } from './config/env';
 import { ExportsEngineModule } from './common/exports/exports.module';
 import { HtmlPagesModule } from './common/html/html-pages.module';
+import { SigningModule } from './common/signing/signing.module';
 import { DatabaseModule } from './database/database.module';
 import { MailModule } from './integrations/mail/mail.module';
 import { StorageModule } from './integrations/storage/storage.module';
@@ -62,6 +63,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     ScheduleModule.forRoot(),
     ExportsEngineModule,
     HtmlPagesModule,
+    SigningModule,
     DatabaseModule,
     MailModule,
     StorageModule,

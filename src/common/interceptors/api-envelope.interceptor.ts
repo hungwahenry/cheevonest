@@ -6,10 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, map } from 'rxjs';
-import {
-  RESPONSE_MESSAGE_KEY,
-  SKIP_ENVELOPE_KEY,
-} from '../decorators/api-response.decorators';
+import { SKIP_ENVELOPE_KEY } from '../decorators/api-response.decorators';
 import { ApiResult } from '../responses/api-result';
 import { Paginated } from '../responses/paginated';
 
@@ -24,9 +21,7 @@ export class ApiEnvelopeInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    const fallbackMessage =
-      this.reflector.getAllAndOverride<string>(RESPONSE_MESSAGE_KEY, targets) ??
-      'OK';
+    const fallbackMessage = 'OK';
 
     return next.handle().pipe(
       map((value: unknown) => {

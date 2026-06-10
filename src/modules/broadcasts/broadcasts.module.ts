@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { SigningModule } from '../../common/signing/signing.module';
 import { MailModule } from '../../integrations/mail/mail.module';
 import { OrganisationsModule } from '../organisations/organisations.module';
 import { BroadcastSerializer } from './broadcast.serializer';
@@ -15,7 +14,7 @@ import { ResendWebhookService } from './services/resend-webhook.service';
 import { SuppressionsService } from './services/suppressions.service';
 
 @Module({
-  imports: [MailModule, SigningModule, OrganisationsModule],
+  imports: [MailModule, OrganisationsModule],
   controllers: [ResendWebhookController, UnsubscribeController],
   providers: [
     BroadcastsService,

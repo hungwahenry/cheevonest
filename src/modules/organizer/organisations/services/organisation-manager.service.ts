@@ -15,7 +15,7 @@ import {
 } from '../dto/create-organisation.dto';
 import { UpdateOrganisationDto } from '../dto/update-organisation.dto';
 import { SearchIndexerService } from '../../../search/services/search-indexer.service';
-import { ensureValidImage } from '../rules/image.rules';
+import { ensureValidImage } from '../../../../common/validation/image.rules';
 import { OrganisationRules } from '../rules/organisation.rules';
 
 const LOGO_MAX_KB = 4096;
