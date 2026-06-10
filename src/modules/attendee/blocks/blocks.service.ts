@@ -3,8 +3,8 @@ import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import type { User } from '../../../generated/prisma/client';
 import { SubscriptionsService } from '../organisations/services/subscriptions.service';
-import { BlockTargetNotFoundException } from './exceptions/block-target-not-found.exception';
 import { CannotBlockYourselfException } from './exceptions/cannot-block-yourself.exception';
+import { BlockRules } from './rules/block.rules';
 import { InvalidBlockTargetException } from './exceptions/invalid-block-target.exception';
 
 export const BLOCKABLE_TYPES = ['user', 'organisation'] as const;
@@ -15,6 +15,7 @@ export class BlocksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly subscriptions: SubscriptionsService,
+    private readonly rules: BlockRules,
   ) {}
 
   async block(
@@ -24,7 +25,7 @@ export class BlocksService {
   ): Promise<void> {
     const type = this.resolveType(targetType);
 
-    await this.ensureTargetExists(type, targetId);
+    await this.rules.ensureTargetExists(type, targetId);
 
     if (type === 'user' && targetId === blocker.id) {
       throw new CannotBlockYourselfException();
@@ -135,25 +136,5 @@ export class BlocksService {
     }
 
     return targetType as BlockableType;
-  }
-
-  private async ensureTargetExists(
-    type: BlockableType,
-    targetId: string,
-  ): Promise<void> {
-    const exists =
-      type === 'user'
-        ? await this.prisma.user.findUnique({
-            where: { id: targetId },
-            select: { id: true },
-          })
-        : await this.prisma.organisation.findUnique({
-            where: { id: targetId },
-            select: { id: true },
-          });
-
-    if (!exists) {
-      throw new BlockTargetNotFoundException();
-    }
   }
 }

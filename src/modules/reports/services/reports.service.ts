@@ -8,17 +8,14 @@ import type {
   ReportReason,
   User,
 } from '../../../generated/prisma/client';
-import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import {
   REPORT_CREATED,
   ReportCreatedEvent,
 } from '../events/report-created.event';
+import { ReportRules } from '../rules/report.rules';
 import { ReportAlreadyExistsException } from '../exceptions/report-already-exists.exception';
-import { ReportCooldownActiveException } from '../exceptions/report-cooldown-active.exception';
-import { ReportDailyCapReachedException } from '../exceptions/report-daily-cap-reached.exception';
 import { ReportDetailsRequiredException } from '../exceptions/report-details-required.exception';
 import { ReportInvalidReasonException } from '../exceptions/report-invalid-reason.exception';
-import { ReportInvalidTargetException } from '../exceptions/report-invalid-target.exception';
 import { ReportSelfTargetException } from '../exceptions/report-self-target.exception';
 
 export const REPORT_TARGET_TYPES = [
@@ -40,16 +37,16 @@ export interface CreateReportInput {
 export class ReportsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly systemConfig: SystemConfigService,
+    private readonly rules: ReportRules,
     private readonly emitter: EventEmitter2,
   ) {}
 
   async create(reporter: User, input: CreateReportInput): Promise<Report> {
-    await this.enforceCooldown(reporter);
-    await this.enforceDailyCap(reporter);
+    await this.rules.ensureCooldownPassed(reporter);
+    await this.rules.ensureDailyCapNotReached(reporter);
 
     const targetType = input.target_type as ReportTargetType;
-    await this.ensureTargetExists(targetType, input.target_id);
+    await this.rules.ensureTargetExists(targetType, input.target_id);
 
     const reason = await this.resolveReason(input.report_reason_id, targetType);
 
@@ -106,99 +103,6 @@ export class ReportsService {
 
       return scopes.length === 0 || scopes.includes(targetType);
     });
-  }
-
-  private async enforceCooldown(reporter: User): Promise<void> {
-    const cooldown = await this.systemConfig.int(
-      'reports.cooldown_seconds',
-      30,
-    );
-
-    if (cooldown <= 0) {
-      return;
-    }
-
-    const last = await this.prisma.report.findFirst({
-      where: { reporterUserId: reporter.id },
-      orderBy: { createdAt: 'desc' },
-      select: { createdAt: true },
-    });
-
-    if (!last) {
-      return;
-    }
-
-    const elapsed = Math.floor((Date.now() - last.createdAt.getTime()) / 1000);
-
-    if (elapsed < cooldown) {
-      throw new ReportCooldownActiveException(cooldown - elapsed);
-    }
-  }
-
-  private async enforceDailyCap(reporter: User): Promise<void> {
-    const cap = await this.systemConfig.int('reports.daily_cap_per_user', 20);
-
-    if (cap <= 0) {
-      return;
-    }
-
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const today = await this.prisma.report.count({
-      where: { reporterUserId: reporter.id, createdAt: { gte: startOfDay } },
-    });
-
-    if (today >= cap) {
-      throw new ReportDailyCapReachedException(cap);
-    }
-  }
-
-  private async ensureTargetExists(
-    targetType: ReportTargetType,
-    targetId: string,
-  ): Promise<void> {
-    const exists = await this.targetExists(targetType, targetId);
-
-    if (!exists) {
-      throw new ReportInvalidTargetException();
-    }
-  }
-
-  private async targetExists(
-    targetType: ReportTargetType,
-    targetId: string,
-  ): Promise<boolean> {
-    switch (targetType) {
-      case 'event':
-        return (
-          (await this.prisma.event.findUnique({
-            where: { id: targetId },
-            select: { id: true },
-          })) !== null
-        );
-      case 'organisation':
-        return (
-          (await this.prisma.organisation.findUnique({
-            where: { id: targetId },
-            select: { id: true },
-          })) !== null
-        );
-      case 'user':
-        return (
-          (await this.prisma.user.findUnique({
-            where: { id: targetId },
-            select: { id: true },
-          })) !== null
-        );
-      case 'event_comment':
-        return (
-          (await this.prisma.eventComment.findUnique({
-            where: { id: targetId },
-            select: { id: true },
-          })) !== null
-        );
-    }
   }
 
   private async resolveReason(

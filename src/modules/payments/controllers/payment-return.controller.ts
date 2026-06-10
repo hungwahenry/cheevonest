@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Env } from '../../../config/env';
 import { Public } from '../../auth/decorators/auth.decorators';
 import { SkipEnvelope } from '../../../common/decorators/api-response.decorators';
+import { HtmlPagesService } from '../../../common/html/html-pages.service';
 import { PaymentsService } from '../services/payments.service';
 
 @Public()
@@ -12,6 +13,7 @@ import { PaymentsService } from '../services/payments.service';
 export class PaymentReturnController {
   constructor(
     private readonly payments: PaymentsService,
+    private readonly pages: HtmlPagesService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -53,31 +55,9 @@ export class PaymentReturnController {
         ? target
         : `${target}${target.includes('?') ? '&' : '?'}${queryString}`;
 
-    return this.page(deepLink);
-  }
-
-  private page(deepLink: string): string {
-    const safe = deepLink
-      .replaceAll('&', '&amp;')
-      .replaceAll('"', '&quot;')
-      .replaceAll('<', '&lt;');
-
-    return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="0;url=${safe}">
-<title>Returning to Cheevo…</title>
-<style>body{font-family:system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#fff;color:#111}main{text-align:center;padding:24px}a{color:#111;font-weight:600}</style>
-</head>
-<body>
-<main>
-<p>Taking you back to the app…</p>
-<p><a href="${safe}">Tap here if nothing happens</a></p>
-</main>
-<script>window.location.replace(${JSON.stringify(deepLink)});</script>
-</body>
-</html>`;
+    return this.pages.render('payment-return', {
+      deepLink,
+      deepLinkJson: JSON.stringify(deepLink),
+    });
   }
 }

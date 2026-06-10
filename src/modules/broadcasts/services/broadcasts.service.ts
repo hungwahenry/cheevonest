@@ -10,17 +10,12 @@ import type {
 } from '../../../generated/prisma/client';
 import { ensureEventNotEnded } from '../../events/rules/event.rules';
 import { FeatureFlagsService } from '../../platform/system-config/feature-flags.service';
-import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import { BroadcastAudienceEmptyException } from '../exceptions/broadcast-audience-empty.exception';
-import { BroadcastCooldownActiveException } from '../exceptions/broadcast-cooldown-active.exception';
-import { BroadcastDailyCapReachedException } from '../exceptions/broadcast-daily-cap-reached.exception';
-import { BroadcastLimitReachedException } from '../exceptions/broadcast-limit-reached.exception';
 import { BroadcastsDisabledException } from '../exceptions/broadcasts-disabled.exception';
+import { BroadcastRules } from '../rules/broadcast.rules';
 import { BroadcastDispatcherService } from './broadcast-dispatcher.service';
 import { BroadcastMailerService } from './broadcast-mailer.service';
 import { BroadcastRecipientsService } from './broadcast-recipients.service';
-
-const COMMITTED_STATUSES = ['queued', 'sending', 'sent'] as const;
 
 export interface BroadcastInput {
   audience: BroadcastAudience;
@@ -33,7 +28,7 @@ export class BroadcastsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly features: FeatureFlagsService,
-    private readonly systemConfig: SystemConfigService,
+    private readonly rules: BroadcastRules,
     private readonly recipients: BroadcastRecipientsService,
     private readonly dispatcher: BroadcastDispatcherService,
     private readonly mailer: BroadcastMailerService,
@@ -51,9 +46,9 @@ export class BroadcastsService {
     }
 
     ensureEventNotEnded(event);
-    await this.ensureWithinPerEventLimit(event);
-    await this.ensureCooldownPassed(event);
-    await this.ensureDailyCapNotReached(event.organisationId);
+    await this.rules.ensureWithinPerEventLimit(event);
+    await this.rules.ensureCooldownPassed(event);
+    await this.rules.ensureDailyCapNotReached(event.organisationId);
 
     const recipients = await this.recipients.resolve(event, input.audience);
 
@@ -137,63 +132,6 @@ export class BroadcastsService {
     ]);
 
     return { items, total };
-  }
-
-  private async ensureWithinPerEventLimit(event: Event): Promise<void> {
-    const limit = await this.systemConfig.int('broadcasts.max_per_event', 3);
-
-    const existing = await this.prisma.broadcast.count({
-      where: { eventId: event.id, status: { in: [...COMMITTED_STATUSES] } },
-    });
-
-    if (existing >= limit) {
-      throw new BroadcastLimitReachedException(limit);
-    }
-  }
-
-  private async ensureCooldownPassed(event: Event): Promise<void> {
-    const cooldownMinutes = await this.systemConfig.int(
-      'broadcasts.cooldown_minutes',
-      720,
-    );
-
-    const latest = await this.prisma.broadcast.findFirst({
-      where: { eventId: event.id, status: { in: [...COMMITTED_STATUSES] } },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!latest) {
-      return;
-    }
-
-    const unlockAt = new Date(
-      latest.createdAt.getTime() + cooldownMinutes * 60_000,
-    );
-
-    if (unlockAt > new Date()) {
-      throw new BroadcastCooldownActiveException(unlockAt.toISOString());
-    }
-  }
-
-  private async ensureDailyCapNotReached(
-    organisationId: string,
-  ): Promise<void> {
-    const cap = await this.systemConfig.int(
-      'broadcasts.daily_volume_cap_per_org',
-      5000,
-    );
-
-    const dayStart = new Date();
-    dayStart.setHours(0, 0, 0, 0);
-
-    const sentToday = await this.prisma.broadcast.aggregate({
-      where: { organisationId, createdAt: { gte: dayStart } },
-      _sum: { recipientsCount: true },
-    });
-
-    if ((sentToday._sum.recipientsCount ?? 0) >= cap) {
-      throw new BroadcastDailyCapReachedException(cap);
-    }
   }
 
   private sanitize(html: string): string {

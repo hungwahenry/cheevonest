@@ -3,6 +3,7 @@ import { ValidationFailedException } from '../../../../common/exceptions/api.exc
 import { PrismaService } from '../../../../database/prisma.service';
 import type { Event, User } from '../../../../generated/prisma/client';
 import { FeatureFlagsService } from '../../../platform/system-config/feature-flags.service';
+import { ensureOpenForRsvp } from '../rules/rsvp.rules';
 
 @Injectable()
 export class RsvpService {
@@ -18,7 +19,7 @@ export class RsvpService {
       });
     }
 
-    this.ensureOpenForRsvp(event);
+    ensureOpenForRsvp(event);
 
     const existing = await this.prisma.eventRsvp.findUnique({
       where: { userId_eventId: { userId: user.id, eventId: event.id } },
@@ -61,23 +62,5 @@ export class RsvpService {
     });
 
     return event.rsvpsCount;
-  }
-
-  private ensureOpenForRsvp(event: Event): void {
-    const ended =
-      event.status === 'past' ||
-      (event.endsAt !== null && event.endsAt <= new Date());
-
-    if (ended) {
-      throw new ValidationFailedException({
-        event: ['This event has already ended.'],
-      });
-    }
-
-    if (event.status !== 'published') {
-      throw new ValidationFailedException({
-        event: ['This event is not open for RSVPs yet.'],
-      });
-    }
   }
 }

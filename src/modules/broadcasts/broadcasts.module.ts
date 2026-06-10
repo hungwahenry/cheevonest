@@ -3,6 +3,7 @@ import { SigningModule } from '../../common/signing/signing.module';
 import { MailModule } from '../../integrations/mail/mail.module';
 import { OrganisationsModule } from '../organisations/organisations.module';
 import { BroadcastSerializer } from './broadcast.serializer';
+import { BroadcastRules } from './rules/broadcast.rules';
 import { BroadcastsCronsService } from './broadcasts-crons.service';
 import { ResendWebhookController } from './controllers/resend-webhook.controller';
 import { UnsubscribeController } from './controllers/unsubscribe.controller';
@@ -18,6 +19,7 @@ import { SuppressionsService } from './services/suppressions.service';
   controllers: [ResendWebhookController, UnsubscribeController],
   providers: [
     BroadcastsService,
+    BroadcastRules,
     BroadcastRecipientsService,
     BroadcastDispatcherService,
     BroadcastMailerService,

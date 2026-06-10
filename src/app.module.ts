@@ -10,6 +10,7 @@ import { MultipartInterceptor } from './common/http/multipart.interceptor';
 import { ApiEnvelopeInterceptor } from './common/interceptors/api-envelope.interceptor';
 import { validationExceptionFactory } from './common/validation/validation-exception.factory';
 import { Env, validateEnv } from './config/env';
+import { HtmlPagesModule } from './common/html/html-pages.module';
 import { DatabaseModule } from './database/database.module';
 import { MailModule } from './integrations/mail/mail.module';
 import { StorageModule } from './integrations/storage/storage.module';
@@ -58,6 +59,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
+    HtmlPagesModule,
     DatabaseModule,
     MailModule,
     StorageModule,

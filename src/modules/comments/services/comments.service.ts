@@ -14,7 +14,7 @@ import {
   COMMENT_REPLIED,
   CommentRepliedEvent,
 } from '../events/comment-replied.event';
-import { EventNotOpenForCommentsException } from '../exceptions/event-not-open-for-comments.exception';
+import { CommentRules } from '../rules/comment.rules';
 
 export const COMMENT_RESOURCE_INCLUDE = {
   author: { include: { profile: true } },
@@ -36,6 +36,7 @@ export class CommentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly features: FeatureFlagsService,
+    private readonly rules: CommentRules,
     private readonly emitter: EventEmitter2,
   ) {}
 
@@ -44,7 +45,7 @@ export class CommentsService {
     event: Event,
     input: CreateCommentInput,
   ): Promise<CommentForResource> {
-    await this.ensureOpenForComments(event, user.id);
+    await this.rules.ensureOpenForComments(event, user.id);
 
     const body = input.body?.trim() || null;
     let gif = input.gif ?? null;
@@ -65,8 +66,8 @@ export class CommentsService {
       });
     }
 
-    await this.ensureValidParent(event, input.parent_id ?? null);
-    await this.ensureMentionsExist(input.mentions ?? null);
+    await this.rules.ensureValidParent(event, input.parent_id ?? null);
+    await this.rules.ensureMentionsExist(input.mentions ?? null);
 
     const commentId = ulid();
 
@@ -242,55 +243,5 @@ export class CommentsService {
     });
 
     return comment.flagsCount;
-  }
-
-  private async ensureOpenForComments(
-    event: Event,
-    userId: string,
-  ): Promise<void> {
-    if (!(await this.features.enabled('comments.enabled', { userId }))) {
-      throw new EventNotOpenForCommentsException();
-    }
-
-    if (event.status !== 'published' || event.commentsLockedAt !== null) {
-      throw new EventNotOpenForCommentsException();
-    }
-  }
-
-  private async ensureValidParent(
-    event: Event,
-    parentId: string | null,
-  ): Promise<void> {
-    if (parentId === null) {
-      return;
-    }
-
-    const parent = await this.prisma.eventComment.findFirst({
-      where: { id: parentId, eventId: event.id, parentId: null },
-      select: { id: true },
-    });
-
-    if (!parent) {
-      throw new ValidationFailedException({
-        parent_id: ['You can only reply to a top-level comment on this event.'],
-      });
-    }
-  }
-
-  private async ensureMentionsExist(mentions: string[] | null): Promise<void> {
-    if (!mentions || mentions.length === 0) {
-      return;
-    }
-
-    const unique = [...new Set(mentions)];
-    const found = await this.prisma.user.count({
-      where: { id: { in: unique } },
-    });
-
-    if (found !== unique.length) {
-      throw new ValidationFailedException({
-        mentions: ['The selected mentions are invalid.'],
-      });
-    }
   }
 }

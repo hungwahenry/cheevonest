@@ -11,6 +11,7 @@ import type { FastifyReply } from 'fastify';
 import { VERSION_NEUTRAL } from '@nestjs/common';
 import { ForbiddenException } from '@nestjs/common';
 import { SkipEnvelope } from '../../../common/decorators/api-response.decorators';
+import { HtmlPagesService } from '../../../common/html/html-pages.service';
 import { UrlSignerService } from '../../../common/signing/url-signer.service';
 import { Public } from '../../auth/decorators/auth.decorators';
 import { OrganisationsService } from '../../organisations/organisations.service';
@@ -23,6 +24,7 @@ export class UnsubscribeController {
   constructor(
     private readonly signer: UrlSignerService,
     private readonly organisations: OrganisationsService,
+    private readonly pages: HtmlPagesService,
     private readonly suppressions: SuppressionsService,
   ) {}
 
@@ -74,10 +76,8 @@ export class UnsubscribeController {
 
     void reply.header('Content-Type', 'text/html; charset=utf-8');
 
-    const safeName = organisation.name
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;');
-
-    return `<!doctype html><meta charset="utf-8"><title>Unsubscribed</title><body style="font-family:-apple-system,sans-serif;max-width:480px;margin:80px auto;text-align:center;padding:0 16px;"><h1 style="font-size:20px;">You're unsubscribed</h1><p style="color:#71717a;">You won't receive emails from <strong>${safeName}</strong> via cheevo anymore.</p></body>`;
+    return this.pages.render('unsubscribed', {
+      organisationName: organisation.name,
+    });
   }
 }
