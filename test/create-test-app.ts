@@ -11,6 +11,7 @@ import {
   seedFeatureFlags,
   seedInterests as seedInterestRows,
   seedOrganisationCatalog,
+  seedReportReasons,
   seedSystemConfigs,
 } from '../prisma/seeders';
 
@@ -53,6 +54,7 @@ export async function seedInterests(prisma: PrismaService): Promise<void> {
 export async function seedPlatform(prisma: PrismaService): Promise<void> {
   await seedSystemConfigs(prisma);
   await seedFeatureFlags(prisma);
+  await seedReportReasons(prisma);
 }
 
 export async function seedCatalog(prisma: PrismaService): Promise<void> {

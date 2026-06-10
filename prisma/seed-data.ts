@@ -1,3 +1,28 @@
+export interface ReportReasonSeed {
+  slug: string;
+  label: string;
+  description: string;
+  scopeTypes: string[];
+  requiresDetails: boolean;
+}
+
+export const REPORT_REASONS: ReadonlyArray<ReportReasonSeed> = [
+  { slug: 'spam', label: 'Spam', description: 'Unwanted promotional or repetitive content.', scopeTypes: [], requiresDetails: false },
+  { slug: 'harassment', label: 'Harassment', description: 'Bullying, targeted insults, or threats.', scopeTypes: [], requiresDetails: false },
+  { slug: 'hate_speech', label: 'Hate speech', description: 'Attacks based on identity or protected characteristics.', scopeTypes: [], requiresDetails: false },
+  { slug: 'violence', label: 'Violence', description: 'Encourages or glorifies violence or self-harm.', scopeTypes: [], requiresDetails: false },
+  { slug: 'scam_or_fraud', label: 'Scam or fraud', description: 'Deceptive content trying to take money or data.', scopeTypes: [], requiresDetails: false },
+  { slug: 'misinformation', label: 'Misinformation', description: 'Provably false claims presented as fact.', scopeTypes: [], requiresDetails: false },
+  { slug: 'impersonation', label: 'Impersonation', description: 'Pretending to be someone else or another brand.', scopeTypes: [], requiresDetails: false },
+  { slug: 'intellectual_property', label: 'Intellectual property', description: 'Unauthorised use of copyrighted or trademarked work.', scopeTypes: [], requiresDetails: false },
+  { slug: 'nudity_or_sexual', label: 'Nudity or sexual content', description: 'Sexual content that is inappropriate or non-consensual.', scopeTypes: [], requiresDetails: false },
+  { slug: 'fake_event', label: 'Fake event', description: 'Event does not exist or is misrepresented.', scopeTypes: ['event'], requiresDetails: false },
+  { slug: 'event_cancelled_no_refund', label: 'Cancelled without refund', description: 'Event was cancelled and refunds were not honoured.', scopeTypes: ['event'], requiresDetails: false },
+  { slug: 'underage_user', label: 'Underage user', description: 'User is under the platform minimum age.', scopeTypes: ['user'], requiresDetails: false },
+  { slug: 'inappropriate_profile', label: 'Inappropriate profile', description: 'Profile photo, bio, or handle violates policy.', scopeTypes: ['user'], requiresDetails: false },
+  { slug: 'other', label: 'Other', description: "Doesn't fit any of the above.", scopeTypes: [], requiresDetails: true },
+];
+
 export interface SystemConfigSeed {
   key: string;
   group: string;

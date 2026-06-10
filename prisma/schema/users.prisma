@@ -29,6 +29,11 @@ model User {
   subscriptions    Subscription[]
   rsvps            EventRsvp[]
   blocks           Block[]
+  comments         EventComment[]
+  commentLikes     EventCommentLike[]
+  commentFlags     EventCommentFlag[]
+  reportsFiled     Report[]             @relation("ReportsFiled")
+  reportsReviewed  Report[]             @relation("ReportsReviewed")
 
   @@index([suspendedAt])
   @@map("users")

@@ -377,14 +377,14 @@ describe('Attendee social (e2e)', () => {
       .set('Authorization', auth(attendeeToken))
       .expect(200);
 
-    const feedAfter = await request(server())
-      .get('/api/v1/attendee/feed')
+    const searchAfter = await request(server())
+      .get(`/api/v1/search?q=${runId}`)
       .set('Authorization', auth(attendeeToken))
       .expect(200);
     expect(
       (
-        feedAfter.body as { data: { items: Array<{ slug: string }> } }
-      ).data.items.some((item) => item.slug === eventSlug),
+        searchAfter.body as { data: { organisations: Array<{ slug: string }> } }
+      ).data.organisations.some((item) => item.slug === orgSlug),
     ).toBe(true);
   });
 

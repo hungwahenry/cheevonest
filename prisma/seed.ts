@@ -5,6 +5,7 @@ import {
   seedFeatureFlags,
   seedInterests,
   seedOrganisationCatalog,
+  seedReportReasons,
   seedSystemConfigs,
 } from './seeders';
 
@@ -17,6 +18,7 @@ async function main(): Promise<void> {
   await seedSystemConfigs(prisma);
   await seedFeatureFlags(prisma);
   await seedOrganisationCatalog(prisma);
+  await seedReportReasons(prisma);
 
   console.log(
     'Seeded interests, system configs, feature flags, and organisation catalog.',

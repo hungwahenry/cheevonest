@@ -48,6 +48,9 @@ const envSchema = z.object({
   DICEBEAR_STYLE: z.string().default('thumbs'),
   DICEBEAR_FORMAT: z.string().default('png'),
 
+  GIPHY_API_KEY: z.string().optional(),
+  GOOGLE_PLACES_API_KEY: z.string().optional(),
+
   SYSTEM_CONFIG_CACHE_TTL_SECONDS: z.coerce
     .number()
     .int()

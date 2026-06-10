@@ -12,6 +12,10 @@ import { DatabaseModule } from './database/database.module';
 import { MailModule } from './integrations/mail/mail.module';
 import { StorageModule } from './integrations/storage/storage.module';
 import { AttendeeModule } from './modules/attendee/attendee.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { GiphyModule } from './modules/giphy/giphy.module';
+import { PlacesModule } from './modules/places/places.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { AuthGuard } from './modules/auth/guards/auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { OrganizerModule } from './modules/organizer/organizer.module';
@@ -49,6 +53,10 @@ import { SearchModule } from './modules/search/search.module';
     OrganizerModule,
     PlatformModule,
     SearchModule,
+    CommentsModule,
+    ReportsModule,
+    GiphyModule,
+    PlacesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

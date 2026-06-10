@@ -4,6 +4,7 @@ import {
   FEATURE_FLAGS,
   INTERESTS,
   ORGANISATION_CATEGORIES,
+  REPORT_REASONS,
   SOCIAL_PLATFORMS,
   SYSTEM_CONFIGS,
 } from './seed-data';
@@ -15,6 +16,7 @@ type Seedable = Pick<
   | 'featureFlag'
   | 'organisationCategory'
   | 'socialPlatform'
+  | 'reportReason'
 >;
 
 export async function seedInterests(prisma: Seedable): Promise<void> {
@@ -111,6 +113,32 @@ export async function seedFeatureFlags(prisma: Seedable): Promise<void> {
         enabled: flag.enabled,
         rolloutPct: flag.rolloutPct ?? 100,
         isPublic: flag.isPublic ?? false,
+      },
+    });
+  }
+}
+
+export async function seedReportReasons(prisma: Seedable): Promise<void> {
+  for (const [index, reason] of REPORT_REASONS.entries()) {
+    await prisma.reportReason.upsert({
+      where: { slug: reason.slug },
+      update: {
+        label: reason.label,
+        description: reason.description,
+        scopeTypes: reason.scopeTypes,
+        displayOrder: index,
+        requiresDetails: reason.requiresDetails,
+        isActive: true,
+      },
+      create: {
+        id: ulid(),
+        slug: reason.slug,
+        label: reason.label,
+        description: reason.description,
+        scopeTypes: reason.scopeTypes,
+        displayOrder: index,
+        requiresDetails: reason.requiresDetails,
+        isActive: true,
       },
     });
   }
