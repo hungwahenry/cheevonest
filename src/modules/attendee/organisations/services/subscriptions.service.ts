@@ -33,15 +33,17 @@ export class SubscriptionsService {
   }
 
   async unsubscribe(userId: string, organisationId: string): Promise<void> {
-    const deleted = await this.prisma.subscription.deleteMany({
-      where: { userId, organisationId },
-    });
-
-    if (deleted.count > 0) {
-      await this.prisma.organisation.update({
-        where: { id: organisationId },
-        data: { subscribersCount: { decrement: 1 } },
+    await this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.subscription.deleteMany({
+        where: { userId, organisationId },
       });
-    }
+
+      if (deleted.count > 0) {
+        await tx.organisation.update({
+          where: { id: organisationId },
+          data: { subscribersCount: { decrement: 1 } },
+        });
+      }
+    });
   }
 }

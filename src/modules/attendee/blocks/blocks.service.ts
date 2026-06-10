@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
+import { Prisma } from '../../../generated/prisma/client';
 import type { User } from '../../../generated/prisma/client';
 import { SubscriptionsService } from '../organisations/services/subscriptions.service';
 import { BlockTargetNotFoundException } from './exceptions/block-target-not-found.exception';
@@ -64,6 +65,68 @@ export class BlocksService {
         blockableId: targetId,
       },
     });
+  }
+
+  async blockedOrganisationsPage(
+    userId: string,
+    page: number,
+    perPage: number,
+  ) {
+    const { ids, total } = await this.blockedTargetIds(
+      userId,
+      'organisation',
+      page,
+      perPage,
+    );
+
+    const organisations = await this.prisma.organisation.findMany({
+      where: { id: { in: ids } },
+      include: { category: true },
+    });
+    const byId = new Map(organisations.map((org) => [org.id, org]));
+
+    return { items: ids.flatMap((id) => byId.get(id) ?? []), total };
+  }
+
+  async blockedUsersPage(userId: string, page: number, perPage: number) {
+    const { ids, total } = await this.blockedTargetIds(
+      userId,
+      'user',
+      page,
+      perPage,
+    );
+
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: ids } },
+      include: { profile: true },
+    });
+    const byId = new Map(users.map((user) => [user.id, user]));
+
+    return { items: ids.flatMap((id) => byId.get(id) ?? []), total };
+  }
+
+  private async blockedTargetIds(
+    userId: string,
+    type: BlockableType,
+    page: number,
+    perPage: number,
+  ): Promise<{ ids: string[]; total: number }> {
+    const where: Prisma.BlockWhereInput = {
+      blockerUserId: userId,
+      blockableType: type,
+    };
+
+    const [total, blocks] = await this.prisma.$transaction([
+      this.prisma.block.count({ where }),
+      this.prisma.block.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
+    ]);
+
+    return { ids: blocks.map((block) => block.blockableId), total };
   }
 
   private resolveType(targetType: string): BlockableType {

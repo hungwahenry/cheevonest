@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
-import type { Event } from '../../generated/prisma/client';
+import type { Event, EventStatus, User } from '../../generated/prisma/client';
+import { ORGANISATION_RESOURCE_INCLUDE } from '../organisations/organisations.service';
 
 export const EVENT_RESOURCE_INCLUDE = {
   images: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
@@ -36,6 +37,81 @@ export class EventsService {
       where: { id },
       include: EVENT_RESOURCE_INCLUDE,
     });
+  }
+
+  /** The public event page: published or past, with org, tickets, features. */
+  async findPublicPageBySlug(slug: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { slug, status: { in: ['published', 'past'] } },
+      include: {
+        organisation: true,
+        tickets: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
+        features: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException();
+    }
+
+    return event;
+  }
+
+  /** The attendee detail page: published or past, full resource + org resource. */
+  async findVisibleDetailBySlug(slug: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { slug, status: { in: ['published', 'past'] } },
+      include: {
+        ...EVENT_RESOURCE_INCLUDE,
+        organisation: { include: ORGANISATION_RESOURCE_INCLUDE },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException();
+    }
+
+    return event;
+  }
+
+  async pageForMember(
+    user: User,
+    options: {
+      page: number;
+      perPage: number;
+      status?: EventStatus;
+      search?: string | null;
+    },
+  ): Promise<{ items: EventForResource[]; total: number }> {
+    const search = options.search?.trim() ?? '';
+
+    const where: Prisma.EventWhereInput = {
+      organisation: { members: { some: { userId: user.id } } },
+      ...(options.status ? { status: options.status } : {}),
+      ...(search !== ''
+        ? {
+            OR: [
+              { title: { contains: search, mode: 'insensitive' } },
+              { slug: { contains: search, mode: 'insensitive' } },
+              { venueName: { contains: search, mode: 'insensitive' } },
+              { city: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.event.count({ where }),
+      this.prisma.event.findMany({
+        where,
+        include: EVENT_RESOURCE_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+        skip: (options.page - 1) * options.perPage,
+        take: options.perPage,
+      }),
+    ]);
+
+    return { items, total };
   }
 
   /** Keeps the event's ticket aggregates in sync after ticket mutations. */

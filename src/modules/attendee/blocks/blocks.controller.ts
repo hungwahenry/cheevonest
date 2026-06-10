@@ -11,7 +11,6 @@ import {
 import { IsIn, IsString, Length } from 'class-validator';
 import { ApiResult } from '../../../common/responses/api-result';
 import { Paginated } from '../../../common/responses/paginated';
-import { PrismaService } from '../../../database/prisma.service';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { OrganisationSerializer } from '../../organisations/organisation.serializer';
@@ -32,7 +31,6 @@ class CreateBlockDto {
 @Controller('attendee/blocks')
 export class BlocksController {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly blocks: BlocksService,
     private readonly organisationSerializer: OrganisationSerializer,
     private readonly userSerializer: UserSerializer,
@@ -68,39 +66,20 @@ export class BlocksController {
   ): Promise<Paginated<unknown>> {
     const page = dto.page ?? 1;
     const perPage = 20;
-    const where = {
-      blockerUserId: user.id,
-      blockableType: 'organisation',
-    } as const;
 
-    const [total, blocks] = await this.prisma.$transaction([
-      this.prisma.block.count({ where }),
-      this.prisma.block.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * perPage,
-        take: perPage,
-      }),
-    ]);
-
-    const ids = blocks.map((block) => block.blockableId);
-    const organisations = await this.prisma.organisation.findMany({
-      where: { id: { in: ids } },
-      include: { category: true },
-    });
-    const byId = new Map(organisations.map((org) => [org.id, org]));
-
-    return new Paginated(
-      ids.flatMap((id) => {
-        const organisation = byId.get(id);
-
-        return organisation
-          ? [this.organisationSerializer.summary(organisation)]
-          : [];
-      }),
+    const result = await this.blocks.blockedOrganisationsPage(
+      user.id,
       page,
       perPage,
-      total,
+    );
+
+    return new Paginated(
+      result.items.map((organisation) =>
+        this.organisationSerializer.summary(organisation),
+      ),
+      page,
+      perPage,
+      result.total,
     );
   }
 
@@ -111,34 +90,14 @@ export class BlocksController {
   ): Promise<Paginated<unknown>> {
     const page = dto.page ?? 1;
     const perPage = 20;
-    const where = { blockerUserId: user.id, blockableType: 'user' } as const;
 
-    const [total, blocks] = await this.prisma.$transaction([
-      this.prisma.block.count({ where }),
-      this.prisma.block.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * perPage,
-        take: perPage,
-      }),
-    ]);
-
-    const ids = blocks.map((block) => block.blockableId);
-    const blockedUsers = await this.prisma.user.findMany({
-      where: { id: { in: ids } },
-      include: { profile: true },
-    });
-    const byId = new Map(blockedUsers.map((blocked) => [blocked.id, blocked]));
+    const result = await this.blocks.blockedUsersPage(user.id, page, perPage);
 
     return new Paginated(
-      ids.flatMap((id) => {
-        const blocked = byId.get(id);
-
-        return blocked ? [this.userSerializer.searchItem(blocked)] : [];
-      }),
+      result.items.map((blocked) => this.userSerializer.searchItem(blocked)),
       page,
       perPage,
-      total,
+      result.total,
     );
   }
 }

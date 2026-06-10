@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   NotFoundException,
@@ -17,6 +16,7 @@ import { Paginated } from '../../../common/responses/paginated';
 import { toNumber } from '../../../common/validation/transforms';
 import type { Event, User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
+import { CommentsPolicy } from '../../comments/comments.policy';
 import { CommentSerializer } from '../../comments/serializers/comment.serializer';
 import { CommentListingService } from '../../comments/services/comment-listing.service';
 import { CommentsService } from '../../comments/services/comments.service';
@@ -42,6 +42,7 @@ export class AttendeeCommentsController {
   constructor(
     private readonly events: EventsService,
     private readonly comments: CommentsService,
+    private readonly policy: CommentsPolicy,
     private readonly listing: CommentListingService,
     private readonly serializer: CommentSerializer,
   ) {}
@@ -88,11 +89,7 @@ export class AttendeeCommentsController {
     @CurrentUser() user: User,
   ): Promise<Paginated<unknown>> {
     const event = await this.findVisibleEvent(eventId);
-    const parent = await this.comments.findScoped(event.id, commentId);
-
-    if (parent.parentId !== null || parent.flagsCount !== 0) {
-      throw new NotFoundException();
-    }
+    const parent = await this.comments.findVisibleTopLevel(event.id, commentId);
 
     const page = dto.page ?? 1;
     const perPage = Math.min(dto.per_page ?? 20, 50);
@@ -123,9 +120,7 @@ export class AttendeeCommentsController {
     const event = await this.events.findOrFail(eventId);
     const comment = await this.comments.findScoped(event.id, commentId);
 
-    if (comment.userId !== user.id) {
-      throw new ForbiddenException('You can only delete your own comments.');
-    }
+    this.policy.ensureAuthor(comment, user.id);
 
     await this.comments.delete(comment);
 

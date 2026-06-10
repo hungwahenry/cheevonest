@@ -2,16 +2,16 @@ import { Controller, Get, Header, Query, Version } from '@nestjs/common';
 import { VERSION_NEUTRAL } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Env } from '../../../config/env';
-import { PrismaService } from '../../../database/prisma.service';
 import { Public } from '../../auth/decorators/auth.decorators';
 import { SkipEnvelope } from '../../../common/decorators/api-response.decorators';
+import { PaymentsService } from '../services/payments.service';
 
 @Public()
 @SkipEnvelope()
 @Controller('payments')
 export class PaymentReturnController {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly payments: PaymentsService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -40,11 +40,7 @@ export class PaymentReturnController {
     const reference = query.reference ?? query.tx_ref ?? query.trxref ?? '';
 
     if (reference !== '') {
-      const payment = await this.prisma.payment.findFirst({
-        where: {
-          OR: [{ reference }, { providerReference: reference }],
-        },
-      });
+      const payment = await this.payments.findByAnyReference(reference);
 
       if (payment?.purposableType === 'order' && payment.purposableId) {
         forward.set('order_id', payment.purposableId);

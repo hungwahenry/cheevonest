@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
 import { Prisma } from '../../../../generated/prisma/client';
-import type { User } from '../../../../generated/prisma/client';
 import { OrganisationsService } from '../../../organisations/organisations.service';
 import { CannotRemoveOwnerException } from '../exceptions/cannot-remove-owner.exception';
 import { OrganisationMemberAlreadyExistsException } from '../exceptions/organisation-member-already-exists.exception';
@@ -52,7 +51,13 @@ export class MembersService {
     });
   }
 
-  async remove(organisationId: string, user: User): Promise<void> {
+  async removeByUserId(organisationId: string, userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+
     const role = await this.organisations.roleOf(organisationId, user.id);
 
     if (role === 'owner') {

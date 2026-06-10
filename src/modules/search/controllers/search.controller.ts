@@ -1,13 +1,11 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { Paginated } from '../../../common/responses/paginated';
-import { PrismaService } from '../../../database/prisma.service';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { EventSerializer } from '../../events/serializers/event.serializer';
 import { OrganisationSerializer } from '../../organisations/organisation.serializer';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import { UserSerializer } from '../../users/serializers/user.serializer';
-import { UsersService } from '../../users/services/users.service';
 import { SearchDto } from '../dto/search.dto';
 import { UnknownSearchTypeException } from '../exceptions/unknown-search-type.exception';
 import { SearchableType } from '../services/search-indexer.service';
@@ -18,9 +16,7 @@ const SEARCH_TYPES: SearchableType[] = ['event', 'organisation', 'user'];
 @Controller('search')
 export class SearchController {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly search: SearchQueryService,
-    private readonly users: UsersService,
     private readonly systemConfig: SystemConfigService,
     private readonly eventSerializer: EventSerializer,
     private readonly organisationSerializer: OrganisationSerializer,
@@ -73,63 +69,17 @@ export class SearchController {
       perPage,
     );
 
-    const items = await this.hydratePage(searchType, ids, user.id);
+    const hydrated = await this.search.hydratePage(searchType, ids, user.id);
+
+    const items =
+      hydrated.type === 'event'
+        ? hydrated.rows.map((event) => this.eventSerializer.searchItem(event))
+        : hydrated.type === 'organisation'
+          ? hydrated.rows.map((organisation) =>
+              this.organisationSerializer.summary(organisation),
+            )
+          : hydrated.rows.map((hit) => this.userSerializer.searchItem(hit));
 
     return new Paginated(items, page, perPage, total);
-  }
-
-  private async hydratePage(
-    type: SearchableType,
-    ids: string[],
-    viewerId: string,
-  ): Promise<unknown[]> {
-    if (ids.length === 0) {
-      return [];
-    }
-
-    if (type === 'event') {
-      const blocked = await this.users.blockedOrganisationIds(viewerId);
-      const rows = await this.prisma.event.findMany({
-        where: {
-          id: { in: ids },
-          ...(blocked.length > 0 ? { organisationId: { notIn: blocked } } : {}),
-        },
-        include: { organisation: true },
-      });
-
-      return this.ordered(ids, rows).map((event) =>
-        this.eventSerializer.searchItem(event),
-      );
-    }
-
-    if (type === 'organisation') {
-      const blocked = await this.users.blockedOrganisationIds(viewerId);
-      const rows = await this.prisma.organisation.findMany({
-        where: { id: { in: ids.filter((id) => !blocked.includes(id)) } },
-        include: { category: true },
-      });
-
-      return this.ordered(ids, rows).map((organisation) =>
-        this.organisationSerializer.summary(organisation),
-      );
-    }
-
-    const blockedUsers = await this.users.mutuallyBlockedUserIds(viewerId);
-    const rows = await this.prisma.user.findMany({
-      where: { id: { in: ids.filter((id) => !blockedUsers.includes(id)) } },
-      include: { profile: true },
-    });
-
-    return this.ordered(ids, rows).map((hit) =>
-      this.userSerializer.searchItem(hit),
-    );
-  }
-
-  private ordered<T extends { id: string }>(ids: string[], rows: T[]): T[] {
-    const byId = new Map(rows.map((row) => [row.id, row]));
-
-    return ids
-      .map((id) => byId.get(id))
-      .filter((row): row is T => row !== undefined);
   }
 }

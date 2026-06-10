@@ -1,19 +1,15 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
-import { PrismaService } from '../../../database/prisma.service';
+import { Controller, Get, Param } from '@nestjs/common';
 import { Public } from '../../auth/decorators/auth.decorators';
+import { PagesService } from './pages.service';
 
 @Public()
 @Controller('pages')
 export class PagesController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly pages: PagesService) {}
 
   @Get()
   async list(): Promise<unknown[]> {
-    const pages = await this.prisma.page.findMany({
-      where: { isPublished: true },
-      orderBy: { title: 'asc' },
-      select: { slug: true, title: true, updatedAt: true },
-    });
+    const pages = await this.pages.listPublished();
 
     return pages.map((page) => ({
       slug: page.slug,
@@ -24,13 +20,7 @@ export class PagesController {
 
   @Get(':slug')
   async show(@Param('slug') slug: string): Promise<Record<string, unknown>> {
-    const page = await this.prisma.page.findFirst({
-      where: { slug, isPublished: true },
-    });
-
-    if (!page) {
-      throw new NotFoundException();
-    }
+    const page = await this.pages.findPublishedOrFail(slug);
 
     return {
       slug: page.slug,

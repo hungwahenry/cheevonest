@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Post,
   Query,
@@ -98,11 +97,11 @@ export class ModerationController {
     const event = await this.events.findOrFail(eventId);
     await this.policy.ensureMember(event, user.id);
 
-    const parent = await this.comments.findScoped(event.id, commentId);
-
-    if (parent.parentId !== null) {
-      throw new NotFoundException();
-    }
+    const parent = await this.comments.findVisibleTopLevel(
+      event.id,
+      commentId,
+      { includeFlagged: true },
+    );
 
     const page = dto.page ?? 1;
     const perPage = Math.min(dto.per_page ?? 20, 50);

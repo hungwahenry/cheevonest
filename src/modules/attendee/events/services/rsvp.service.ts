@@ -40,16 +40,27 @@ export class RsvpService {
   }
 
   async unrsvp(user: User, event: Event): Promise<void> {
-    const deleted = await this.prisma.eventRsvp.deleteMany({
-      where: { userId: user.id, eventId: event.id },
+    await this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.eventRsvp.deleteMany({
+        where: { userId: user.id, eventId: event.id },
+      });
+
+      if (deleted.count > 0) {
+        await tx.event.update({
+          where: { id: event.id },
+          data: { rsvpsCount: { decrement: 1 } },
+        });
+      }
+    });
+  }
+
+  async rsvpsCount(eventId: string): Promise<number> {
+    const event = await this.prisma.event.findUniqueOrThrow({
+      where: { id: eventId },
+      select: { rsvpsCount: true },
     });
 
-    if (deleted.count > 0) {
-      await this.prisma.event.update({
-        where: { id: event.id },
-        data: { rsvpsCount: { decrement: 1 } },
-      });
-    }
+    return event.rsvpsCount;
   }
 
   private ensureOpenForRsvp(event: Event): void {

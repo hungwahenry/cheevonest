@@ -4,12 +4,10 @@ import {
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Post,
 } from '@nestjs/common';
 import { ApiResult } from '../../../../common/responses/api-result';
-import { PrismaService } from '../../../../database/prisma.service';
 import type { User } from '../../../../generated/prisma/client';
 import { CurrentUser } from '../../../auth/decorators/auth.decorators';
 import { OrganisationsPolicy } from '../../../organisations/organisations.policy';
@@ -21,7 +19,6 @@ import { MembersService } from '../services/members.service';
 @Controller('organizer/organisations/:organisationId/members')
 export class MembersController {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly organisations: OrganisationsService,
     private readonly policy: OrganisationsPolicy,
     private readonly members: MembersService,
@@ -65,13 +62,7 @@ export class MembersController {
     const organisation = await this.organisations.findOrFail(organisationId);
     await this.policy.assertManageMembers(organisation.id, user.id);
 
-    const target = await this.prisma.user.findUnique({ where: { id: userId } });
-
-    if (!target) {
-      throw new NotFoundException();
-    }
-
-    await this.members.remove(organisation.id, target);
+    await this.members.removeByUserId(organisation.id, userId);
 
     return new ApiResult(null, 'Member removed.');
   }

@@ -1,33 +1,27 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { PrismaService } from '../../../../database/prisma.service';
 import { OrganisationSerializer } from '../../../organisations/organisation.serializer';
+import { OrganisationsService } from '../../../organisations/organisations.service';
 import { OrganisationRules } from '../rules/organisation.rules';
 import { CheckSlugDto } from '../dto/check-slug.dto';
 
 @Controller('organizer')
 export class CatalogController {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly organisations: OrganisationsService,
     private readonly serializer: OrganisationSerializer,
     private readonly rules: OrganisationRules,
   ) {}
 
   @Get('organisation-categories')
   async categories(): Promise<unknown[]> {
-    const categories = await this.prisma.organisationCategory.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-    });
+    const categories = await this.organisations.activeCategories();
 
     return categories.map((category) => this.serializer.category(category));
   }
 
   @Get('social-platforms')
   async socialPlatforms(): Promise<unknown[]> {
-    const platforms = await this.prisma.socialPlatform.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-    });
+    const platforms = await this.organisations.activeSocialPlatforms();
 
     return platforms.map((platform) =>
       this.serializer.socialPlatform(platform),

@@ -115,30 +115,34 @@ export class CommentsService {
   }
 
   async like(user: User, comment: EventComment): Promise<void> {
-    const result = await this.prisma.eventCommentLike.createMany({
-      data: [{ commentId: comment.id, userId: user.id }],
-      skipDuplicates: true,
-    });
-
-    if (result.count > 0) {
-      await this.prisma.eventComment.update({
-        where: { id: comment.id },
-        data: { likesCount: { increment: 1 } },
+    await this.prisma.$transaction(async (tx) => {
+      const result = await tx.eventCommentLike.createMany({
+        data: [{ commentId: comment.id, userId: user.id }],
+        skipDuplicates: true,
       });
-    }
+
+      if (result.count > 0) {
+        await tx.eventComment.update({
+          where: { id: comment.id },
+          data: { likesCount: { increment: 1 } },
+        });
+      }
+    });
   }
 
   async unlike(user: User, comment: EventComment): Promise<void> {
-    const deleted = await this.prisma.eventCommentLike.deleteMany({
-      where: { commentId: comment.id, userId: user.id },
-    });
-
-    if (deleted.count > 0) {
-      await this.prisma.eventComment.update({
-        where: { id: comment.id },
-        data: { likesCount: { decrement: 1 } },
+    await this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.eventCommentLike.deleteMany({
+        where: { commentId: comment.id, userId: user.id },
       });
-    }
+
+      if (deleted.count > 0) {
+        await tx.eventComment.update({
+          where: { id: comment.id },
+          data: { likesCount: { decrement: 1 } },
+        });
+      }
+    });
   }
 
   async flag(
@@ -146,30 +150,55 @@ export class CommentsService {
     comment: EventComment,
     reason: string | null,
   ): Promise<void> {
-    const result = await this.prisma.eventCommentFlag.createMany({
-      data: [{ commentId: comment.id, flaggedByUserId: organizer.id, reason }],
-      skipDuplicates: true,
-    });
-
-    if (result.count > 0) {
-      await this.prisma.eventComment.update({
-        where: { id: comment.id },
-        data: { flagsCount: { increment: 1 } },
+    await this.prisma.$transaction(async (tx) => {
+      const result = await tx.eventCommentFlag.createMany({
+        data: [
+          { commentId: comment.id, flaggedByUserId: organizer.id, reason },
+        ],
+        skipDuplicates: true,
       });
-    }
+
+      if (result.count > 0) {
+        await tx.eventComment.update({
+          where: { id: comment.id },
+          data: { flagsCount: { increment: 1 } },
+        });
+      }
+    });
   }
 
   async unflag(organizer: User, comment: EventComment): Promise<void> {
-    const deleted = await this.prisma.eventCommentFlag.deleteMany({
-      where: { commentId: comment.id, flaggedByUserId: organizer.id },
-    });
-
-    if (deleted.count > 0) {
-      await this.prisma.eventComment.update({
-        where: { id: comment.id },
-        data: { flagsCount: { decrement: 1 } },
+    await this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.eventCommentFlag.deleteMany({
+        where: { commentId: comment.id, flaggedByUserId: organizer.id },
       });
+
+      if (deleted.count > 0) {
+        await tx.eventComment.update({
+          where: { id: comment.id },
+          data: { flagsCount: { decrement: 1 } },
+        });
+      }
+    });
+  }
+
+  /** A reply target / reply-list parent: top-level and, unless moderating, unflagged. */
+  async findVisibleTopLevel(
+    eventId: string,
+    commentId: string,
+    options: { includeFlagged?: boolean } = {},
+  ): Promise<EventComment> {
+    const comment = await this.findScoped(eventId, commentId);
+
+    if (comment.parentId !== null) {
+      throw new NotFoundException();
     }
+
+    if (!options.includeFlagged && comment.flagsCount !== 0) {
+      throw new NotFoundException();
+    }
+
+    return comment;
   }
 
   async findScoped(eventId: string, commentId: string): Promise<EventComment> {

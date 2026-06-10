@@ -12,15 +12,11 @@ import {
 } from '@nestjs/common';
 import { ApiResult } from '../../../../common/responses/api-result';
 import { Paginated } from '../../../../common/responses/paginated';
-import { PrismaService } from '../../../../database/prisma.service';
-import { EventStatus, Prisma } from '../../../../generated/prisma/client';
+import { EventStatus } from '../../../../generated/prisma/client';
 import type { User } from '../../../../generated/prisma/client';
 import { CurrentUser } from '../../../auth/decorators/auth.decorators';
 import { EventsPolicy } from '../../../events/events.policy';
-import {
-  EVENT_RESOURCE_INCLUDE,
-  EventsService,
-} from '../../../events/events.service';
+import { EventsService } from '../../../events/events.service';
 import { EventSerializer } from '../../../events/serializers/event.serializer';
 import { CreateEventDto } from '../dto/create-event.dto';
 import { ListEventsDto } from '../dto/list-events.dto';
@@ -32,7 +28,6 @@ import { EventPublisherService } from '../services/event-publisher.service';
 @Controller('organizer/events')
 export class EventsController {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly events: EventsService,
     private readonly policy: EventsPolicy,
     private readonly manager: EventManagerService,
@@ -48,44 +43,24 @@ export class EventsController {
   ): Promise<Paginated<unknown>> {
     const perPage = Math.min(dto.per_page ?? 20, 100);
     const page = dto.page ?? 1;
-    const search = dto.q?.trim() ?? '';
     const status =
       dto.status &&
       Object.values(EventStatus).includes(dto.status as EventStatus)
         ? (dto.status as EventStatus)
         : undefined;
 
-    const where: Prisma.EventWhereInput = {
-      organisation: { members: { some: { userId: user.id } } },
-      ...(status ? { status } : {}),
-      ...(search !== ''
-        ? {
-            OR: [
-              { title: { contains: search, mode: 'insensitive' } },
-              { slug: { contains: search, mode: 'insensitive' } },
-              { venueName: { contains: search, mode: 'insensitive' } },
-              { city: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-    };
-
-    const [total, rows] = await this.prisma.$transaction([
-      this.prisma.event.count({ where }),
-      this.prisma.event.findMany({
-        where,
-        include: EVENT_RESOURCE_INCLUDE,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * perPage,
-        take: perPage,
-      }),
-    ]);
-
-    return new Paginated(
-      rows.map((event) => this.serializer.full(event)),
+    const result = await this.events.pageForMember(user, {
       page,
       perPage,
-      total,
+      status,
+      search: dto.q,
+    });
+
+    return new Paginated(
+      result.items.map((event) => this.serializer.full(event)),
+      page,
+      perPage,
+      result.total,
     );
   }
 

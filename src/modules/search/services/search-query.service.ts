@@ -146,6 +146,56 @@ export class SearchQueryService {
     };
   }
 
+  /** Page hydration with block filtering, preserving rank order. */
+  async hydratePage(
+    type: SearchableType,
+    ids: string[],
+    viewerId: string,
+  ): Promise<
+    | { type: 'event'; rows: SearchEventHit[] }
+    | { type: 'organisation'; rows: SearchOrganisationHit[] }
+    | { type: 'user'; rows: SearchUserHit[] }
+  > {
+    if (ids.length === 0) {
+      return type === 'event'
+        ? { type, rows: [] }
+        : type === 'organisation'
+          ? { type, rows: [] }
+          : { type, rows: [] };
+    }
+
+    if (type === 'event') {
+      const blocked = await this.users.blockedOrganisationIds(viewerId);
+      const rows = await this.prisma.event.findMany({
+        where: {
+          id: { in: ids },
+          ...(blocked.length > 0 ? { organisationId: { notIn: blocked } } : {}),
+        },
+        include: HYDRATE_EVENT_INCLUDE,
+      });
+
+      return { type, rows: this.inOrder(ids, rows) };
+    }
+
+    if (type === 'organisation') {
+      const blocked = await this.users.blockedOrganisationIds(viewerId);
+      const rows = await this.prisma.organisation.findMany({
+        where: { id: { in: ids.filter((id) => !blocked.includes(id)) } },
+        include: HYDRATE_ORGANISATION_INCLUDE,
+      });
+
+      return { type, rows: this.inOrder(ids, rows) };
+    }
+
+    const blockedUsers = await this.users.mutuallyBlockedUserIds(viewerId);
+    const rows = await this.prisma.user.findMany({
+      where: { id: { in: ids.filter((id) => !blockedUsers.includes(id)) } },
+      include: { profile: true },
+    });
+
+    return { type, rows: this.inOrder(ids, rows) };
+  }
+
   private async matchIds(
     query: string,
     type: SearchableType,

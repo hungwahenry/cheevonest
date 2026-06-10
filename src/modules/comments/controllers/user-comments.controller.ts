@@ -1,17 +1,11 @@
-import {
-  Controller,
-  Get,
-  NotFoundException,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { Transform } from 'class-transformer';
 import { IsInt, IsOptional, Min } from 'class-validator';
 import { Paginated } from '../../../common/responses/paginated';
 import { toNumber } from '../../../common/validation/transforms';
-import { PrismaService } from '../../../database/prisma.service';
-import { Prisma } from '../../../generated/prisma/client';
+import { PublicProfileService } from '../../users/services/public-profile.service';
 import { CommentSerializer } from '../serializers/comment.serializer';
+import { CommentListingService } from '../services/comment-listing.service';
 
 class UserCommentsPageDto {
   @IsOptional()
@@ -24,7 +18,8 @@ class UserCommentsPageDto {
 @Controller('users/:userId/comments')
 export class UserCommentsController {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly profiles: PublicProfileService,
+    private readonly listing: CommentListingService,
     private readonly serializer: CommentSerializer,
   ) {}
 
@@ -33,40 +28,18 @@ export class UserCommentsController {
     @Param('userId') userId: string,
     @Query() dto: UserCommentsPageDto,
   ): Promise<Paginated<unknown>> {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
-      select: { completedAt: true },
-    });
-
-    if (!profile || profile.completedAt === null) {
-      throw new NotFoundException();
-    }
+    await this.profiles.findCompletedOrFail(userId);
 
     const page = dto.page ?? 1;
     const perPage = 20;
 
-    const where: Prisma.EventCommentWhereInput = {
-      userId,
-      flagsCount: 0,
-      event: { status: { in: ['published', 'past'] } },
-    };
-
-    const [total, rows] = await this.prisma.$transaction([
-      this.prisma.eventComment.count({ where }),
-      this.prisma.eventComment.findMany({
-        where,
-        include: { event: true },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * perPage,
-        take: perPage,
-      }),
-    ]);
+    const result = await this.listing.userCommentsPage(userId, page, perPage);
 
     return new Paginated(
-      rows.map((comment) => this.serializer.userComment(comment)),
+      result.items.map((comment) => this.serializer.userComment(comment)),
       page,
       perPage,
-      total,
+      result.total,
     );
   }
 }

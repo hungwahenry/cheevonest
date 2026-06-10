@@ -41,6 +41,28 @@ export class OrganisationsService {
     });
   }
 
+  async listForMember(userId: string): Promise<OrganisationForResource[]> {
+    return this.prisma.organisation.findMany({
+      where: { members: { some: { userId } } },
+      include: ORGANISATION_RESOURCE_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async activeCategories() {
+    return this.prisma.organisationCategory.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+  }
+
+  async activeSocialPlatforms() {
+    return this.prisma.socialPlatform.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+  }
+
   async roleOf(
     organisationId: string,
     userId: string,

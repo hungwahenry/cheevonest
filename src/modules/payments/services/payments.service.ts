@@ -196,6 +196,12 @@ export class PaymentsService {
     });
   }
 
+  async findByAnyReference(reference: string): Promise<Payment | null> {
+    return this.prisma.payment.findFirst({
+      where: { OR: [{ reference }, { providerReference: reference }] },
+    });
+  }
+
   providerFor(payment: Payment): PaymentProvider {
     return this.registry.get(payment.provider);
   }

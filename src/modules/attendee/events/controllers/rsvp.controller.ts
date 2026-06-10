@@ -1,6 +1,5 @@
 import { Controller, Delete, HttpCode, Param, Post } from '@nestjs/common';
 import { ApiResult } from '../../../../common/responses/api-result';
-import { PrismaService } from '../../../../database/prisma.service';
 import type { User } from '../../../../generated/prisma/client';
 import { CurrentUser } from '../../../auth/decorators/auth.decorators';
 import { EventsService } from '../../../events/events.service';
@@ -9,7 +8,6 @@ import { RsvpService } from '../services/rsvp.service';
 @Controller('attendee/events/:eventId/rsvp')
 export class RsvpController {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly events: EventsService,
     private readonly rsvps: RsvpService,
   ) {}
@@ -27,7 +25,7 @@ export class RsvpController {
     return new ApiResult(
       {
         is_rsvped: true,
-        rsvps_count: await this.rsvpsCount(event.id),
+        rsvps_count: await this.rsvps.rsvpsCount(event.id),
       },
       "You're going.",
     );
@@ -46,18 +44,9 @@ export class RsvpController {
     return new ApiResult(
       {
         is_rsvped: false,
-        rsvps_count: await this.rsvpsCount(event.id),
+        rsvps_count: await this.rsvps.rsvpsCount(event.id),
       },
       'No longer going.',
     );
-  }
-
-  private async rsvpsCount(eventId: string): Promise<number> {
-    const event = await this.prisma.event.findUniqueOrThrow({
-      where: { id: eventId },
-      select: { rsvpsCount: true },
-    });
-
-    return event.rsvpsCount;
   }
 }

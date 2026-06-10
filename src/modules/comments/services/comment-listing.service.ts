@@ -100,6 +100,35 @@ export class CommentListingService {
     return { items: await this.decorate(rows, event, viewer), total };
   }
 
+  /** Public profile comments: unflagged, on visible events, newest first. */
+  async userCommentsPage(
+    userId: string,
+    page: number,
+    perPage: number,
+  ): Promise<{
+    items: Array<Prisma.EventCommentGetPayload<{ include: { event: true } }>>;
+    total: number;
+  }> {
+    const where: Prisma.EventCommentWhereInput = {
+      userId,
+      flagsCount: 0,
+      event: { status: { in: ['published', 'past'] } },
+    };
+
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.eventComment.count({ where }),
+      this.prisma.eventComment.findMany({
+        where,
+        include: { event: true },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
+    ]);
+
+    return { items, total };
+  }
+
   async decorateOne(
     comment: CommentForResource,
     event: Event,
