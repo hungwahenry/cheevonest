@@ -4,7 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { TestingModuleBuilder } from '@nestjs/testing';
 import { PaystackProvider } from '../src/modules/payments/providers/paystack.provider';
 import { ExpoPushService } from '../src/modules/notifications/services/expo-push.service';
-import { ScheduledNotificationsService } from '../src/modules/notifications/services/scheduled-notifications.service';
+import { DailySalesDigestService } from '../src/modules/notifications/services/scheduled/daily-sales-digest.service';
+import { StartingSoonService } from '../src/modules/notifications/services/scheduled/starting-soon.service';
 import {
   createTestApp,
   extractOtpCode,
@@ -492,9 +493,9 @@ describe('Notifications (e2e)', () => {
       data: { startsAt },
     });
 
-    const scheduled = ctx.app.get(ScheduledNotificationsService);
+    const scheduled = ctx.app.get(StartingSoonService);
 
-    expect(await scheduled.notifyStartingSoon()).toBe(1);
+    expect(await scheduled.run()).toBe(1);
 
     const ownerCount = await ctx.prisma.notification.count({
       where: { userId: ownerId, type: 'event.starting_soon' },
@@ -506,7 +507,7 @@ describe('Notifications (e2e)', () => {
     });
     expect(buyerCount).toBe(1);
 
-    expect(await scheduled.notifyStartingSoon()).toBe(0);
+    expect(await scheduled.run()).toBe(0);
   });
 
   it('sends the daily sales digest by email once per day', async () => {
@@ -517,15 +518,15 @@ describe('Notifications (e2e)', () => {
     });
 
     const mailsBefore = ctx.mails.length;
-    const scheduled = ctx.app.get(ScheduledNotificationsService);
+    const scheduled = ctx.app.get(DailySalesDigestService);
 
-    expect(await scheduled.sendDailySalesDigest()).toBe(1);
+    expect(await scheduled.run()).toBe(1);
 
     const digestMails = ctx.mails
       .slice(mailsBefore)
       .filter((mail) => mail.template === 'daily-sales-digest');
     expect(digestMails.length).toBeGreaterThan(0);
 
-    expect(await scheduled.sendDailySalesDigest()).toBe(0);
+    expect(await scheduled.run()).toBe(0);
   });
 });

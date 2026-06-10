@@ -16,7 +16,8 @@ import { MutesService } from './services/mutes.service';
 import { NotificationPreferencesService } from './services/notification-preferences.service';
 import { NotifierService } from './services/notifier.service';
 import { PushTokensService } from './services/push-tokens.service';
-import { ScheduledNotificationsService } from './services/scheduled-notifications.service';
+import { DailySalesDigestService } from './services/scheduled/daily-sales-digest.service';
+import { StartingSoonService } from './services/scheduled/starting-soon.service';
 
 @Module({
   imports: [MailModule, EventsModule, UsersModule],
@@ -28,7 +29,8 @@ import { ScheduledNotificationsService } from './services/scheduled-notification
     InboxService,
     PushTokensService,
     MutesService,
-    ScheduledNotificationsService,
+    StartingSoonService,
+    DailySalesDigestService,
     NotificationsCronsService,
     NotificationSerializer,
     OrderPaidListener,
