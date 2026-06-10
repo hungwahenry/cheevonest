@@ -24,7 +24,8 @@ model User {
   profile          Profile?
   accessTokens     AccessToken[]
   interests        InterestUser[]
-  referredProfiles Profile[]      @relation("ProfileReferrer")
+  referredProfiles Profile[]            @relation("ProfileReferrer")
+  memberships      OrganisationMember[]
 
   @@index([suspendedAt])
   @@map("users")

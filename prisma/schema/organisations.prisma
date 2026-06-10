@@ -1,0 +1,91 @@
+enum OrganisationRole {
+  owner
+  member
+}
+
+model Organisation {
+  id                                String    @id @db.Char(26)
+  categoryId                        Int?      @map("category_id")
+  name                              String
+  slug                              String    @unique
+  logoPath                          String?   @map("logo_path")
+  coverPath                         String?   @map("cover_path")
+  about                             String?
+  contactEmail                      String?   @map("contact_email")
+  contactPhone                      String?   @map("contact_phone")
+  website                           String?
+  city                              String?
+  eventsCount                       Int       @default(0) @map("events_count")
+  subscribersCount                  Int       @default(0) @map("subscribers_count")
+  subscriptionFanoutWindowStartedAt DateTime? @map("subscription_fanout_window_started_at") @db.Timestamptz(6)
+  subscriptionFanoutCount           Int       @default(0) @map("subscription_fanout_count")
+  suspendedAt                       DateTime? @map("suspended_at") @db.Timestamptz(6)
+  suspendedReason                   String?   @map("suspended_reason")
+  createdAt                         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  category OrganisationCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  members  OrganisationMember[]
+  socials  OrganisationSocial[]
+
+  @@index([suspendedAt])
+  @@map("organisations")
+}
+
+model OrganisationMember {
+  organisationId String           @map("organisation_id") @db.Char(26)
+  userId         String           @map("user_id") @db.Char(26)
+  role           OrganisationRole
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([organisationId, userId])
+  @@index([userId])
+  @@map("organisation_members")
+}
+
+model OrganisationCategory {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organisations Organisation[]
+
+  @@map("organisation_categories")
+}
+
+model SocialPlatform {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  name      String
+  baseUrl   String?  @map("base_url")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organisations OrganisationSocial[]
+
+  @@map("social_platforms")
+}
+
+model OrganisationSocial {
+  organisationId   String   @map("organisation_id") @db.Char(26)
+  socialPlatformId Int      @map("social_platform_id")
+  handle           String
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organisation Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  platform     SocialPlatform @relation(fields: [socialPlatformId], references: [id], onDelete: Cascade)
+
+  @@id([organisationId, socialPlatformId])
+  @@map("organisation_social")
+}

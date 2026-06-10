@@ -1,8 +1,21 @@
 import { ulid } from 'ulid';
 import type { PrismaClient } from '../src/generated/prisma/client';
-import { FEATURE_FLAGS, INTERESTS, SYSTEM_CONFIGS } from './seed-data';
+import {
+  FEATURE_FLAGS,
+  INTERESTS,
+  ORGANISATION_CATEGORIES,
+  SOCIAL_PLATFORMS,
+  SYSTEM_CONFIGS,
+} from './seed-data';
 
-type Seedable = Pick<PrismaClient, 'interest' | 'systemConfig' | 'featureFlag'>;
+type Seedable = Pick<
+  PrismaClient,
+  | 'interest'
+  | 'systemConfig'
+  | 'featureFlag'
+  | 'organisationCategory'
+  | 'socialPlatform'
+>;
 
 export async function seedInterests(prisma: Seedable): Promise<void> {
   for (const [index, interest] of INTERESTS.entries()) {
@@ -42,6 +55,40 @@ export async function seedSystemConfigs(prisma: Seedable): Promise<void> {
         value: payload,
         defaultValue: payload,
         isPublic: config.isPublic ?? false,
+      },
+    });
+  }
+}
+
+export async function seedOrganisationCatalog(prisma: Seedable): Promise<void> {
+  for (const [index, category] of ORGANISATION_CATEGORIES.entries()) {
+    await prisma.organisationCategory.upsert({
+      where: { slug: category.slug },
+      update: { name: category.name, sortOrder: index, isActive: true },
+      create: {
+        slug: category.slug,
+        name: category.name,
+        sortOrder: index,
+        isActive: true,
+      },
+    });
+  }
+
+  for (const [index, platform] of SOCIAL_PLATFORMS.entries()) {
+    await prisma.socialPlatform.upsert({
+      where: { slug: platform.slug },
+      update: {
+        name: platform.name,
+        baseUrl: platform.baseUrl,
+        sortOrder: index,
+        isActive: true,
+      },
+      create: {
+        slug: platform.slug,
+        name: platform.name,
+        baseUrl: platform.baseUrl,
+        sortOrder: index,
+        isActive: true,
       },
     });
   }

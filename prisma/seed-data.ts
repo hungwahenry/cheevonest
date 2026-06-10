@@ -83,6 +83,49 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagSeed> = [
   { key: 'admin.system_announcements', description: 'Admin ability to broadcast platform-wide system announcements.', enabled: true, isPublic: false },
 ];
 
+export const ORGANISATION_CATEGORIES: ReadonlyArray<{
+  slug: string;
+  name: string;
+}> = [
+  { slug: 'nightclub', name: 'Nightclub' },
+  { slug: 'bar-lounge', name: 'Bar & Lounge' },
+  { slug: 'concert-promoter', name: 'Concert Promoter' },
+  { slug: 'festival-organizer', name: 'Festival Organizer' },
+  { slug: 'event-planner', name: 'Event Planner' },
+  { slug: 'restaurant-cafe', name: 'Restaurant & Café' },
+  { slug: 'comedy-club', name: 'Comedy Club' },
+  { slug: 'sports-fitness', name: 'Sports & Fitness' },
+  { slug: 'conference-summit', name: 'Conference & Summit' },
+  { slug: 'brand-activation', name: 'Brand & Activation' },
+  { slug: 'community-group', name: 'Community Group' },
+  { slug: 'religious-organization', name: 'Religious Organization' },
+  { slug: 'school-alumni', name: 'School & Alumni' },
+  { slug: 'artist-musician', name: 'Artist / Musician' },
+  { slug: 'dj', name: 'DJ' },
+  { slug: 'content-creator', name: 'Content Creator' },
+  { slug: 'fashion-lifestyle', name: 'Fashion & Lifestyle' },
+  { slug: 'nonprofit', name: 'Nonprofit' },
+  { slug: 'venue', name: 'Venue' },
+  { slug: 'ticketing-resale', name: 'Ticketing & Resale' },
+];
+
+export const SOCIAL_PLATFORMS: ReadonlyArray<{
+  slug: string;
+  name: string;
+  baseUrl: string | null;
+}> = [
+  { slug: 'instagram', name: 'Instagram', baseUrl: 'https://instagram.com/' },
+  { slug: 'x', name: 'X', baseUrl: 'https://x.com/' },
+  { slug: 'tiktok', name: 'TikTok', baseUrl: 'https://tiktok.com/@' },
+  { slug: 'snapchat', name: 'Snapchat', baseUrl: 'https://snapchat.com/add/' },
+  { slug: 'facebook', name: 'Facebook', baseUrl: 'https://facebook.com/' },
+  { slug: 'youtube', name: 'YouTube', baseUrl: 'https://youtube.com/@' },
+  { slug: 'whatsapp', name: 'WhatsApp', baseUrl: 'https://wa.me/' },
+  { slug: 'telegram', name: 'Telegram', baseUrl: 'https://t.me/' },
+  { slug: 'threads', name: 'Threads', baseUrl: 'https://threads.net/@' },
+  { slug: 'website', name: 'Website', baseUrl: null },
+];
+
 export const INTERESTS: ReadonlyArray<{ slug: string; name: string }> = [
   { slug: 'afrobeats', name: 'Afrobeats' },
   { slug: 'amapiano', name: 'Amapiano' },

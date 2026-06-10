@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Env } from '../../../config/env';
 import type { Interest, Profile } from '../../../generated/prisma/client';
 import { StorageService } from '../../../integrations/storage/storage.service';
+import { OrganisationSerializer } from '../../organisations/organisation.serializer';
 import { UserForResource } from '../services/users.service';
 
 export interface SerializeUserOptions {
@@ -16,6 +17,7 @@ export class UserSerializer {
   constructor(
     config: ConfigService<Env, true>,
     private readonly storage: StorageService,
+    private readonly organisations: OrganisationSerializer,
   ) {
     const url = config.get('DICEBEAR_URL', { infer: true }).replace(/\/$/, '');
     const style = config.get('DICEBEAR_STYLE', { infer: true });
@@ -34,10 +36,16 @@ export class UserSerializer {
       role: user.role,
       email_verified: user.emailVerifiedAt !== null,
       onboarding_completed: user.profile?.completedAt != null,
-      is_organizer: false,
+      is_organizer: user.memberships.length > 0,
       profile: user.profile ? this.profile(user.profile) : null,
       interests: user.interests.map(({ interest }) => this.interest(interest)),
-      ...(options.includeOrganisations ? { organisations: [] } : {}),
+      ...(options.includeOrganisations
+        ? {
+            organisations: user.memberships.map((membership) =>
+              this.organisations.organisation(membership.organisation),
+            ),
+          }
+        : {}),
     };
   }
 
@@ -70,7 +78,7 @@ export class UserSerializer {
   }
 
   /** Uploaded avatar when present, otherwise a deterministic DiceBear avatar. */
-  private avatarUrl(profile: Profile): string {
+  avatarUrl(profile: Profile): string {
     if (profile.avatarPath !== null) {
       return this.storage.url(profile.avatarPath);
     }

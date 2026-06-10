@@ -17,6 +17,8 @@ interface MultipartValue {
   toBuffer?: () => Promise<Buffer>;
 }
 
+type Container = Record<string, unknown> | unknown[];
+
 @Injectable()
 export class MultipartInterceptor implements NestInterceptor {
   async intercept(
@@ -34,34 +36,115 @@ export class MultipartInterceptor implements NestInterceptor {
     return next.handle();
   }
 
+  /** Rebuilds multipart fields into plain values, supporting PHP-style bracket keys. */
   private async normalize(
     body: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
     const normalized: Record<string, unknown> = {};
 
     for (const [rawKey, rawValue] of Object.entries(body)) {
-      const isArrayKey = rawKey.endsWith('[]');
-      const key = isArrayKey ? rawKey.slice(0, -2) : rawKey;
+      const segments = this.parseSegments(rawKey);
       const parts = Array.isArray(rawValue) ? rawValue : [rawValue];
-
-      const values: unknown[] = [];
 
       for (const part of parts) {
         const resolved = await this.resolvePart(part as MultipartValue);
 
-        if (resolved !== undefined) {
-          values.push(resolved);
+        if (resolved === undefined) {
+          continue;
+        }
+
+        if (segments.length === 1) {
+          this.assignFlat(normalized, segments[0], resolved);
+        } else {
+          this.assignDeep(normalized, segments, resolved);
         }
       }
-
-      if (values.length === 0) {
-        continue;
-      }
-
-      normalized[key] = isArrayKey || values.length > 1 ? values : values[0];
     }
 
     return normalized;
+  }
+
+  private parseSegments(key: string): string[] {
+    const match = /^([^[\]]+)((?:\[[^[\]]*\])*)$/.exec(key);
+
+    if (!match || !match[2]) {
+      return [key];
+    }
+
+    const segments = [match[1]];
+
+    for (const bracket of match[2].matchAll(/\[([^[\]]*)\]/g)) {
+      segments.push(bracket[1]);
+    }
+
+    return segments;
+  }
+
+  private assignFlat(
+    target: Record<string, unknown>,
+    key: string,
+    value: unknown,
+  ): void {
+    if (key in target) {
+      const existing = target[key];
+      target[key] = Array.isArray(existing)
+        ? [...existing, value]
+        : [existing, value];
+      return;
+    }
+
+    target[key] = value;
+  }
+
+  private assignDeep(
+    target: Record<string, unknown>,
+    segments: string[],
+    value: unknown,
+  ): void {
+    let node: Container = target;
+
+    for (let i = 0; i < segments.length; i += 1) {
+      const segment = segments[i];
+      const isLast = i === segments.length - 1;
+
+      if (isLast) {
+        if (segment === '' && Array.isArray(node)) {
+          node.push(value);
+        } else if (Array.isArray(node)) {
+          node[Number(segment)] = value;
+        } else {
+          node[segment] = value;
+        }
+        return;
+      }
+
+      const childIsArray =
+        segments[i + 1] === '' || /^\d+$/.test(segments[i + 1]);
+      node = this.childContainer(node, segment, childIsArray);
+    }
+  }
+
+  private childContainer(
+    node: Container,
+    segment: string,
+    childIsArray: boolean,
+  ): Container {
+    const create = (): Container => (childIsArray ? [] : {});
+
+    if (segment === '' && Array.isArray(node)) {
+      const child = create();
+      node.push(child);
+      return child;
+    }
+
+    const key = Array.isArray(node) ? Number(segment) : segment;
+    const holder = node as Record<string | number, unknown>;
+
+    if (typeof holder[key] !== 'object' || holder[key] === null) {
+      holder[key] = create();
+    }
+
+    return holder[key] as Container;
   }
 
   private async resolvePart(part: MultipartValue): Promise<unknown> {

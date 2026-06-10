@@ -14,6 +14,7 @@ import { StorageModule } from './integrations/storage/storage.module';
 import { AttendeeModule } from './modules/attendee/attendee.module';
 import { AuthGuard } from './modules/auth/guards/auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
+import { OrganizerModule } from './modules/organizer/organizer.module';
 import { PlatformModule } from './modules/platform/platform.module';
 
 @Module({
@@ -44,6 +45,7 @@ import { PlatformModule } from './modules/platform/platform.module';
     StorageModule,
     AuthModule,
     AttendeeModule,
+    OrganizerModule,
     PlatformModule,
   ],
   providers: [

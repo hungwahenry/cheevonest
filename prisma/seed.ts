@@ -1,7 +1,12 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { seedFeatureFlags, seedInterests, seedSystemConfigs } from './seeders';
+import {
+  seedFeatureFlags,
+  seedInterests,
+  seedOrganisationCatalog,
+  seedSystemConfigs,
+} from './seeders';
 
 async function main(): Promise<void> {
   const prisma = new PrismaClient({
@@ -11,8 +16,11 @@ async function main(): Promise<void> {
   await seedInterests(prisma);
   await seedSystemConfigs(prisma);
   await seedFeatureFlags(prisma);
+  await seedOrganisationCatalog(prisma);
 
-  console.log('Seeded interests, system configs, and feature flags.');
+  console.log(
+    'Seeded interests, system configs, feature flags, and organisation catalog.',
+  );
   await prisma.$disconnect();
 }
 

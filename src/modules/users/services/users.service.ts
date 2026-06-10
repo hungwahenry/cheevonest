@@ -5,12 +5,17 @@ import { ValidationFailedException } from '../../../common/exceptions/api.except
 import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import type { User } from '../../../generated/prisma/client';
+import { ORGANISATION_RESOURCE_INCLUDE } from '../../organisations/organisations.service';
 
 export const USER_RESOURCE_INCLUDE = {
   profile: true,
   interests: {
     include: { interest: true },
     orderBy: { interest: { sortOrder: Prisma.SortOrder.asc } },
+  },
+  memberships: {
+    include: { organisation: { include: ORGANISATION_RESOURCE_INCLUDE } },
+    orderBy: { createdAt: Prisma.SortOrder.asc },
   },
 } satisfies Prisma.UserInclude;
 
