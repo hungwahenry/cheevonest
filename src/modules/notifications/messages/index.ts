@@ -8,3 +8,4 @@ export * from './event-starting-soon-organizer.message';
 export * from './event-starting-soon-attendee.message';
 export * from './new-event-from-subscription.message';
 export * from './daily-sales-digest.message';
+export * from './broadcast-finished.message';

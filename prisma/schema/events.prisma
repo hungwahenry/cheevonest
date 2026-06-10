@@ -66,6 +66,7 @@ model Event {
   orders            Order[]
   issuedTickets     IssuedTicket[]
   notificationMutes EventNotificationMute[]
+  broadcasts        Broadcast[]
 
   @@index([status, endsAt])
   @@index([latitude, longitude])

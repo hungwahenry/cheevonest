@@ -15,6 +15,7 @@ import { MailModule } from './integrations/mail/mail.module';
 import { StorageModule } from './integrations/storage/storage.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AttendeeModule } from './modules/attendee/attendee.module';
+import { BroadcastsModule } from './modules/broadcasts/broadcasts.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { GiphyModule } from './modules/giphy/giphy.module';
 import { PlacesModule } from './modules/places/places.module';
@@ -65,6 +66,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     OrganizerModule,
     PlatformModule,
     SearchModule,
+    BroadcastsModule,
     CommentsModule,
     ReportsModule,
     PaymentsModule,

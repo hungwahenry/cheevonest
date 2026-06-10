@@ -59,6 +59,9 @@ const envSchema = z.object({
   PAYMENT_BRIDGE_URL: z.string().optional(),
   APP_DEEP_LINK_SCHEME: z.string().default('cheevo'),
 
+  BROADCASTS_FROM_ADDRESS: z.string().default('events@cheevo.vip'),
+  RESEND_WEBHOOK_SECRET: z.string().optional(),
+
   GIPHY_API_KEY: z.string().optional(),
   GOOGLE_PLACES_API_KEY: z.string().optional(),
 

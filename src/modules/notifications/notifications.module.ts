@@ -3,6 +3,7 @@ import { MailModule } from '../../integrations/mail/mail.module';
 import { EventsModule } from '../events/events.module';
 import { UsersModule } from '../users/users.module';
 import { NotificationsController } from './controllers/notifications.controller';
+import { BroadcastSentListener } from './listeners/broadcast-sent.listener';
 import { CommentRepliedListener } from './listeners/comment-replied.listener';
 import { EventPublishedListener } from './listeners/event-published.listener';
 import { OrderPaidListener } from './listeners/order-paid.listener';
@@ -38,6 +39,7 @@ import { StartingSoonService } from './services/scheduled/starting-soon.service'
     CommentRepliedListener,
     EventPublishedListener,
     ReportCreatedListener,
+    BroadcastSentListener,
   ],
   exports: [NotifierService, MutesService],
 })

@@ -48,6 +48,8 @@ model User {
   expoPushTokens          ExpoPushToken[]
   eventMutes              EventNotificationMute[]
   stepUpChallenges        StepUpChallenge[]
+  createdBroadcasts       Broadcast[]
+  suppressions            BroadcastSuppression[]
 
   @@index([suspendedAt])
   @@map("users")

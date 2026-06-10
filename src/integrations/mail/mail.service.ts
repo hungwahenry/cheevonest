@@ -9,6 +9,9 @@ export interface MailMessage {
   subject: string;
   template: string;
   context?: Record<string, unknown>;
+  from?: string;
+  replyTo?: string;
+  headers?: Record<string, string>;
 }
 
 @Injectable()
@@ -43,9 +46,11 @@ export class MailService {
     }
 
     const { error } = await this.resend.emails.send({
-      from: this.from,
+      from: message.from ?? this.from,
       to: message.to,
       subject: message.subject,
+      ...(message.replyTo ? { replyTo: message.replyTo } : {}),
+      ...(message.headers ? { headers: message.headers } : {}),
       html,
       text,
     });

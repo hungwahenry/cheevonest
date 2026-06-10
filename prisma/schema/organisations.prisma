@@ -24,13 +24,15 @@ model Organisation {
   createdAt                         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  category      OrganisationCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category      OrganisationCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   members       OrganisationMember[]
   socials       OrganisationSocial[]
   events        Event[]
   subscriptions Subscription[]
   payoutAccount PayoutAccount?
   payouts       Payout[]
+  broadcasts    Broadcast[]
+  suppressions  BroadcastSuppression[]
 
   @@index([suspendedAt])
   @@map("organisations")

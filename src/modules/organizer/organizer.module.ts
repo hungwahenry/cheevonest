@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { OrganizerEventsModule } from './events/organizer-events.module';
 import { ModerationModule } from './moderation/moderation.module';
 import { OrganizerOrganisationsModule } from './organisations/organizer-organisations.module';
+import { OrganizerBroadcastsModule } from './broadcasts/organizer-broadcasts.module';
 import { OrganizerPayoutsModule } from './payouts/organizer-payouts.module';
 import { OrganizerTicketsModule } from './tickets/organizer-tickets.module';
 
@@ -12,6 +13,7 @@ import { OrganizerTicketsModule } from './tickets/organizer-tickets.module';
     ModerationModule,
     OrganizerTicketsModule,
     OrganizerPayoutsModule,
+    OrganizerBroadcastsModule,
   ],
 })
 export class OrganizerModule {}
