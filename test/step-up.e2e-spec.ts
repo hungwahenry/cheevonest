@@ -55,7 +55,7 @@ describe('Step-up flows (e2e)', () => {
     const otherSession = await signIn(currentEmail);
 
     const created = await request(server())
-      .post('/api/v1/attendee/step-up')
+      .post('/api/v1/step-up')
       .set('Authorization', auth(token))
       .send({ action: 'change_email', payload: { new_email: newEmail } })
       .expect(200);
@@ -83,14 +83,14 @@ describe('Step-up flows (e2e)', () => {
     const firstCode = lastCodeFor(currentEmail);
 
     const wrong = await request(server())
-      .post(`/api/v1/attendee/step-up/${challenge.id}/verify`)
+      .post(`/api/v1/step-up/${challenge.id}/verify`)
       .set('Authorization', auth(token))
       .send({ factor_id: challenge.next_factor_id, code: '000000' })
       .expect(422);
     expect(wrong.body).toMatchObject({ code: 'otp_invalid' });
 
     const afterFirst = await request(server())
-      .post(`/api/v1/attendee/step-up/${challenge.id}/verify`)
+      .post(`/api/v1/step-up/${challenge.id}/verify`)
       .set('Authorization', auth(token))
       .send({ factor_id: challenge.next_factor_id, code: firstCode })
       .expect(200);
@@ -104,7 +104,7 @@ describe('Step-up flows (e2e)', () => {
     expect(midway.next_factor_id).not.toBe(challenge.next_factor_id);
 
     const skipAhead = await request(server())
-      .post(`/api/v1/attendee/step-up/${challenge.id}/verify`)
+      .post(`/api/v1/step-up/${challenge.id}/verify`)
       .set('Authorization', auth(token))
       .send({ factor_id: challenge.next_factor_id, code: '123456' })
       .expect(409);
@@ -113,7 +113,7 @@ describe('Step-up flows (e2e)', () => {
     const secondCode = lastCodeFor(newEmail);
 
     const completed = await request(server())
-      .post(`/api/v1/attendee/step-up/${challenge.id}/verify`)
+      .post(`/api/v1/step-up/${challenge.id}/verify`)
       .set('Authorization', auth(token))
       .send({ factor_id: midway.next_factor_id, code: secondCode })
       .expect(200);
@@ -137,7 +137,7 @@ describe('Step-up flows (e2e)', () => {
       .expect(401);
 
     const replay = await request(server())
-      .post(`/api/v1/attendee/step-up/${challenge.id}/verify`)
+      .post(`/api/v1/step-up/${challenge.id}/verify`)
       .set('Authorization', auth(token))
       .send({ factor_id: midway.next_factor_id, code: secondCode })
       .expect(409);
@@ -151,21 +151,21 @@ describe('Step-up flows (e2e)', () => {
     await signIn(takenEmail);
 
     const same = await request(server())
-      .post('/api/v1/attendee/step-up')
+      .post('/api/v1/step-up')
       .set('Authorization', auth(token))
       .send({ action: 'change_email', payload: { new_email: email } })
       .expect(422);
     expect(same.body).toMatchObject({ code: 'email_same' });
 
     const taken = await request(server())
-      .post('/api/v1/attendee/step-up')
+      .post('/api/v1/step-up')
       .set('Authorization', auth(token))
       .send({ action: 'change_email', payload: { new_email: takenEmail } })
       .expect(422);
     expect(taken.body).toMatchObject({ code: 'email_taken' });
 
     await request(server())
-      .post('/api/v1/attendee/step-up')
+      .post('/api/v1/step-up')
       .set('Authorization', auth(token))
       .send({ action: 'unknown_thing', payload: {} })
       .expect(422);
@@ -177,7 +177,7 @@ describe('Step-up flows (e2e)', () => {
     const stranger = await signIn(uniqueEmail('stepup-stranger'));
 
     const created = await request(server())
-      .post('/api/v1/attendee/step-up')
+      .post('/api/v1/step-up')
       .set('Authorization', auth(token))
       .send({
         action: 'change_email',
@@ -190,14 +190,14 @@ describe('Step-up flows (e2e)', () => {
     ).data;
 
     const throttled = await request(server())
-      .post(`/api/v1/attendee/step-up/${challenge.id}/resend`)
+      .post(`/api/v1/step-up/${challenge.id}/resend`)
       .set('Authorization', auth(token))
       .send({ factor_id: challenge.next_factor_id })
       .expect(429);
     expect(throttled.body).toMatchObject({ code: 'otp_throttled' });
 
     const foreign = await request(server())
-      .post(`/api/v1/attendee/step-up/${challenge.id}/verify`)
+      .post(`/api/v1/step-up/${challenge.id}/verify`)
       .set('Authorization', auth(stranger))
       .send({ factor_id: challenge.next_factor_id, code: '123456' })
       .expect(410);
@@ -220,7 +220,7 @@ describe('Step-up flows (e2e)', () => {
       .expect(201);
 
     const denied = await request(server())
-      .post('/api/v1/attendee/step-up')
+      .post('/api/v1/step-up')
       .set('Authorization', auth(token))
       .send({ action: 'delete_account', payload: {} })
       .expect(409);
@@ -232,7 +232,7 @@ describe('Step-up flows (e2e)', () => {
     const token = await signIn(email);
 
     const created = await request(server())
-      .post('/api/v1/attendee/step-up')
+      .post('/api/v1/step-up')
       .set('Authorization', auth(token))
       .send({ action: 'delete_account', payload: {} })
       .expect(200);
@@ -244,7 +244,7 @@ describe('Step-up flows (e2e)', () => {
     const code = lastCodeFor(email);
 
     const completed = await request(server())
-      .post(`/api/v1/attendee/step-up/${challenge.id}/verify`)
+      .post(`/api/v1/step-up/${challenge.id}/verify`)
       .set('Authorization', auth(token))
       .send({ factor_id: challenge.next_factor_id, code })
       .expect(200);

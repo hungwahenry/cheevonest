@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { MailModule } from '../../../integrations/mail/mail.module';
-import { UsersModule } from '../../users/users.module';
+import { MailModule } from '../../integrations/mail/mail.module';
+import { UsersModule } from '../users/users.module';
 import { ChangeEmailAction } from './actions/change-email.action';
 import { DeleteAccountAction } from './actions/delete-account.action';
 import { StepUpController } from './step-up.controller';

@@ -1,10 +1,10 @@
 import { Body, Controller, HttpCode, Param, Post } from '@nestjs/common';
-import { ApiResult } from '../../../common/responses/api-result';
-import type { User } from '../../../generated/prisma/client';
+import { ApiResult } from '../../common/responses/api-result';
+import type { User } from '../../generated/prisma/client';
 import {
   CurrentTokenId,
   CurrentUser,
-} from '../../auth/decorators/auth.decorators';
+} from '../auth/decorators/auth.decorators';
 import {
   CreateStepUpDto,
   ResendStepUpDto,
@@ -13,7 +13,7 @@ import {
 import { StepUpSerializer } from './step-up.serializer';
 import { StepUpService } from './services/step-up.service';
 
-@Controller('attendee/step-up')
+@Controller('step-up')
 export class StepUpController {
   constructor(
     private readonly stepUp: StepUpService,

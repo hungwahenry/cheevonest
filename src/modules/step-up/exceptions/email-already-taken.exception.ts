@@ -1,4 +1,4 @@
-import { ApiException } from '../../../../common/exceptions/api.exception';
+import { ApiException } from '../../../common/exceptions/api.exception';
 
 export class EmailAlreadyTakenException extends ApiException {
   constructor() {

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ValidationFailedException } from '../../../../common/exceptions/api.exception';
-import { PrismaService } from '../../../../database/prisma.service';
-import type { StepUpFactor, User } from '../../../../generated/prisma/client';
-import { MailMessage } from '../../../../integrations/mail/mail.service';
-import { UserSerializer } from '../../../users/serializers/user.serializer';
-import { UsersService } from '../../../users/services/users.service';
+import { ValidationFailedException } from '../../../common/exceptions/api.exception';
+import { PrismaService } from '../../../database/prisma.service';
+import type { StepUpFactor, User } from '../../../generated/prisma/client';
+import { MailMessage } from '../../../integrations/mail/mail.service';
+import { UserSerializer } from '../../users/serializers/user.serializer';
+import { UsersService } from '../../users/services/users.service';
 import { EmailAlreadyTakenException } from '../exceptions/email-already-taken.exception';
 import { SameEmailException } from '../exceptions/same-email.exception';
 import {

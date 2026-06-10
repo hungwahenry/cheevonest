@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../database/prisma.service';
-import type { StepUpFactor, User } from '../../../../generated/prisma/client';
-import { MailMessage } from '../../../../integrations/mail/mail.service';
+import { PrismaService } from '../../../database/prisma.service';
+import type { StepUpFactor, User } from '../../../generated/prisma/client';
+import { MailMessage } from '../../../integrations/mail/mail.service';
 import { AccountOwnsOrganisationsException } from '../exceptions/account-owns-organisations.exception';
 import { FactorSpec, StepUpActionContract } from './step-up-action.interface';
 

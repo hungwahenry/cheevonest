@@ -1,5 +1,5 @@
-import type { StepUpFactor, User } from '../../../../generated/prisma/client';
-import { MailMessage } from '../../../../integrations/mail/mail.service';
+import type { StepUpFactor, User } from '../../../generated/prisma/client';
+import { MailMessage } from '../../../integrations/mail/mail.service';
 
 export interface FactorSpec {
   kind: 'otp';

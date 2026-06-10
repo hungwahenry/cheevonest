@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { StepUpFactor } from '../../../generated/prisma/client';
+import type { StepUpFactor } from '../../generated/prisma/client';
 import {
   ChallengeWithFactors,
   StepUpService,

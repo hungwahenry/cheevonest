@@ -8,7 +8,6 @@ import { OnboardingModule } from './onboarding/onboarding.module';
 import { AttendeeOrdersModule } from './orders/attendee-orders.module';
 import { AttendeeOrganisationsModule } from './organisations/attendee-organisations.module';
 import { ProfileModule } from './profile/profile.module';
-import { StepUpModule } from './step-up/step-up.module';
 
 @Module({
   imports: [
@@ -21,7 +20,6 @@ import { StepUpModule } from './step-up/step-up.module';
     BlocksModule,
     AttendeeCommentsModule,
     AttendeeOrdersModule,
-    StepUpModule,
   ],
 })
 export class AttendeeModule {}

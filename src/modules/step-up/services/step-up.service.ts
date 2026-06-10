@@ -2,19 +2,19 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'node:crypto';
 import { ulid } from 'ulid';
-import { PrismaService } from '../../../../database/prisma.service';
-import { Prisma } from '../../../../generated/prisma/client';
+import { PrismaService } from '../../../database/prisma.service';
+import { Prisma } from '../../../generated/prisma/client';
 import type {
   StepUpChallenge,
   StepUpFactor,
   User,
-} from '../../../../generated/prisma/client';
-import { MailService } from '../../../../integrations/mail/mail.service';
-import { OtpExpiredException } from '../../../auth/exceptions/otp-expired.exception';
-import { OtpInvalidException } from '../../../auth/exceptions/otp-invalid.exception';
-import { OtpMaxAttemptsException } from '../../../auth/exceptions/otp-max-attempts.exception';
-import { OtpThrottleException } from '../../../auth/exceptions/otp-throttle.exception';
-import { SystemConfigService } from '../../../platform/system-config/system-config.service';
+} from '../../../generated/prisma/client';
+import { MailService } from '../../../integrations/mail/mail.service';
+import { OtpExpiredException } from '../../auth/exceptions/otp-expired.exception';
+import { OtpInvalidException } from '../../auth/exceptions/otp-invalid.exception';
+import { OtpMaxAttemptsException } from '../../auth/exceptions/otp-max-attempts.exception';
+import { OtpThrottleException } from '../../auth/exceptions/otp-throttle.exception';
+import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import {
   StepUpActionContract,
   StepUpExecutionContext,
