@@ -55,6 +55,55 @@ export class UsersService {
     });
   }
 
+  async blockedOrganisationIds(userId: string): Promise<string[]> {
+    const blocks = await this.prisma.block.findMany({
+      where: { blockerUserId: userId, blockableType: 'organisation' },
+      select: { blockableId: true },
+    });
+
+    return blocks.map((block) => block.blockableId);
+  }
+
+  /** Users this user blocked plus users who blocked them — the symmetric guard. */
+  async mutuallyBlockedUserIds(userId: string): Promise<string[]> {
+    const [outgoing, incoming] = await Promise.all([
+      this.prisma.block.findMany({
+        where: { blockerUserId: userId, blockableType: 'user' },
+        select: { blockableId: true },
+      }),
+      this.prisma.block.findMany({
+        where: { blockableType: 'user', blockableId: userId },
+        select: { blockerUserId: true },
+      }),
+    ]);
+
+    return [
+      ...new Set([
+        ...outgoing.map((block) => block.blockableId),
+        ...incoming.map((block) => block.blockerUserId),
+      ]),
+    ];
+  }
+
+  async hasBlocked(
+    userId: string,
+    targetType: 'user' | 'organisation',
+    targetId: string,
+  ): Promise<boolean> {
+    const block = await this.prisma.block.findUnique({
+      where: {
+        blockerUserId_blockableType_blockableId: {
+          blockerUserId: userId,
+          blockableType: targetType,
+          blockableId: targetId,
+        },
+      },
+      select: { blockerUserId: true },
+    });
+
+    return block !== null;
+  }
+
   private async uniqueReferralCode(): Promise<string> {
     for (;;) {
       const code = this.randomReferralCode();

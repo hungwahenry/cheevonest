@@ -3,6 +3,7 @@ import { ValidationFailedException } from '../../../common/exceptions/api.except
 import { PrismaService } from '../../../database/prisma.service';
 import type { Profile, User } from '../../../generated/prisma/client';
 import { StorageService } from '../../../integrations/storage/storage.service';
+import { SearchIndexerService } from '../../search/services/search-indexer.service';
 import { UsernameRules } from '../../users/rules/username.rules';
 import {
   UserForResource,
@@ -22,6 +23,7 @@ export class OnboardingService {
     private readonly usernameRules: UsernameRules,
     private readonly interests: InterestsService,
     private readonly interestRules: InterestRules,
+    private readonly searchIndexer: SearchIndexerService,
   ) {}
 
   async complete(
@@ -66,6 +68,8 @@ export class OnboardingService {
     });
 
     await this.interests.syncFor(user.id, dto.interests);
+
+    await this.searchIndexer.indexUser(user.id);
 
     return this.users.findForResource(user.id);
   }

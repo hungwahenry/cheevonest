@@ -69,6 +69,34 @@ export class UserSerializer {
     };
   }
 
+  searchItem(user: {
+    id: string;
+    profile: Profile | null;
+  }): Record<string, unknown> {
+    const profile = user.profile;
+    const name =
+      `${profile?.firstName ?? ''} ${profile?.lastName ?? ''}`.trim();
+
+    return {
+      id: user.id,
+      username: profile?.username ?? null,
+      display_name: name !== '' ? name : null,
+      avatar_url: profile ? this.avatarUrl(profile) : null,
+      city: profile?.city ?? null,
+    };
+  }
+
+  publicUser(
+    user: { id: string; profile: Profile | null },
+    isBlocked: boolean,
+  ): Record<string, unknown> {
+    return {
+      ...this.searchItem(user),
+      bio: user.profile?.bio ?? null,
+      is_blocked: isBlocked,
+    };
+  }
+
   interest(interest: Interest): Record<string, unknown> {
     return {
       id: interest.id,

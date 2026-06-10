@@ -14,6 +14,7 @@ import {
   SocialEntryDto,
 } from '../dto/create-organisation.dto';
 import { UpdateOrganisationDto } from '../dto/update-organisation.dto';
+import { SearchIndexerService } from '../../../search/services/search-indexer.service';
 import { ensureValidImage } from '../rules/image.rules';
 import { OrganisationRules } from '../rules/organisation.rules';
 
@@ -27,6 +28,7 @@ export class OrganisationManagerService {
     private readonly storage: StorageService,
     private readonly organisations: OrganisationsService,
     private readonly rules: OrganisationRules,
+    private readonly searchIndexer: SearchIndexerService,
   ) {}
 
   /** One atomic submission: details, logo/cover, socials. The creator becomes Owner. */
@@ -77,7 +79,10 @@ export class OrganisationManagerService {
       await this.syncSocials(tx, organisationId, dto.socials ?? []);
     });
 
-    return this.organisations.loadForResource(organisationId);
+    const created = await this.organisations.loadForResource(organisationId);
+    await this.searchIndexer.indexOrganisation(created);
+
+    return created;
   }
 
   async update(
@@ -108,7 +113,10 @@ export class OrganisationManagerService {
       }
     });
 
-    return this.organisations.loadForResource(organisation.id);
+    const updated = await this.organisations.loadForResource(organisation.id);
+    await this.searchIndexer.indexOrganisation(updated);
+
+    return updated;
   }
 
   private async buildUpdateData(

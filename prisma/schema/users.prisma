@@ -26,6 +26,9 @@ model User {
   interests        InterestUser[]
   referredProfiles Profile[]            @relation("ProfileReferrer")
   memberships      OrganisationMember[]
+  subscriptions    Subscription[]
+  rsvps            EventRsvp[]
+  blocks           Block[]
 
   @@index([suspendedAt])
   @@map("users")

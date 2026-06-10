@@ -3,6 +3,7 @@ import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import type { User } from '../../../generated/prisma/client';
 import { StorageService } from '../../../integrations/storage/storage.service';
+import { SearchIndexerService } from '../../search/services/search-indexer.service';
 import { UsernameRules } from '../../users/rules/username.rules';
 import {
   UserForResource,
@@ -18,6 +19,7 @@ export class ProfileService {
     private readonly storage: StorageService,
     private readonly users: UsersService,
     private readonly usernameRules: UsernameRules,
+    private readonly searchIndexer: SearchIndexerService,
   ) {}
 
   async update(user: User, dto: UpdateProfileDto): Promise<UserForResource> {
@@ -56,6 +58,8 @@ export class ProfileService {
     if (Object.keys(data).length > 0) {
       await this.prisma.profile.update({ where: { id: profile.id }, data });
     }
+
+    await this.searchIndexer.indexUser(user.id);
 
     return this.users.findForResource(user.id);
   }

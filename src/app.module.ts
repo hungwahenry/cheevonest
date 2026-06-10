@@ -16,6 +16,7 @@ import { AuthGuard } from './modules/auth/guards/auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { OrganizerModule } from './modules/organizer/organizer.module';
 import { PlatformModule } from './modules/platform/platform.module';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { PlatformModule } from './modules/platform/platform.module';
     AttendeeModule,
     OrganizerModule,
     PlatformModule,
+    SearchModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

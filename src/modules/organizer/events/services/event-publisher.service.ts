@@ -5,6 +5,7 @@ import {
   EventForResource,
   EventsService,
 } from '../../../events/events.service';
+import { SearchIndexerService } from '../../../search/services/search-indexer.service';
 import { PublishRules } from '../rules/publish.rules';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class EventPublisherService {
     private readonly prisma: PrismaService,
     private readonly events: EventsService,
     private readonly rules: PublishRules,
+    private readonly searchIndexer: SearchIndexerService,
   ) {}
 
   async publish(event: Event): Promise<EventForResource> {
@@ -25,6 +27,9 @@ export class EventPublisherService {
       data: { status: 'published', publishedAt: new Date() },
     });
 
-    return this.events.loadForResource(event.id);
+    const published = await this.events.loadForResource(event.id);
+    await this.searchIndexer.indexEvent(published);
+
+    return published;
   }
 }

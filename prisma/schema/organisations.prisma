@@ -27,7 +27,8 @@ model Organisation {
   category OrganisationCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   members  OrganisationMember[]
   socials  OrganisationSocial[]
-  events   Event[]
+  events        Event[]
+  subscriptions Subscription[]
 
   @@index([suspendedAt])
   @@map("organisations")

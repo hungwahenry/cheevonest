@@ -4,6 +4,7 @@ import { PrismaService } from '../../../../database/prisma.service';
 import { Prisma } from '../../../../generated/prisma/client';
 import type { Event, User } from '../../../../generated/prisma/client';
 import { StorageService } from '../../../../integrations/storage/storage.service';
+import { SearchIndexerService } from '../../../search/services/search-indexer.service';
 import {
   EventForResource,
   EventsService,
@@ -30,6 +31,7 @@ export class EventManagerService {
     private readonly storage: StorageService,
     private readonly events: EventsService,
     private readonly interestRules: EventInterestRules,
+    private readonly searchIndexer: SearchIndexerService,
   ) {}
 
   async create(user: User, dto: CreateEventDto): Promise<EventForResource> {
@@ -101,7 +103,10 @@ export class EventManagerService {
       }
     });
 
-    return this.events.loadForResource(eventId);
+    const created = await this.events.loadForResource(eventId);
+    await this.searchIndexer.indexEvent(created);
+
+    return created;
   }
 
   async update(event: Event, dto: UpdateEventDto): Promise<EventForResource> {
@@ -202,7 +207,10 @@ export class EventManagerService {
       }
     });
 
-    return this.events.loadForResource(event.id);
+    const updated = await this.events.loadForResource(event.id);
+    await this.searchIndexer.indexEvent(updated);
+
+    return updated;
   }
 
   async delete(event: Event): Promise<void> {
@@ -230,6 +238,8 @@ export class EventManagerService {
         await this.storage.delete(feature.imagePath);
       }
     }
+
+    await this.searchIndexer.deindex('event', event.id);
 
     await this.prisma.$transaction([
       this.prisma.event.delete({ where: { id: event.id } }),

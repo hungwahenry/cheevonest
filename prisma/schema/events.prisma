@@ -61,6 +61,7 @@ model Event {
   features     EventFeature[]
   tickets      EventTicket[]
   interests    EventInterest[]
+  rsvps        EventRsvp[]
 
   @@index([status, endsAt])
   @@index([latitude, longitude])
