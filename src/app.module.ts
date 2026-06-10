@@ -13,16 +13,19 @@ import { Env, validateEnv } from './config/env';
 import { DatabaseModule } from './database/database.module';
 import { MailModule } from './integrations/mail/mail.module';
 import { StorageModule } from './integrations/storage/storage.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AttendeeModule } from './modules/attendee/attendee.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { GiphyModule } from './modules/giphy/giphy.module';
 import { PlacesModule } from './modules/places/places.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AuthGuard } from './modules/auth/guards/auth.guard';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { OrganizerModule } from './modules/organizer/organizer.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { PayoutsModule } from './modules/payouts/payouts.module';
 import { PlatformModule } from './modules/platform/platform.module';
 import { SearchModule } from './modules/search/search.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
@@ -65,12 +68,15 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     PaymentsModule,
     TicketsModule,
     OrdersModule,
+    PayoutsModule,
+    AdminModule,
     GiphyModule,
     PlacesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
     {
       provide: APP_PIPE,
       useFactory: () =>

@@ -24,3 +24,7 @@ export const CurrentTokenId = createParamDecorator(
   (_data: unknown, context: ExecutionContext): string =>
     context.switchToHttp().getRequest<AuthenticatedRequest>().accessTokenId,
 );
+
+export const ROLES_KEY = 'roles';
+
+export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);

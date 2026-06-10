@@ -4,8 +4,11 @@ import { ConfigService } from '@nestjs/config';
 import { Env } from '../../../config/env';
 import { Currency, PaymentStatus } from '../../../generated/prisma/client';
 import {
+  CreateTransferRecipientRequest,
   InitializedPayment,
   InitializePaymentRequest,
+  InitiatedTransfer,
+  InitiateTransferRequest,
   PaymentProvider,
   PaymentWebhookEvent,
   TransferWebhookEvent,
@@ -120,6 +123,36 @@ export class FlutterwaveProvider implements PaymentProvider {
       status,
       failureReason:
         status === 'failed' ? str(data.complete_message ?? '') : null,
+      providerResponse: data,
+    };
+  }
+
+  /** Flutterwave addresses transfers by bank details directly — no recipient objects. */
+  createTransferRecipient(
+    request: CreateTransferRecipientRequest,
+  ): Promise<string | null> {
+    void request;
+
+    return Promise.resolve(null);
+  }
+
+  async transfer(request: InitiateTransferRequest): Promise<InitiatedTransfer> {
+    const data = await this.request('/transfers', {
+      method: 'POST',
+      body: JSON.stringify({
+        account_bank: request.bankCode,
+        account_number: request.accountNumber,
+        amount: request.amountMinor / MINOR_UNIT_MULTIPLIER,
+        currency: request.currency,
+        reference: request.reference,
+        narration: request.reason,
+      }),
+    });
+
+    return {
+      providerReference:
+        data.id !== undefined ? str(data.id) : request.reference,
+      status: 'processing',
       providerResponse: data,
     };
   }

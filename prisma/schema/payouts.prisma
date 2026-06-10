@@ -1,0 +1,68 @@
+enum PayoutStatus {
+  requested
+  approved
+  processing
+  paid
+  rejected
+  failed
+}
+
+model PayoutAccount {
+  id                    String    @id @db.Char(26)
+  organisationId        String    @unique @map("organisation_id") @db.Char(26)
+  bankCode              String    @map("bank_code") @db.VarChar(16)
+  bankName              String    @map("bank_name")
+  accountNumber         String    @map("account_number") @db.VarChar(32)
+  accountName           String    @map("account_name")
+  currency              Currency  @default(NGN)
+  provider              String    @default("paystack") @db.VarChar(32)
+  providerRecipientCode String?   @map("provider_recipient_code")
+  verifiedAt            DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  payouts      Payout[]
+
+  @@map("payout_accounts")
+}
+
+model Payout {
+  id                String       @id @db.Char(26)
+  organisationId    String       @map("organisation_id") @db.Char(26)
+  payoutAccountId   String?      @map("payout_account_id") @db.Char(26)
+  requestedByUserId String       @map("requested_by_user_id") @db.Char(26)
+  reviewedByUserId  String?      @map("reviewed_by_user_id") @db.Char(26)
+  bankCode          String       @map("bank_code") @db.VarChar(16)
+  bankName          String       @map("bank_name")
+  accountNumber     String       @map("account_number") @db.VarChar(32)
+  accountName       String       @map("account_name")
+  amountMinor       BigInt       @map("amount_minor")
+  feesMinor         BigInt       @default(0) @map("fees_minor")
+  netMinor          BigInt       @map("net_minor")
+  currency          Currency     @default(NGN)
+  status            PayoutStatus @default(requested)
+  provider          String       @default("paystack") @db.VarChar(32)
+  transferMethod    String?      @map("transfer_method") @db.VarChar(16)
+  providerReference String?      @map("provider_reference")
+  providerResponse  Json?        @map("provider_response")
+  failedReason      String?      @map("failed_reason")
+  reviewNotes       String?      @map("review_notes")
+  requestedAt       DateTime     @map("requested_at") @db.Timestamptz(6)
+  approvedAt        DateTime?    @map("approved_at") @db.Timestamptz(6)
+  paidAt            DateTime?    @map("paid_at") @db.Timestamptz(6)
+  failedAt          DateTime?    @map("failed_at") @db.Timestamptz(6)
+  rejectedAt        DateTime?    @map("rejected_at") @db.Timestamptz(6)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organisation Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  account      PayoutAccount? @relation(fields: [payoutAccountId], references: [id], onDelete: SetNull)
+  requestedBy  User           @relation("PayoutsRequested", fields: [requestedByUserId], references: [id])
+  reviewedBy   User?          @relation("PayoutsReviewed", fields: [reviewedByUserId], references: [id])
+
+  @@index([organisationId, status])
+  @@index([status])
+  @@index([providerReference])
+  @@map("payouts")
+}

@@ -29,6 +29,8 @@ model Organisation {
   socials  OrganisationSocial[]
   events        Event[]
   subscriptions Subscription[]
+  payoutAccount PayoutAccount?
+  payouts       Payout[]
 
   @@index([suspendedAt])
   @@map("organisations")

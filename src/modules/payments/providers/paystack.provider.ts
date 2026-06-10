@@ -4,8 +4,11 @@ import { ConfigService } from '@nestjs/config';
 import { Env } from '../../../config/env';
 import { Currency, PaymentStatus } from '../../../generated/prisma/client';
 import {
+  CreateTransferRecipientRequest,
   InitializedPayment,
   InitializePaymentRequest,
+  InitiatedTransfer,
+  InitiateTransferRequest,
   PaymentProvider,
   PaymentWebhookEvent,
   TransferWebhookEvent,
@@ -133,6 +136,49 @@ export class PaystackProvider implements PaymentProvider {
         status === 'failed'
           ? str(data.reason ?? data.failure_reason ?? '')
           : null,
+      providerResponse: data,
+    };
+  }
+
+  async createTransferRecipient(
+    request: CreateTransferRecipientRequest,
+  ): Promise<string | null> {
+    const data = await this.post('/transferrecipient', {
+      type: 'nuban',
+      name: request.name,
+      account_number: request.accountNumber,
+      bank_code: request.bankCode,
+      currency: request.currency,
+    });
+
+    const code = str(data.recipient_code);
+
+    return code !== '' ? code : null;
+  }
+
+  async transfer(request: InitiateTransferRequest): Promise<InitiatedTransfer> {
+    if (request.recipientCode === null) {
+      throw new PaymentProviderException(
+        'paystack',
+        'transfer: recipient_code is required',
+      );
+    }
+
+    const data = await this.post('/transfer', {
+      source: 'balance',
+      amount: request.amountMinor,
+      currency: request.currency,
+      recipient: request.recipientCode,
+      reference: request.reference,
+      reason: request.reason,
+    });
+
+    return {
+      providerReference: str(
+        data.transfer_code,
+        str(data.reference, request.reference),
+      ),
+      status: 'processing',
       providerResponse: data,
     };
   }

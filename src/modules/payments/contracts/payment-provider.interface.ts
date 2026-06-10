@@ -33,6 +33,30 @@ export interface PaymentWebhookEvent {
   providerResponse: Record<string, unknown>;
 }
 
+export interface CreateTransferRecipientRequest {
+  name: string;
+  accountNumber: string;
+  bankCode: string;
+  currency: Currency;
+}
+
+export interface InitiateTransferRequest {
+  amountMinor: number;
+  currency: Currency;
+  reference: string;
+  reason: string;
+  recipientCode: string | null;
+  bankCode: string;
+  accountNumber: string;
+  accountName: string;
+}
+
+export interface InitiatedTransfer {
+  providerReference: string;
+  status: 'processing';
+  providerResponse: Record<string, unknown>;
+}
+
 export interface TransferWebhookEvent {
   reference: string;
   providerReference: string | null;
@@ -53,4 +77,8 @@ export interface PaymentProvider {
   parseTransferWebhookEvent(
     payload: Record<string, unknown>,
   ): TransferWebhookEvent | null;
+  createTransferRecipient(
+    request: CreateTransferRecipientRequest,
+  ): Promise<string | null>;
+  transfer(request: InitiateTransferRequest): Promise<InitiatedTransfer>;
 }

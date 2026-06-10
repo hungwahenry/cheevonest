@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { FastifyRequest } from 'fastify';
 import { Public } from '../../auth/decorators/auth.decorators';
 import { SkipEnvelope } from '../../../common/decorators/api-response.decorators';
@@ -15,6 +16,10 @@ import { PaymentProviderRegistry } from '../services/payment-provider-registry.s
 import { PaymentsService } from '../services/payments.service';
 import { WebhookIdempotencyService } from '../services/webhook-idempotency.service';
 import { str } from '../support/json';
+import {
+  TRANSFER_SETTLED,
+  TransferSettledEvent,
+} from '../events/transfer-settled.event';
 
 @Public()
 @SkipEnvelope()
@@ -26,6 +31,7 @@ export class WebhooksController {
     private readonly registry: PaymentProviderRegistry,
     private readonly payments: PaymentsService,
     private readonly idempotency: WebhookIdempotencyService,
+    private readonly emitter: EventEmitter2,
   ) {}
 
   @Post('paystack')
@@ -45,14 +51,7 @@ export class WebhooksController {
       return '';
     }
 
-    const provider = this.registry.get('paystack');
-    const charge = provider.parseWebhookEvent(payload);
-
-    if (charge) {
-      await this.payments.finalize(charge);
-    } else if (provider.parseTransferWebhookEvent(payload)) {
-      this.logger.log('paystack transfer webhook ignored until payouts land');
-    }
+    await this.dispatch('paystack', payload);
 
     return '';
   }
@@ -74,18 +73,32 @@ export class WebhooksController {
       return '';
     }
 
-    const provider = this.registry.get('flutterwave');
+    await this.dispatch('flutterwave', payload);
+
+    return '';
+  }
+
+  private async dispatch(
+    providerName: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
+    const provider = this.registry.get(providerName);
     const charge = provider.parseWebhookEvent(payload);
 
     if (charge) {
       await this.payments.finalize(charge);
-    } else if (provider.parseTransferWebhookEvent(payload)) {
-      this.logger.log(
-        'flutterwave transfer webhook ignored until payouts land',
-      );
+
+      return;
     }
 
-    return '';
+    const transfer = provider.parseTransferWebhookEvent(payload);
+
+    if (transfer) {
+      await this.emitter.emitAsync(
+        TRANSFER_SETTLED,
+        new TransferSettledEvent(transfer),
+      );
+    }
   }
 
   /** Verifies the signature and the replay guard; null means "acknowledged, nothing to do". */

@@ -38,6 +38,8 @@ model User {
   heldTickets      IssuedTicket[]       @relation("HeldTickets")
   scannedTickets   IssuedTicket[]       @relation("ScannedTickets")
   payments         Payment[]
+  payoutsRequested Payout[]             @relation("PayoutsRequested")
+  payoutsReviewed  Payout[]             @relation("PayoutsReviewed")
 
   @@index([suspendedAt])
   @@map("users")
