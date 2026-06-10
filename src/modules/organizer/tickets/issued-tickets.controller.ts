@@ -58,7 +58,7 @@ class ScanTicketDto {
   code!: string;
 }
 
-@Controller('organizer/events/:eventId/tickets')
+@Controller('organizer/events/:eventId/issued-tickets')
 export class OrganizerIssuedTicketsController {
   constructor(
     private readonly events: EventsService,

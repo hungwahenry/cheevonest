@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -117,7 +118,7 @@ export class AttendeeOrdersController {
     );
   }
 
-  @Post('orders/:orderId/cancel')
+  @Delete('orders/:orderId')
   @HttpCode(200)
   async cancel(
     @Param('orderId') orderId: string,

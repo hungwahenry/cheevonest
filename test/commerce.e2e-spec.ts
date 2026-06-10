@@ -277,8 +277,8 @@ describe('Commerce (e2e)', () => {
     expect(second.body).toMatchObject({ code: 'ticket_sold_out' });
 
     await request(server())
-      .post(
-        `/api/v1/attendee/orders/${(sold.body as { data: { order: { id: string } } }).data.order.id}/cancel`,
+      .delete(
+        `/api/v1/attendee/orders/${(sold.body as { data: { order: { id: string } } }).data.order.id}`,
       )
       .set('Authorization', auth(buyerToken))
       .expect(200);
@@ -288,8 +288,8 @@ describe('Commerce (e2e)', () => {
     ]).expect(200);
 
     await request(server())
-      .post(
-        `/api/v1/attendee/orders/${(after.body as { data: { order: { id: string } } }).data.order.id}/cancel`,
+      .delete(
+        `/api/v1/attendee/orders/${(after.body as { data: { order: { id: string } } }).data.order.id}`,
       )
       .set('Authorization', auth(buyerToken))
       .expect(200);
@@ -389,7 +389,7 @@ describe('Commerce (e2e)', () => {
     expect(order.status).toBe('pending');
 
     await request(server())
-      .post(`/api/v1/attendee/orders/${orderId}/cancel`)
+      .delete(`/api/v1/attendee/orders/${orderId}`)
       .set('Authorization', auth(buyerToken))
       .expect(200);
   });
@@ -459,7 +459,7 @@ describe('Commerce (e2e)', () => {
     });
 
     const scanned = await request(server())
-      .post(`/api/v1/organizer/events/${eventId}/tickets/scan`)
+      .post(`/api/v1/organizer/events/${eventId}/issued-tickets/scan`)
       .set('Authorization', auth(ownerToken))
       .send({ code: ticket.code.toLowerCase() })
       .expect(200);
@@ -474,14 +474,14 @@ describe('Commerce (e2e)', () => {
     ).toContain('buyer');
 
     const rescan = await request(server())
-      .post(`/api/v1/organizer/events/${eventId}/tickets/scan`)
+      .post(`/api/v1/organizer/events/${eventId}/issued-tickets/scan`)
       .set('Authorization', auth(ownerToken))
       .send({ code: ticket.code })
       .expect(409);
     expect(rescan.body).toMatchObject({ code: 'ticket_already_scanned' });
 
     await request(server())
-      .post(`/api/v1/organizer/events/${eventId}/tickets/scan`)
+      .post(`/api/v1/organizer/events/${eventId}/issued-tickets/scan`)
       .set('Authorization', auth(ownerToken))
       .send({ code: 'NOPE123' })
       .expect(404);
@@ -491,7 +491,9 @@ describe('Commerce (e2e)', () => {
     });
 
     await request(server())
-      .post(`/api/v1/organizer/events/${eventId}/tickets/${ticket.id}/revoke`)
+      .post(
+        `/api/v1/organizer/events/${eventId}/issued-tickets/${ticket.id}/revoke`,
+      )
       .set('Authorization', auth(ownerToken))
       .expect(200);
 
@@ -501,7 +503,7 @@ describe('Commerce (e2e)', () => {
     expect(before.ticketsSold - after.ticketsSold).toBe(1);
 
     const revokedScan = await request(server())
-      .post(`/api/v1/organizer/events/${eventId}/tickets/scan`)
+      .post(`/api/v1/organizer/events/${eventId}/issued-tickets/scan`)
       .set('Authorization', auth(ownerToken))
       .send({ code: ticket.code })
       .expect(410);
@@ -533,7 +535,7 @@ describe('Commerce (e2e)', () => {
 
   it('lists issued tickets for organizers with search', async () => {
     const response = await request(server())
-      .get(`/api/v1/organizer/events/${eventId}/tickets?q=buyer`)
+      .get(`/api/v1/organizer/events/${eventId}/issued-tickets?q=buyer`)
       .set('Authorization', auth(ownerToken))
       .expect(200);
 
