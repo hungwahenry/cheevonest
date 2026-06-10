@@ -5,6 +5,7 @@ const envSchema = z.object({
     .enum(['development', 'test', 'production'])
     .default('development'),
   APP_NAME: z.string().default('cheevo'),
+  APP_KEY: z.string().min(16).default('dev-app-key-not-for-production'),
   APP_URL: z.string().default('http://127.0.0.1:3000'),
   WEB_URL: z.string().default('https://cheevo.events'),
   PORT: z.coerce.number().int().positive().default(3000),

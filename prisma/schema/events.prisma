@@ -1,0 +1,140 @@
+enum EventStatus {
+  draft
+  published
+  past
+}
+
+enum TicketStatus {
+  draft
+  on_sale
+  paused
+}
+
+enum Currency {
+  NGN
+  USD
+  GHS
+  KES
+  ZAR
+}
+
+model Event {
+  id                     String      @id @db.Char(26)
+  organisationId         String      @map("organisation_id") @db.Char(26)
+  title                  String
+  slug                   String      @unique
+  description            String?
+  startsAt               DateTime?   @map("starts_at") @db.Timestamptz(6)
+  endsAt                 DateTime?   @map("ends_at") @db.Timestamptz(6)
+  timezone               String      @default("Africa/Lagos")
+  venueName              String?     @map("venue_name")
+  placeId                String?     @map("place_id")
+  address                String?
+  latitude               Decimal?    @db.Decimal(10, 7)
+  longitude              Decimal?    @db.Decimal(10, 7)
+  city                   String?
+  currency               Currency    @default(NGN)
+  flyerPath              String?     @map("flyer_path")
+  flyerType              String?     @map("flyer_type")
+  videoUrl               String?     @map("video_url")
+  status                 EventStatus @default(draft)
+  publishedAt            DateTime?   @map("published_at") @db.Timestamptz(6)
+  presaleUntil           DateTime?   @map("presale_until") @db.Timestamptz(6)
+  ticketsCount           Int         @default(0) @map("tickets_count")
+  ticketsMinPrice        Int?        @map("tickets_min_price")
+  ticketsMaxPrice        Int?        @map("tickets_max_price")
+  ticketsSold            Int         @default(0) @map("tickets_sold")
+  revenueMinor           BigInt      @default(0) @map("revenue_minor")
+  rsvpsCount             Int         @default(0) @map("rsvps_count")
+  commentsCount          Int         @default(0) @map("comments_count")
+  startingSoonNotifiedAt DateTime?   @map("starting_soon_notified_at") @db.Timestamptz(6)
+  firstSaleNotifiedAt    DateTime?   @map("first_sale_notified_at") @db.Timestamptz(6)
+  digestLastSentAt       DateTime?   @map("digest_last_sent_at") @db.Timestamptz(6)
+  suspendedAt            DateTime?   @map("suspended_at") @db.Timestamptz(6)
+  suspendedReason        String?     @map("suspended_reason")
+  commentsLockedAt       DateTime?   @map("comments_locked_at") @db.Timestamptz(6)
+  createdAt              DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  images       EventImage[]
+  features     EventFeature[]
+  tickets      EventTicket[]
+  interests    EventInterest[]
+
+  @@index([status, endsAt])
+  @@index([latitude, longitude])
+  @@index([suspendedAt])
+  @@index([organisationId])
+  @@map("events")
+}
+
+model EventTicket {
+  id           String       @id @db.Char(26)
+  eventId      String       @map("event_id") @db.Char(26)
+  name         String
+  description  String?
+  grossPrice   Int          @map("gross_price")
+  displayPrice Int?         @map("display_price")
+  quantity     Int?
+  soldCount    Int          @default(0) @map("sold_count")
+  sortOrder    Int          @default(0) @map("sort_order")
+  status       TicketStatus @default(draft)
+  salesStartsAt DateTime?   @map("sales_starts_at") @db.Timestamptz(6)
+  salesEndsAt   DateTime?   @map("sales_ends_at") @db.Timestamptz(6)
+  validFrom     DateTime?   @map("valid_from") @db.Timestamptz(6)
+  validTo       DateTime?   @map("valid_to") @db.Timestamptz(6)
+  maxPerOrder   Int?        @map("max_per_order")
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, sortOrder])
+  @@map("event_tickets")
+}
+
+model EventImage {
+  id        String   @id @db.Char(26)
+  eventId   String   @map("event_id") @db.Char(26)
+  path      String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@map("event_images")
+}
+
+model EventFeature {
+  id          String    @id @db.Char(26)
+  eventId     String    @map("event_id") @db.Char(26)
+  title       String
+  description String?
+  imagePath   String?   @map("image_path")
+  link        String?
+  startsAt    DateTime? @map("starts_at") @db.Timestamptz(6)
+  endsAt      DateTime? @map("ends_at") @db.Timestamptz(6)
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@map("event_features")
+}
+
+model EventInterest {
+  eventId    String @map("event_id") @db.Char(26)
+  interestId Int    @map("interest_id")
+
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, interestId])
+  @@index([interestId, eventId])
+  @@map("event_interest")
+}

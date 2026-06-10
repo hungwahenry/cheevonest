@@ -88,7 +88,7 @@ export class MultipartInterceptor implements NestInterceptor {
     if (key in target) {
       const existing = target[key];
       target[key] = Array.isArray(existing)
-        ? [...existing, value]
+        ? [...(existing as unknown[]), value]
         : [existing, value];
       return;
     }
