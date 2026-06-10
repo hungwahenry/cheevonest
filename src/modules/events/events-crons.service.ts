@@ -3,8 +3,8 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
-export class EventsMaintenanceService {
-  private readonly logger = new Logger(EventsMaintenanceService.name);
+export class EventsCronsService {
+  private readonly logger = new Logger(EventsCronsService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 

@@ -7,7 +7,7 @@ import { TicketAvailabilityRules } from './rules/ticket-availability.rules';
 import { OrderSerializer } from './serializers/order.serializer';
 import { OrderPricingService } from './services/order-pricing.service';
 import { OrderQuotingService } from './services/order-quoting.service';
-import { OrdersMaintenanceService } from './services/orders-maintenance.service';
+import { OrdersCronsService } from './services/orders-crons.service';
 import { OrdersService } from './services/orders.service';
 
 @Module({
@@ -16,7 +16,7 @@ import { OrdersService } from './services/orders.service';
     OrdersService,
     OrderQuotingService,
     OrderPricingService,
-    OrdersMaintenanceService,
+    OrdersCronsService,
     OrderWindowRules,
     TicketAvailabilityRules,
     OrderSerializer,

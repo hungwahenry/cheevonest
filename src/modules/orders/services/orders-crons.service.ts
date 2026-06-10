@@ -3,8 +3,8 @@ import { Cron } from '@nestjs/schedule';
 import { OrdersService } from './orders.service';
 
 @Injectable()
-export class OrdersMaintenanceService {
-  private readonly logger = new Logger(OrdersMaintenanceService.name);
+export class OrdersCronsService {
+  private readonly logger = new Logger(OrdersCronsService.name);
 
   constructor(private readonly orders: OrdersService) {}
 
