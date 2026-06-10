@@ -2,7 +2,7 @@ import { Controller, Get, Req, Res } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SkipEnvelope } from '../../../common/decorators/api-response.decorators';
 import { Public } from '../../auth/decorators/auth.decorators';
-import { SystemConfigRepository } from '../system-config/system-config.repository';
+import { SystemConfigRepository } from './system-config.repository';
 
 @Public()
 @SkipEnvelope()

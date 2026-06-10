@@ -4,8 +4,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SkipEnvelope } from '../../../common/decorators/api-response.decorators';
 import type { User } from '../../../generated/prisma/client';
 import { Public } from '../../auth/decorators/auth.decorators';
-import { FeatureFlagsService } from '../system-config/feature-flags.service';
-import { SystemConfigRepository } from '../system-config/system-config.repository';
+import { FeatureFlagsService } from './feature-flags.service';
+import { SystemConfigRepository } from './system-config.repository';
 
 @Public()
 @SkipEnvelope()

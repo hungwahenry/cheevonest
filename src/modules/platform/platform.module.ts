@@ -1,21 +1,17 @@
 import { Module } from '@nestjs/common';
-import { ConfigController } from './controllers/config.controller';
-import { FlagsController } from './controllers/flags.controller';
-import { HealthController } from './controllers/health.controller';
-import { PagesController } from './controllers/pages.controller';
-import { WelcomeController } from './controllers/welcome.controller';
-import { WellKnownController } from './controllers/well-known.controller';
+import { AppLinksModule } from './app-links/app-links.module';
+import { HealthModule } from './health/health.module';
+import { PagesModule } from './pages/pages.module';
 import { SystemConfigModule } from './system-config/system-config.module';
+import { WelcomeModule } from './welcome/welcome.module';
 
 @Module({
-  imports: [SystemConfigModule],
-  controllers: [
-    HealthController,
-    ConfigController,
-    FlagsController,
-    PagesController,
-    WelcomeController,
-    WellKnownController,
+  imports: [
+    SystemConfigModule,
+    HealthModule,
+    PagesModule,
+    WelcomeModule,
+    AppLinksModule,
   ],
 })
 export class PlatformModule {}
