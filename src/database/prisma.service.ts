@@ -9,6 +9,7 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
   constructor(config: ConfigService<Env, true>) {
     super({
       adapter: new PrismaPg({
+        options: '-c TimeZone=UTC',
         connectionString: config.get('DATABASE_URL', { infer: true }),
       }),
     });

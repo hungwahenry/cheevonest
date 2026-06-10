@@ -11,7 +11,7 @@ import {
 
 async function main(): Promise<void> {
   const prisma = new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+    adapter: new PrismaPg({ options: '-c TimeZone=UTC', connectionString: process.env.DATABASE_URL }),
   });
 
   await seedInterests(prisma);
