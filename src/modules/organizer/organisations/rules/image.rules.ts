@@ -1,9 +1,9 @@
-import { ValidationFailedException } from '../../../common/exceptions/api.exception';
-import { UploadedFile } from '../../../common/http/uploaded-file';
+import { ValidationFailedException } from '../../../../common/exceptions/api.exception';
+import { UploadedFile } from '../../../../common/http/uploaded-file';
 
 const ALLOWED_MIMETYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-export function assertValidImage(
+export function ensureValidImage(
   file: UploadedFile,
   field: string,
   maxKb: number,

@@ -1,10 +1,10 @@
-import { ValidationFailedException } from '../../common/exceptions/api.exception';
-import { UploadedFile } from '../../common/http/uploaded-file';
+import { ValidationFailedException } from '../../../common/exceptions/api.exception';
+import { UploadedFile } from '../../../common/http/uploaded-file';
 
 const ALLOWED_MIMETYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE_KB = 4096;
 
-export function assertValidAvatar(file: UploadedFile): void {
+export function ensureValidAvatar(file: UploadedFile): void {
   if (!ALLOWED_MIMETYPES.includes(file.mimetype)) {
     throw new ValidationFailedException({
       avatar: ['The avatar must be a file of type: jpeg, jpg, png, webp.'],

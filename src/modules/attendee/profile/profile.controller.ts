@@ -4,6 +4,7 @@ import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { UserSerializer } from '../../users/serializers/user.serializer';
 import { InterestsService } from '../interests/interests.service';
+import { InterestRules } from '../interests/rules/interest.rules';
 import { UpdateInterestsDto } from './dto/update-interests.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileService } from './profile.service';
@@ -13,6 +14,7 @@ export class ProfileController {
   constructor(
     private readonly profiles: ProfileService,
     private readonly interests: InterestsService,
+    private readonly interestRules: InterestRules,
     private readonly serializer: UserSerializer,
   ) {}
 
@@ -34,7 +36,7 @@ export class ProfileController {
     @Body() dto: UpdateInterestsDto,
     @CurrentUser() user: User,
   ): Promise<ApiResult<unknown>> {
-    await this.interests.assertActive(dto.interests);
+    await this.interestRules.ensureActive(dto.interests);
     await this.interests.syncFor(user.id, dto.interests);
 
     const interests = await this.interests.listFor(user.id);

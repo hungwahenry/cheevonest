@@ -1,7 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { ValidationFailedException } from '../../../common/exceptions/api.exception';
 import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import type { User } from '../../../generated/prisma/client';
@@ -54,29 +53,6 @@ export class UsersService {
       where: { id: userId },
       include: USER_RESOURCE_INCLUDE,
     });
-  }
-
-  async isUsernameAvailable(
-    username: string,
-    ownUserId: string,
-  ): Promise<boolean> {
-    const taken = await this.prisma.profile.findFirst({
-      where: { username, NOT: { userId: ownUserId } },
-      select: { id: true },
-    });
-
-    return taken === null;
-  }
-
-  async assertUsernameAvailable(
-    username: string,
-    ownUserId: string,
-  ): Promise<void> {
-    if (!(await this.isUsernameAvailable(username, ownUserId))) {
-      throw new ValidationFailedException({
-        username: ['The username has already been taken.'],
-      });
-    }
   }
 
   private async uniqueReferralCode(): Promise<string> {

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../database/prisma.service';
-import { Prisma } from '../../../generated/prisma/client';
-import type { User } from '../../../generated/prisma/client';
-import { OrganisationsService } from '../../organisations/organisations.service';
-import { CannotRemoveOwnerException } from './exceptions/cannot-remove-owner.exception';
-import { OrganisationMemberAlreadyExistsException } from './exceptions/organisation-member-already-exists.exception';
-import { OrganisationMemberNotFoundException } from './exceptions/organisation-member-not-found.exception';
+import { PrismaService } from '../../../../database/prisma.service';
+import { Prisma } from '../../../../generated/prisma/client';
+import type { User } from '../../../../generated/prisma/client';
+import { OrganisationsService } from '../../../organisations/organisations.service';
+import { CannotRemoveOwnerException } from '../exceptions/cannot-remove-owner.exception';
+import { OrganisationMemberAlreadyExistsException } from '../exceptions/organisation-member-already-exists.exception';
+import { OrganisationMemberNotFoundException } from '../exceptions/organisation-member-not-found.exception';
 
 export const MEMBER_RESOURCE_INCLUDE = {
   user: { include: { profile: true } },

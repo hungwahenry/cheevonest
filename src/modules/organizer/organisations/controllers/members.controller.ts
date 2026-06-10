@@ -8,15 +8,15 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { ApiResult } from '../../../common/responses/api-result';
-import { PrismaService } from '../../../database/prisma.service';
-import type { User } from '../../../generated/prisma/client';
-import { CurrentUser } from '../../auth/decorators/auth.decorators';
-import { OrganisationsPolicy } from '../../organisations/organisations.policy';
-import { OrganisationsService } from '../../organisations/organisations.service';
-import { AddMemberDto } from './dto/add-member.dto';
-import { MemberSerializer } from './member.serializer';
-import { MembersService } from './members.service';
+import { ApiResult } from '../../../../common/responses/api-result';
+import { PrismaService } from '../../../../database/prisma.service';
+import type { User } from '../../../../generated/prisma/client';
+import { CurrentUser } from '../../../auth/decorators/auth.decorators';
+import { OrganisationsPolicy } from '../../../organisations/organisations.policy';
+import { OrganisationsService } from '../../../organisations/organisations.service';
+import { AddMemberDto } from '../dto/add-member.dto';
+import { MemberSerializer } from '../serializers/member.serializer';
+import { MembersService } from '../services/members.service';
 
 @Controller('organizer/organisations/:organisationId/members')
 export class MembersController {

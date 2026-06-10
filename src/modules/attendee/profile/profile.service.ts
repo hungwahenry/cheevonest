@@ -3,11 +3,12 @@ import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import type { User } from '../../../generated/prisma/client';
 import { StorageService } from '../../../integrations/storage/storage.service';
+import { UsernameRules } from '../../users/rules/username.rules';
 import {
   UserForResource,
   UsersService,
 } from '../../users/services/users.service';
-import { assertValidAvatar } from '../avatar-rules';
+import { ensureValidAvatar } from '../rules/avatar.rules';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class ProfileService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly users: UsersService,
+    private readonly usernameRules: UsernameRules,
   ) {}
 
   async update(user: User, dto: UpdateProfileDto): Promise<UserForResource> {
@@ -34,12 +36,12 @@ export class ProfileService {
     if (dto.city !== undefined) data.city = dto.city;
 
     if (dto.username !== undefined) {
-      await this.users.assertUsernameAvailable(dto.username, user.id);
+      await this.usernameRules.ensureAvailable(dto.username, user.id);
       data.username = dto.username;
     }
 
     if (dto.avatar) {
-      assertValidAvatar(dto.avatar);
+      ensureValidAvatar(dto.avatar);
 
       if (profile.avatarPath !== null) {
         await this.storage.delete(profile.avatarPath);

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { UserSerializer } from '../../users/serializers/user.serializer';
-import { MemberForResource } from './members.service';
+import { UserSerializer } from '../../../users/serializers/user.serializer';
+import { MemberForResource } from '../services/members.service';
 
 @Injectable()
 export class MemberSerializer {

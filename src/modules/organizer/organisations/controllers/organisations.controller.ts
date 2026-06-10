@@ -8,19 +8,19 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { ApiResult } from '../../../common/responses/api-result';
-import { PrismaService } from '../../../database/prisma.service';
-import type { User } from '../../../generated/prisma/client';
-import { CurrentUser } from '../../auth/decorators/auth.decorators';
-import { OrganisationSerializer } from '../../organisations/organisation.serializer';
-import { OrganisationsPolicy } from '../../organisations/organisations.policy';
+import { ApiResult } from '../../../../common/responses/api-result';
+import { PrismaService } from '../../../../database/prisma.service';
+import type { User } from '../../../../generated/prisma/client';
+import { CurrentUser } from '../../../auth/decorators/auth.decorators';
+import { OrganisationSerializer } from '../../../organisations/organisation.serializer';
+import { OrganisationsPolicy } from '../../../organisations/organisations.policy';
 import {
   ORGANISATION_RESOURCE_INCLUDE,
   OrganisationsService,
-} from '../../organisations/organisations.service';
-import { CreateOrganisationDto } from './dto/create-organisation.dto';
-import { UpdateOrganisationDto } from './dto/update-organisation.dto';
-import { OrganisationManagerService } from './organisation-manager.service';
+} from '../../../organisations/organisations.service';
+import { CreateOrganisationDto } from '../dto/create-organisation.dto';
+import { UpdateOrganisationDto } from '../dto/update-organisation.dto';
+import { OrganisationManagerService } from '../services/organisation-manager.service';
 
 @Controller('organizer/organisations')
 export class OrganisationsController {

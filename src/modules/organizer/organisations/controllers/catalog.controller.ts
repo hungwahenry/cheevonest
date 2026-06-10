@@ -1,15 +1,15 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { PrismaService } from '../../../database/prisma.service';
-import { OrganisationSerializer } from '../../organisations/organisation.serializer';
-import { OrganisationManagerService } from './organisation-manager.service';
-import { CheckSlugDto } from './dto/check-slug.dto';
+import { PrismaService } from '../../../../database/prisma.service';
+import { OrganisationSerializer } from '../../../organisations/organisation.serializer';
+import { OrganisationRules } from '../rules/organisation.rules';
+import { CheckSlugDto } from '../dto/check-slug.dto';
 
 @Controller('organizer')
 export class CatalogController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serializer: OrganisationSerializer,
-    private readonly manager: OrganisationManagerService,
+    private readonly rules: OrganisationRules,
   ) {}
 
   @Get('organisation-categories')
@@ -40,7 +40,7 @@ export class CatalogController {
   ): Promise<{ slug: string; available: boolean }> {
     return {
       slug: dto.slug,
-      available: await this.manager.isSlugAvailable(dto.slug),
+      available: await this.rules.isSlugAvailable(dto.slug),
     };
   }
 }

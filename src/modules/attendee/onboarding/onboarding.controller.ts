@@ -2,8 +2,8 @@ import { Body, Controller, Get, HttpCode, Post, Query } from '@nestjs/common';
 import { ApiResult } from '../../../common/responses/api-result';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
+import { UsernameRules } from '../../users/rules/username.rules';
 import { UserSerializer } from '../../users/serializers/user.serializer';
-import { UsersService } from '../../users/services/users.service';
 import { CheckUsernameDto } from './dto/check-username.dto';
 import { CompleteProfileDto } from './dto/complete-profile.dto';
 import { OnboardingService } from './onboarding.service';
@@ -12,7 +12,7 @@ import { OnboardingService } from './onboarding.service';
 export class OnboardingController {
   constructor(
     private readonly onboarding: OnboardingService,
-    private readonly users: UsersService,
+    private readonly usernameRules: UsernameRules,
     private readonly serializer: UserSerializer,
   ) {}
 
@@ -23,7 +23,7 @@ export class OnboardingController {
   ): Promise<{ username: string; available: boolean }> {
     return {
       username: dto.username,
-      available: await this.users.isUsernameAvailable(dto.username, user.id),
+      available: await this.usernameRules.isAvailable(dto.username, user.id),
     };
   }
 

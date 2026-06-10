@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { ValidationFailedException } from '../../../common/exceptions/api.exception';
-import { UploadedFile } from '../../../common/http/uploaded-file';
-import { PrismaService } from '../../../database/prisma.service';
-import { Prisma } from '../../../generated/prisma/client';
-import type { Organisation, User } from '../../../generated/prisma/client';
-import { StorageService } from '../../../integrations/storage/storage.service';
+import { UploadedFile } from '../../../../common/http/uploaded-file';
+import { PrismaService } from '../../../../database/prisma.service';
+import { Prisma } from '../../../../generated/prisma/client';
+import type { Organisation, User } from '../../../../generated/prisma/client';
+import { StorageService } from '../../../../integrations/storage/storage.service';
 import {
   OrganisationForResource,
   OrganisationsService,
-} from '../../organisations/organisations.service';
+} from '../../../organisations/organisations.service';
 import {
   CreateOrganisationDto,
   SocialEntryDto,
-} from './dto/create-organisation.dto';
-import { UpdateOrganisationDto } from './dto/update-organisation.dto';
-import { assertValidImage } from './image-rules';
+} from '../dto/create-organisation.dto';
+import { UpdateOrganisationDto } from '../dto/update-organisation.dto';
+import { ensureValidImage } from '../rules/image.rules';
+import { OrganisationRules } from '../rules/organisation.rules';
 
 const LOGO_MAX_KB = 4096;
 const COVER_MAX_KB = 8192;
@@ -26,6 +26,7 @@ export class OrganisationManagerService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly organisations: OrganisationsService,
+    private readonly rules: OrganisationRules,
   ) {}
 
   /** One atomic submission: details, logo/cover, socials. The creator becomes Owner. */
@@ -33,9 +34,9 @@ export class OrganisationManagerService {
     user: User,
     dto: CreateOrganisationDto,
   ): Promise<OrganisationForResource> {
-    await this.assertSlugAvailable(dto.slug);
-    await this.assertCategoryActive(dto.category_id);
-    await this.assertSocialsValid(dto.socials ?? []);
+    await this.rules.ensureSlugAvailable(dto.slug);
+    await this.rules.ensureCategoryActive(dto.category_id);
+    await this.rules.ensureSocialPlatformsActive(dto.socials ?? []);
 
     const logoPath = await this.storeImage(
       dto.logo,
@@ -84,17 +85,36 @@ export class OrganisationManagerService {
     dto: UpdateOrganisationDto,
   ): Promise<OrganisationForResource> {
     if (dto.slug !== undefined && dto.slug !== organisation.slug) {
-      await this.assertSlugAvailable(dto.slug);
+      await this.rules.ensureSlugAvailable(dto.slug);
     }
 
     if (dto.category_id !== undefined) {
-      await this.assertCategoryActive(dto.category_id);
+      await this.rules.ensureCategoryActive(dto.category_id);
     }
 
     if (dto.socials != null) {
-      await this.assertSocialsValid(dto.socials);
+      await this.rules.ensureSocialPlatformsActive(dto.socials);
     }
 
+    const data = await this.buildUpdateData(organisation, dto);
+
+    await this.prisma.$transaction(async (tx) => {
+      if (Object.keys(data).length > 0) {
+        await tx.organisation.update({ where: { id: organisation.id }, data });
+      }
+
+      if (dto.socials !== undefined) {
+        await this.syncSocials(tx, organisation.id, dto.socials ?? []);
+      }
+    });
+
+    return this.organisations.loadForResource(organisation.id);
+  }
+
+  private async buildUpdateData(
+    organisation: Organisation,
+    dto: UpdateOrganisationDto,
+  ): Promise<Prisma.OrganisationUncheckedUpdateInput> {
     const data: Prisma.OrganisationUncheckedUpdateInput = {};
 
     if (dto.name !== undefined) data.name = dto.name;
@@ -130,64 +150,7 @@ export class OrganisationManagerService {
       );
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      if (Object.keys(data).length > 0) {
-        await tx.organisation.update({ where: { id: organisation.id }, data });
-      }
-
-      if (dto.socials !== undefined) {
-        await this.syncSocials(tx, organisation.id, dto.socials ?? []);
-      }
-    });
-
-    return this.organisations.loadForResource(organisation.id);
-  }
-
-  async isSlugAvailable(slug: string): Promise<boolean> {
-    const existing = await this.prisma.organisation.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
-
-    return existing === null;
-  }
-
-  private async assertSlugAvailable(slug: string): Promise<void> {
-    if (!(await this.isSlugAvailable(slug))) {
-      throw new ValidationFailedException({
-        slug: ['The slug has already been taken.'],
-      });
-    }
-  }
-
-  private async assertCategoryActive(categoryId: number): Promise<void> {
-    const category = await this.prisma.organisationCategory.findFirst({
-      where: { id: categoryId, isActive: true },
-      select: { id: true },
-    });
-
-    if (!category) {
-      throw new ValidationFailedException({
-        category_id: ['The selected category id is invalid.'],
-      });
-    }
-  }
-
-  private async assertSocialsValid(socials: SocialEntryDto[]): Promise<void> {
-    if (socials.length === 0) {
-      return;
-    }
-
-    const ids = [...new Set(socials.map((social) => social.platform_id))];
-    const found = await this.prisma.socialPlatform.count({
-      where: { id: { in: ids }, isActive: true },
-    });
-
-    if (found !== ids.length) {
-      throw new ValidationFailedException({
-        socials: ['The selected socials are invalid.'],
-      });
-    }
+    return data;
   }
 
   private async syncSocials(
@@ -222,7 +185,7 @@ export class OrganisationManagerService {
       return null;
     }
 
-    assertValidImage(file, field, maxKb);
+    ensureValidImage(file, field, maxKb);
 
     return this.storage.put(file, dir);
   }

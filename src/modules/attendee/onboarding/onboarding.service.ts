@@ -3,12 +3,14 @@ import { ValidationFailedException } from '../../../common/exceptions/api.except
 import { PrismaService } from '../../../database/prisma.service';
 import type { Profile, User } from '../../../generated/prisma/client';
 import { StorageService } from '../../../integrations/storage/storage.service';
+import { UsernameRules } from '../../users/rules/username.rules';
 import {
   UserForResource,
   UsersService,
 } from '../../users/services/users.service';
-import { assertValidAvatar } from '../avatar-rules';
+import { InterestRules } from '../interests/rules/interest.rules';
 import { InterestsService } from '../interests/interests.service';
+import { ensureValidAvatar } from '../rules/avatar.rules';
 import { CompleteProfileDto } from './dto/complete-profile.dto';
 
 @Injectable()
@@ -17,21 +19,23 @@ export class OnboardingService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly users: UsersService,
+    private readonly usernameRules: UsernameRules,
     private readonly interests: InterestsService,
+    private readonly interestRules: InterestRules,
   ) {}
 
   async complete(
     user: User,
     dto: CompleteProfileDto,
   ): Promise<UserForResource> {
-    this.assertDateOfBirthInPast(dto.date_of_birth);
+    this.ensureDateOfBirthInPast(dto.date_of_birth);
 
     const profile = await this.prisma.profile.findUniqueOrThrow({
       where: { userId: user.id },
     });
 
-    await this.users.assertUsernameAvailable(dto.username, user.id);
-    await this.interests.assertActive(dto.interests);
+    await this.usernameRules.ensureAvailable(dto.username, user.id);
+    await this.interestRules.ensureActive(dto.interests);
 
     const referredByUserId = await this.resolveReferral(
       user,
@@ -66,7 +70,7 @@ export class OnboardingService {
     return this.users.findForResource(user.id);
   }
 
-  private assertDateOfBirthInPast(dateOfBirth: string): void {
+  private ensureDateOfBirthInPast(dateOfBirth: string): void {
     const today = new Date().toISOString().slice(0, 10);
 
     if (dateOfBirth >= today) {
@@ -107,7 +111,7 @@ export class OnboardingService {
       return null;
     }
 
-    assertValidAvatar(avatar);
+    ensureValidAvatar(avatar);
 
     if (profile.avatarPath !== null) {
       await this.storage.delete(profile.avatarPath);
