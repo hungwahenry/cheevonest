@@ -26,7 +26,13 @@ export function createFastifyAdapter(): FastifyAdapter {
 }
 
 export async function configureApp(app: NestFastifyApplication): Promise<void> {
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: [
+      '.well-known/apple-app-site-association',
+      'apple-app-site-association',
+      '.well-known/assetlinks.json',
+    ],
+  });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
   app.enableShutdownHooks();
 

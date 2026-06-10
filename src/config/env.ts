@@ -46,6 +46,17 @@ const envSchema = z.object({
   DICEBEAR_URL: z.string().default('https://api.dicebear.com/9.x'),
   DICEBEAR_STYLE: z.string().default('thumbs'),
   DICEBEAR_FORMAT: z.string().default('png'),
+
+  SYSTEM_CONFIG_CACHE_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(60),
+
+  APPLE_TEAM_ID: z.string().optional(),
+  IOS_BUNDLE_ID: z.string().default('events.cheevo.app'),
+  ANDROID_PACKAGE_NAME: z.string().default('events.cheevo.app'),
+  ANDROID_SHA256_FINGERPRINTS: z.string().default(''),
 });
 
 const refinedEnvSchema = envSchema.superRefine((env, ctx) => {

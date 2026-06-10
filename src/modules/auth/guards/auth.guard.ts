@@ -28,15 +28,19 @@ export class AuthGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (isPublic) {
-      return true;
-    }
-
     const request = context.switchToHttp().getRequest<FastifyRequest>();
     const header = request.headers.authorization;
     const plainToken = header?.startsWith('Bearer ')
       ? header.slice('Bearer '.length)
       : undefined;
+
+    if (isPublic) {
+      if (plainToken) {
+        await this.attachUserIfValid(request, plainToken);
+      }
+
+      return true;
+    }
 
     if (!plainToken) {
       throw new UnauthorizedException();
@@ -67,5 +71,27 @@ export class AuthGuard implements CanActivate {
     authenticated.accessTokenId = token.id;
 
     return true;
+  }
+
+  /** Public routes still resolve the user when a valid token is sent. */
+  private async attachUserIfValid(
+    request: FastifyRequest,
+    plainToken: string,
+  ): Promise<void> {
+    const token = await this.tokens.resolve(plainToken);
+
+    if (!token) {
+      return;
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: token.userId },
+    });
+
+    if (user) {
+      const authenticated = request as AuthenticatedRequest;
+      authenticated.user = user;
+      authenticated.accessTokenId = token.id;
+    }
   }
 }

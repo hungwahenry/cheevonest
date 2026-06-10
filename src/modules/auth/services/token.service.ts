@@ -5,21 +5,23 @@ import { ulid } from 'ulid';
 import { Env } from '../../../config/env';
 import { PrismaService } from '../../../database/prisma.service';
 import type { AccessToken } from '../../../generated/prisma/client';
+import { SystemConfigService } from '../../platform/system-config/system-config.service';
 
 @Injectable()
 export class TokenService {
-  private readonly ttlMinutes: number;
-
   constructor(
     private readonly prisma: PrismaService,
-    config: ConfigService<Env, true>,
-  ) {
-    this.ttlMinutes = config.get('AUTH_TOKEN_TTL_MINUTES', { infer: true });
-  }
+    private readonly config: ConfigService<Env, true>,
+    private readonly systemConfig: SystemConfigService,
+  ) {}
 
   async issue(userId: string, name = 'auth'): Promise<string> {
     const id = ulid();
     const secret = randomBytes(30).toString('base64url');
+    const ttlMinutes = await this.systemConfig.int(
+      'auth.token_ttl_minutes',
+      this.config.get('AUTH_TOKEN_TTL_MINUTES', { infer: true }),
+    );
 
     await this.prisma.accessToken.create({
       data: {
@@ -27,7 +29,7 @@ export class TokenService {
         userId,
         name,
         tokenHash: this.hash(secret),
-        expiresAt: new Date(Date.now() + this.ttlMinutes * 60_000),
+        expiresAt: new Date(Date.now() + ttlMinutes * 60_000),
       },
     });
 

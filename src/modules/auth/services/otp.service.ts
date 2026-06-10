@@ -6,6 +6,7 @@ import { ulid } from 'ulid';
 import { Env } from '../../../config/env';
 import { PrismaService } from '../../../database/prisma.service';
 import { MailService } from '../../../integrations/mail/mail.service';
+import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import { OtpExpiredException } from '../exceptions/otp-expired.exception';
 import { OtpInvalidException } from '../exceptions/otp-invalid.exception';
 import { OtpMaxAttemptsException } from '../exceptions/otp-max-attempts.exception';
@@ -17,6 +18,7 @@ export class OtpService {
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
     private readonly config: ConfigService<Env, true>,
+    private readonly systemConfig: SystemConfigService,
   ) {}
 
   /** Issues a fresh code and delivers it synchronously; only the latest code is valid. */
@@ -27,8 +29,11 @@ export class OtpService {
     await this.prisma.otpCode.deleteMany({ where: { email: normalized } });
 
     const reviewCode = this.reviewCodeFor(normalized);
-    const code = reviewCode ?? this.generateCode();
-    const ttlMinutes = this.config.get('OTP_TTL_MINUTES', { infer: true });
+    const code = reviewCode ?? (await this.generateCode());
+    const ttlMinutes = await this.systemConfig.int(
+      'auth.otp_ttl_minutes',
+      this.config.get('OTP_TTL_MINUTES', { infer: true }),
+    );
 
     await this.prisma.otpCode.create({
       data: {
@@ -62,7 +67,12 @@ export class OtpService {
       throw new OtpInvalidException();
     }
 
-    if (otp.attempts >= this.config.get('OTP_MAX_ATTEMPTS', { infer: true })) {
+    const maxAttempts = await this.systemConfig.int(
+      'auth.otp_max_attempts',
+      this.config.get('OTP_MAX_ATTEMPTS', { infer: true }),
+    );
+
+    if (otp.attempts >= maxAttempts) {
       throw new OtpMaxAttemptsException();
     }
 
@@ -95,9 +105,10 @@ export class OtpService {
       return;
     }
 
-    const cooldown = this.config.get('OTP_RESEND_COOLDOWN_SECONDS', {
-      infer: true,
-    });
+    const cooldown = await this.systemConfig.int(
+      'auth.otp_resend_cooldown_seconds',
+      this.config.get('OTP_RESEND_COOLDOWN_SECONDS', { infer: true }),
+    );
     const elapsed = Math.floor((Date.now() - last.createdAt.getTime()) / 1000);
 
     if (elapsed < cooldown) {
@@ -105,8 +116,11 @@ export class OtpService {
     }
   }
 
-  private generateCode(): string {
-    const length = this.config.get('OTP_LENGTH', { infer: true });
+  private async generateCode(): Promise<string> {
+    const length = await this.systemConfig.int(
+      'auth.otp_length',
+      this.config.get('OTP_LENGTH', { infer: true }),
+    );
     const max = 10 ** length;
 
     return String(randomInt(0, max)).padStart(length, '0');

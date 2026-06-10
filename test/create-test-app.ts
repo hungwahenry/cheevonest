@@ -7,7 +7,11 @@ import {
   MailMessage,
   MailService,
 } from '../src/integrations/mail/mail.service';
-import { INTERESTS } from '../prisma/seed-data';
+import {
+  seedFeatureFlags,
+  seedInterests as seedInterestRows,
+  seedSystemConfigs,
+} from '../prisma/seeders';
 
 export interface TestContext {
   app: NestFastifyApplication;
@@ -42,18 +46,12 @@ export async function createTestApp(): Promise<TestContext> {
 }
 
 export async function seedInterests(prisma: PrismaService): Promise<void> {
-  for (const [index, interest] of INTERESTS.entries()) {
-    await prisma.interest.upsert({
-      where: { slug: interest.slug },
-      update: {},
-      create: {
-        slug: interest.slug,
-        name: interest.name,
-        sortOrder: index,
-        isActive: true,
-      },
-    });
-  }
+  await seedInterestRows(prisma);
+}
+
+export async function seedPlatform(prisma: PrismaService): Promise<void> {
+  await seedSystemConfigs(prisma);
+  await seedFeatureFlags(prisma);
 }
 
 export function uniqueEmail(prefix: string): string {

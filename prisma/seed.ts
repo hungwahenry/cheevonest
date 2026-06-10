@@ -1,27 +1,18 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { INTERESTS } from './seed-data';
+import { seedFeatureFlags, seedInterests, seedSystemConfigs } from './seeders';
 
 async function main(): Promise<void> {
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
 
-  for (const [index, interest] of INTERESTS.entries()) {
-    await prisma.interest.upsert({
-      where: { slug: interest.slug },
-      update: { name: interest.name, sortOrder: index, isActive: true },
-      create: {
-        slug: interest.slug,
-        name: interest.name,
-        sortOrder: index,
-        isActive: true,
-      },
-    });
-  }
+  await seedInterests(prisma);
+  await seedSystemConfigs(prisma);
+  await seedFeatureFlags(prisma);
 
-  console.log(`Seeded ${INTERESTS.length} interests.`);
+  console.log('Seeded interests, system configs, and feature flags.');
   await prisma.$disconnect();
 }
 

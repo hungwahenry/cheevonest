@@ -1,0 +1,62 @@
+enum SystemConfigType {
+  bool
+  int
+  decimal
+  string
+  json
+}
+
+model SystemConfig {
+  id           String           @id @db.Char(26)
+  key          String           @unique @db.VarChar(100)
+  description  String?
+  group        String           @db.VarChar(40)
+  type         SystemConfigType
+  value        Json
+  defaultValue Json             @map("default_value")
+  isPublic     Boolean          @default(false) @map("is_public")
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([group])
+  @@map("system_configs")
+}
+
+model FeatureFlag {
+  id          String   @id @db.Char(26)
+  key         String   @unique @db.VarChar(80)
+  description String?
+  enabled     Boolean  @default(false)
+  rolloutPct  Int      @default(100) @map("rollout_pct") @db.SmallInt
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("feature_flags")
+}
+
+model Page {
+  id              String    @id @db.Char(26)
+  slug            String    @unique @db.VarChar(80)
+  title           String    @db.VarChar(200)
+  bodyHtml        String    @map("body_html")
+  metaDescription String?   @map("meta_description") @db.VarChar(300)
+  isPublished     Boolean   @default(false) @map("is_published")
+  publishedAt     DateTime? @map("published_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isPublished])
+  @@map("pages")
+}
+
+model WelcomeContent {
+  id             Int      @id @default(autoincrement())
+  backgroundPath String?  @map("background_path")
+  headline       String   @db.VarChar(160)
+  subheadline    String   @db.VarChar(280)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("welcome_contents")
+}

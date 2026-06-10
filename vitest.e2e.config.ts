@@ -18,6 +18,7 @@ export default defineConfig({
       MAIL_DRIVER: 'log',
       STORAGE_DISK: 'local',
       STORAGE_DIR: 'storage/test',
+      SYSTEM_CONFIG_CACHE_TTL_SECONDS: '0',
     },
   },
   plugins: [swc.vite({ module: { type: 'es6' } })],
