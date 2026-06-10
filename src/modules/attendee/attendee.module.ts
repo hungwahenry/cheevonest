@@ -5,6 +5,7 @@ import { AttendeeEventsModule } from './events/attendee-events.module';
 import { FeedModule } from './feed/feed.module';
 import { InterestsModule } from './interests/interests.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
+import { AttendeeOrdersModule } from './orders/attendee-orders.module';
 import { AttendeeOrganisationsModule } from './organisations/attendee-organisations.module';
 import { ProfileModule } from './profile/profile.module';
 
@@ -18,6 +19,7 @@ import { ProfileModule } from './profile/profile.module';
     AttendeeOrganisationsModule,
     BlocksModule,
     AttendeeCommentsModule,
+    AttendeeOrdersModule,
   ],
 })
 export class AttendeeModule {}

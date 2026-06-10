@@ -1,5 +1,7 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule, seconds } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
@@ -18,9 +20,12 @@ import { PlacesModule } from './modules/places/places.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AuthGuard } from './modules/auth/guards/auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
+import { OrdersModule } from './modules/orders/orders.module';
 import { OrganizerModule } from './modules/organizer/organizer.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { PlatformModule } from './modules/platform/platform.module';
 import { SearchModule } from './modules/search/search.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
 
 @Module({
   imports: [
@@ -45,6 +50,8 @@ import { SearchModule } from './modules/search/search.module';
         skipIf: () => config.get('NODE_ENV', { infer: true }) === 'test',
       }),
     }),
+    EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     MailModule,
     StorageModule,
@@ -55,6 +62,9 @@ import { SearchModule } from './modules/search/search.module';
     SearchModule,
     CommentsModule,
     ReportsModule,
+    PaymentsModule,
+    TicketsModule,
+    OrdersModule,
     GiphyModule,
     PlacesModule,
   ],

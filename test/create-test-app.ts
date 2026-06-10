@@ -1,5 +1,5 @@
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
-import { Test } from '@nestjs/testing';
+import { Test, TestingModuleBuilder } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import { configureApp, createFastifyAdapter } from '../src/app.setup';
 import { PrismaService } from '../src/database/prisma.service';
@@ -21,10 +21,16 @@ export interface TestContext {
   mails: MailMessage[];
 }
 
-export async function createTestApp(): Promise<TestContext> {
+export interface TestAppOptions {
+  overrides?: (builder: TestingModuleBuilder) => TestingModuleBuilder;
+}
+
+export async function createTestApp(
+  options: TestAppOptions = {},
+): Promise<TestContext> {
   const mails: MailMessage[] = [];
 
-  const moduleRef = await Test.createTestingModule({
+  let builder = Test.createTestingModule({
     imports: [AppModule],
   })
     .overrideProvider(MailService)
@@ -33,11 +39,17 @@ export async function createTestApp(): Promise<TestContext> {
         mails.push(message);
         return Promise.resolve();
       },
-    })
-    .compile();
+    });
+
+  if (options.overrides) {
+    builder = options.overrides(builder);
+  }
+
+  const moduleRef = await builder.compile();
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(
     createFastifyAdapter(),
+    { rawBody: true },
   );
 
   await configureApp(app);

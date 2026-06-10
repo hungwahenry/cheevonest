@@ -34,6 +34,10 @@ model User {
   commentFlags     EventCommentFlag[]
   reportsFiled     Report[]             @relation("ReportsFiled")
   reportsReviewed  Report[]             @relation("ReportsReviewed")
+  orders           Order[]
+  heldTickets      IssuedTicket[]       @relation("HeldTickets")
+  scannedTickets   IssuedTicket[]       @relation("ScannedTickets")
+  payments         Payment[]
 
   @@index([suspendedAt])
   @@map("users")

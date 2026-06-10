@@ -63,6 +63,8 @@ model Event {
   interests    EventInterest[]
   rsvps        EventRsvp[]
   comments     EventComment[]
+  orders       Order[]
+  issuedTickets IssuedTicket[]
 
   @@index([status, endsAt])
   @@index([latitude, longitude])
@@ -90,7 +92,10 @@ model EventTicket {
   createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  orderItems    OrderItem[]
+  holds         TicketHold[]
+  issuedTickets IssuedTicket[]
 
   @@index([eventId, sortOrder])
   @@map("event_tickets")
