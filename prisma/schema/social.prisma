@@ -1,4 +1,3 @@
-
 model Subscription {
   userId         String   @map("user_id") @db.Char(26)
   organisationId String   @map("organisation_id") @db.Char(26)

@@ -48,23 +48,24 @@ model Event {
   rsvpsCount             Int         @default(0) @map("rsvps_count")
   commentsCount          Int         @default(0) @map("comments_count")
   startingSoonNotifiedAt DateTime?   @map("starting_soon_notified_at") @db.Timestamptz(6)
-  firstSaleNotifiedAt    DateTime?   @map("first_sale_notified_at") @db.Timestamptz(6)
   digestLastSentAt       DateTime?   @map("digest_last_sent_at") @db.Timestamptz(6)
+  firstSaleNotifiedAt    DateTime?   @map("first_sale_notified_at") @db.Timestamptz(6)
   suspendedAt            DateTime?   @map("suspended_at") @db.Timestamptz(6)
   suspendedReason        String?     @map("suspended_reason")
   commentsLockedAt       DateTime?   @map("comments_locked_at") @db.Timestamptz(6)
   createdAt              DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  images       EventImage[]
-  features     EventFeature[]
-  tickets      EventTicket[]
-  interests    EventInterest[]
-  rsvps        EventRsvp[]
-  comments     EventComment[]
-  orders       Order[]
-  issuedTickets IssuedTicket[]
+  organisation      Organisation            @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  images            EventImage[]
+  features          EventFeature[]
+  tickets           EventTicket[]
+  interests         EventInterest[]
+  rsvps             EventRsvp[]
+  comments          EventComment[]
+  orders            Order[]
+  issuedTickets     IssuedTicket[]
+  notificationMutes EventNotificationMute[]
 
   @@index([status, endsAt])
   @@index([latitude, longitude])
@@ -74,23 +75,23 @@ model Event {
 }
 
 model EventTicket {
-  id           String       @id @db.Char(26)
-  eventId      String       @map("event_id") @db.Char(26)
-  name         String
-  description  String?
-  grossPrice   Int          @map("gross_price")
-  displayPrice Int?         @map("display_price")
-  quantity     Int?
-  soldCount    Int          @default(0) @map("sold_count")
-  sortOrder    Int          @default(0) @map("sort_order")
-  status       TicketStatus @default(draft)
-  salesStartsAt DateTime?   @map("sales_starts_at") @db.Timestamptz(6)
-  salesEndsAt   DateTime?   @map("sales_ends_at") @db.Timestamptz(6)
-  validFrom     DateTime?   @map("valid_from") @db.Timestamptz(6)
-  validTo       DateTime?   @map("valid_to") @db.Timestamptz(6)
-  maxPerOrder   Int?        @map("max_per_order")
-  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id            String       @id @db.Char(26)
+  eventId       String       @map("event_id") @db.Char(26)
+  name          String
+  description   String?
+  grossPrice    Int          @map("gross_price")
+  displayPrice  Int?         @map("display_price")
+  quantity      Int?
+  soldCount     Int          @default(0) @map("sold_count")
+  sortOrder     Int          @default(0) @map("sort_order")
+  status        TicketStatus @default(draft)
+  salesStartsAt DateTime?    @map("sales_starts_at") @db.Timestamptz(6)
+  salesEndsAt   DateTime?    @map("sales_ends_at") @db.Timestamptz(6)
+  validFrom     DateTime?    @map("valid_from") @db.Timestamptz(6)
+  validTo       DateTime?    @map("valid_to") @db.Timestamptz(6)
+  maxPerOrder   Int?         @map("max_per_order")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   orderItems    OrderItem[]

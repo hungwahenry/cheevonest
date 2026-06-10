@@ -12,34 +12,41 @@ enum UserGender {
 }
 
 model User {
-  id              String    @id @db.Char(26)
-  email           String    @unique
-  role            UserRole  @default(attendee)
-  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
-  suspendedAt     DateTime? @map("suspended_at") @db.Timestamptz(6)
-  suspendedReason String?   @map("suspended_reason")
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                 String    @id @db.Char(26)
+  email              String    @unique
+  role               UserRole  @default(attendee)
+  emailVerifiedAt    DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  suspendedAt        DateTime? @map("suspended_at") @db.Timestamptz(6)
+  suspendedReason    String?   @map("suspended_reason")
+  quietHoursStart    String?   @map("quiet_hours_start") @db.VarChar(8)
+  quietHoursEnd      String?   @map("quiet_hours_end") @db.VarChar(8)
+  quietHoursTimezone String?   @map("quiet_hours_timezone") @db.VarChar(64)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  profile          Profile?
-  accessTokens     AccessToken[]
-  interests        InterestUser[]
-  referredProfiles Profile[]            @relation("ProfileReferrer")
-  memberships      OrganisationMember[]
-  subscriptions    Subscription[]
-  rsvps            EventRsvp[]
-  blocks           Block[]
-  comments         EventComment[]
-  commentLikes     EventCommentLike[]
-  commentFlags     EventCommentFlag[]
-  reportsFiled     Report[]             @relation("ReportsFiled")
-  reportsReviewed  Report[]             @relation("ReportsReviewed")
-  orders           Order[]
-  heldTickets      IssuedTicket[]       @relation("HeldTickets")
-  scannedTickets   IssuedTicket[]       @relation("ScannedTickets")
-  payments         Payment[]
-  payoutsRequested Payout[]             @relation("PayoutsRequested")
-  payoutsReviewed  Payout[]             @relation("PayoutsReviewed")
+  profile                 Profile?
+  accessTokens            AccessToken[]
+  interests               InterestUser[]
+  referredProfiles        Profile[]                @relation("ProfileReferrer")
+  memberships             OrganisationMember[]
+  subscriptions           Subscription[]
+  rsvps                   EventRsvp[]
+  blocks                  Block[]
+  comments                EventComment[]
+  commentLikes            EventCommentLike[]
+  commentFlags            EventCommentFlag[]
+  reportsFiled            Report[]                 @relation("ReportsFiled")
+  reportsReviewed         Report[]                 @relation("ReportsReviewed")
+  orders                  Order[]
+  heldTickets             IssuedTicket[]           @relation("HeldTickets")
+  scannedTickets          IssuedTicket[]           @relation("ScannedTickets")
+  payments                Payment[]
+  payoutsRequested        Payout[]                 @relation("PayoutsRequested")
+  payoutsReviewed         Payout[]                 @relation("PayoutsReviewed")
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
+  expoPushTokens          ExpoPushToken[]
+  eventMutes              EventNotificationMute[]
 
   @@index([suspendedAt])
   @@map("users")

@@ -22,6 +22,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { AuthGuard } from './modules/auth/guards/auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { OrganizerModule } from './modules/organizer/organizer.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -69,6 +70,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     TicketsModule,
     OrdersModule,
     PayoutsModule,
+    NotificationsModule,
     AdminModule,
     GiphyModule,
     PlacesModule,

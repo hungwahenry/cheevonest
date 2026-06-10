@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ulid } from 'ulid';
 import { ValidationFailedException } from '../../../common/exceptions/api.exception';
 import { PrismaService } from '../../../database/prisma.service';
@@ -9,6 +10,10 @@ import type {
   User,
 } from '../../../generated/prisma/client';
 import { FeatureFlagsService } from '../../platform/system-config/feature-flags.service';
+import {
+  COMMENT_REPLIED,
+  CommentRepliedEvent,
+} from '../events/comment-replied.event';
 import { EventNotOpenForCommentsException } from '../exceptions/event-not-open-for-comments.exception';
 
 export const COMMENT_RESOURCE_INCLUDE = {
@@ -31,6 +36,7 @@ export class CommentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly features: FeatureFlagsService,
+    private readonly emitter: EventEmitter2,
   ) {}
 
   async create(
@@ -89,6 +95,13 @@ export class CommentsService {
         data: { commentsCount: { increment: 1 } },
       });
     });
+
+    if (input.parent_id) {
+      await this.emitter.emitAsync(
+        COMMENT_REPLIED,
+        new CommentRepliedEvent(commentId),
+      );
+    }
 
     return this.prisma.eventComment.findUniqueOrThrow({
       where: { id: commentId },

@@ -16,17 +16,17 @@ model Organisation {
   website                           String?
   city                              String?
   eventsCount                       Int       @default(0) @map("events_count")
-  subscribersCount                  Int       @default(0) @map("subscribers_count")
   subscriptionFanoutWindowStartedAt DateTime? @map("subscription_fanout_window_started_at") @db.Timestamptz(6)
   subscriptionFanoutCount           Int       @default(0) @map("subscription_fanout_count")
+  subscribersCount                  Int       @default(0) @map("subscribers_count")
   suspendedAt                       DateTime? @map("suspended_at") @db.Timestamptz(6)
   suspendedReason                   String?   @map("suspended_reason")
   createdAt                         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  category OrganisationCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  members  OrganisationMember[]
-  socials  OrganisationSocial[]
+  category      OrganisationCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  members       OrganisationMember[]
+  socials       OrganisationSocial[]
   events        Event[]
   subscriptions Subscription[]
   payoutAccount PayoutAccount?

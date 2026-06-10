@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ulid } from 'ulid';
 import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
@@ -26,6 +27,10 @@ import { PayoutNotPayableException } from '../exceptions/payout-not-payable.exce
 import { PayoutNotRejectableException } from '../exceptions/payout-not-rejectable.exception';
 import { PayoutNotRetryableException } from '../exceptions/payout-not-retryable.exception';
 import { PayoutsDisabledException } from '../exceptions/payouts-disabled.exception';
+import {
+  PAYOUT_SETTLED,
+  PayoutSettledEvent,
+} from '../events/payout-settled.event';
 import { BalanceService } from './balance.service';
 import { PayoutFeesService } from './payout-fees.service';
 
@@ -43,6 +48,7 @@ export class PayoutsService {
     private readonly balance: BalanceService,
     private readonly fees: PayoutFeesService,
     private readonly features: FeatureFlagsService,
+    private readonly emitter: EventEmitter2,
   ) {}
 
   async request(
@@ -129,7 +135,7 @@ export class PayoutsService {
       throw new PayoutNotRejectableException(payout.status);
     }
 
-    return this.prisma.payout.update({
+    const rejected = await this.prisma.payout.update({
       where: { id: payout.id },
       data: {
         status: 'rejected',
@@ -138,6 +144,13 @@ export class PayoutsService {
         reviewNotes: note,
       },
     });
+
+    await this.emitter.emitAsync(
+      PAYOUT_SETTLED,
+      new PayoutSettledEvent(rejected.id),
+    );
+
+    return rejected;
   }
 
   async markPaid(payout: Payout, admin: User, note: string): Promise<Payout> {
@@ -145,7 +158,7 @@ export class PayoutsService {
       throw new PayoutNotPayableException(payout.status);
     }
 
-    return this.prisma.payout.update({
+    const paid = await this.prisma.payout.update({
       where: { id: payout.id },
       data: {
         status: 'paid',
@@ -154,6 +167,13 @@ export class PayoutsService {
         reviewNotes: note,
       },
     });
+
+    await this.emitter.emitAsync(
+      PAYOUT_SETTLED,
+      new PayoutSettledEvent(paid.id),
+    );
+
+    return paid;
   }
 
   async retry(payout: Payout, admin: User): Promise<Payout> {
@@ -207,7 +227,7 @@ export class PayoutsService {
 
   /** Applies a provider transfer event to the matching payout exactly once. */
   async finalize(event: TransferWebhookEvent): Promise<Payout | null> {
-    return this.prisma.$transaction(async (tx) => {
+    const settled = await this.prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRawTyped(
         lockPayoutByProviderReference(event.reference),
       );
@@ -239,6 +259,15 @@ export class PayoutsService {
         },
       });
     });
+
+    if (settled && ['paid', 'failed'].includes(settled.status)) {
+      await this.emitter.emitAsync(
+        PAYOUT_SETTLED,
+        new PayoutSettledEvent(settled.id),
+      );
+    }
+
+    return settled;
   }
 
   async findOrFail(payoutId: string): Promise<Payout> {

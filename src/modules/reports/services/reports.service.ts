@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ulid } from 'ulid';
-import { ConfigService } from '@nestjs/config';
-import { Env } from '../../../config/env';
 import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import type {
@@ -10,6 +9,10 @@ import type {
   User,
 } from '../../../generated/prisma/client';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
+import {
+  REPORT_CREATED,
+  ReportCreatedEvent,
+} from '../events/report-created.event';
 import { ReportAlreadyExistsException } from '../exceptions/report-already-exists.exception';
 import { ReportCooldownActiveException } from '../exceptions/report-cooldown-active.exception';
 import { ReportDailyCapReachedException } from '../exceptions/report-daily-cap-reached.exception';
@@ -38,7 +41,7 @@ export class ReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly systemConfig: SystemConfigService,
-    private readonly config: ConfigService<Env, true>,
+    private readonly emitter: EventEmitter2,
   ) {}
 
   async create(reporter: User, input: CreateReportInput): Promise<Report> {
@@ -61,7 +64,7 @@ export class ReportsService {
     }
 
     try {
-      return await this.prisma.report.create({
+      const report = await this.prisma.report.create({
         data: {
           id: ulid(),
           targetType,
@@ -71,6 +74,13 @@ export class ReportsService {
           details: details === '' ? null : details,
         },
       });
+
+      await this.emitter.emitAsync(
+        REPORT_CREATED,
+        new ReportCreatedEvent(report.id, report.targetType, report.targetId),
+      );
+
+      return report;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
