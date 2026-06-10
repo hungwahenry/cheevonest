@@ -1,0 +1,37 @@
+model StepUpChallenge {
+  id         String    @id @db.Char(26)
+  userId     String    @map("user_id") @db.Char(26)
+  action     String    @db.VarChar(64)
+  payload    Json
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  factors StepUpFactor[]
+
+  @@index([userId, action])
+  @@index([expiresAt])
+  @@map("step_up_challenges")
+}
+
+model StepUpFactor {
+  id          String    @id @db.Char(26)
+  challengeId String    @map("challenge_id") @db.Char(26)
+  kind        String    @db.VarChar(32)
+  target      String
+  codeHash    String?   @map("code_hash")
+  attempts    Int       @default(0) @db.SmallInt
+  sortOrder   Int       @map("sort_order") @db.SmallInt
+  sentAt      DateTime? @map("sent_at") @db.Timestamptz(6)
+  verifiedAt  DateTime? @map("verified_at") @db.Timestamptz(6)
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  challenge StepUpChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, sortOrder])
+  @@map("step_up_factors")
+}

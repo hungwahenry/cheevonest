@@ -47,6 +47,7 @@ model User {
   notificationPreferences NotificationPreference[]
   expoPushTokens          ExpoPushToken[]
   eventMutes              EventNotificationMute[]
+  stepUpChallenges        StepUpChallenge[]
 
   @@index([suspendedAt])
   @@map("users")
