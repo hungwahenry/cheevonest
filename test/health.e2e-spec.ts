@@ -16,7 +16,7 @@ describe('Health (e2e)', () => {
     app = moduleRef.createNestApplication<NestFastifyApplication>(
       createFastifyAdapter(),
     );
-    configureApp(app);
+    await configureApp(app);
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
   });

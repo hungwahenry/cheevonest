@@ -13,7 +13,7 @@ async function bootstrap(): Promise<void> {
   );
 
   app.useLogger(app.get(Logger));
-  configureApp(app);
+  await configureApp(app);
   setupSwagger(app);
 
   const config = app.get(ConfigService);

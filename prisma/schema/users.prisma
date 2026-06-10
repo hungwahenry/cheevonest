@@ -1,0 +1,114 @@
+enum UserRole {
+  attendee
+  organiser
+  admin
+}
+
+enum UserGender {
+  male
+  female
+  non_binary
+  prefer_not_to_say
+}
+
+model User {
+  id              String    @id @db.Char(26)
+  email           String    @unique
+  role            UserRole  @default(attendee)
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  suspendedAt     DateTime? @map("suspended_at") @db.Timestamptz(6)
+  suspendedReason String?   @map("suspended_reason")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile          Profile?
+  accessTokens     AccessToken[]
+  interests        InterestUser[]
+  referredProfiles Profile[]      @relation("ProfileReferrer")
+
+  @@index([suspendedAt])
+  @@map("users")
+}
+
+model Profile {
+  id               String      @id @db.Char(26)
+  userId           String      @unique @map("user_id") @db.Char(26)
+  firstName        String?     @map("first_name")
+  lastName         String?     @map("last_name")
+  username         String?     @unique
+  avatarPath       String?     @map("avatar_path")
+  gender           UserGender?
+  bio              String?
+  dateOfBirth      DateTime?   @map("date_of_birth") @db.Date
+  latitude         Decimal?    @db.Decimal(10, 7)
+  longitude        Decimal?    @db.Decimal(10, 7)
+  placeName        String?     @map("place_name")
+  city             String?
+  marketingOptIn   Boolean     @default(false) @map("marketing_opt_in")
+  referralCode     String      @unique @map("referral_code")
+  referredByUserId String?     @map("referred_by_user_id") @db.Char(26)
+  completedAt      DateTime?   @map("completed_at") @db.Timestamptz(6)
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referredBy User? @relation("ProfileReferrer", fields: [referredByUserId], references: [id], onDelete: SetNull)
+
+  @@index([city])
+  @@map("profiles")
+}
+
+model OtpCode {
+  id         String    @id @db.Char(26)
+  email      String
+  codeHash   String    @map("code_hash")
+  attempts   Int       @default(0) @db.SmallInt
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([email])
+  @@map("otp_codes")
+}
+
+model AccessToken {
+  id         String    @id @db.Char(26)
+  userId     String    @map("user_id") @db.Char(26)
+  name       String
+  tokenHash  String    @unique @map("token_hash")
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(6)
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("access_tokens")
+}
+
+model Interest {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  users InterestUser[]
+
+  @@map("interests")
+}
+
+model InterestUser {
+  userId     String @map("user_id") @db.Char(26)
+  interestId Int    @map("interest_id")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([userId, interestId])
+  @@map("interest_user")
+}

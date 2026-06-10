@@ -4,6 +4,7 @@ import type { FastifyReply } from 'fastify';
 import { ApiResult } from '../../../common/responses/api-result';
 import { Env } from '../../../config/env';
 import { PrismaService } from '../../../database/prisma.service';
+import { Public } from '../../auth/decorators/auth.decorators';
 
 interface HealthReport {
   service: string;
@@ -11,6 +12,7 @@ interface HealthReport {
   time: string;
 }
 
+@Public()
 @Controller('health')
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
