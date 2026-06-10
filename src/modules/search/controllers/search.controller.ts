@@ -1,5 +1,4 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiException } from '../../../common/exceptions/api.exception';
 import { Paginated } from '../../../common/responses/paginated';
 import { PrismaService } from '../../../database/prisma.service';
 import type { User } from '../../../generated/prisma/client';
@@ -10,6 +9,7 @@ import { SystemConfigService } from '../../platform/system-config/system-config.
 import { UserSerializer } from '../../users/serializers/user.serializer';
 import { UsersService } from '../../users/services/users.service';
 import { SearchDto } from '../dto/search.dto';
+import { UnknownSearchTypeException } from '../exceptions/unknown-search-type.exception';
 import { SearchableType } from '../services/search-indexer.service';
 import { SearchQueryService } from '../services/search-query.service';
 
@@ -59,12 +59,7 @@ export class SearchController {
     @CurrentUser() user: User,
   ): Promise<Paginated<unknown>> {
     if (!SEARCH_TYPES.includes(type as SearchableType)) {
-      throw new ApiException(
-        `Unknown search type: ${type}`,
-        404,
-        {},
-        'unknown_search_type',
-      );
+      throw new UnknownSearchTypeException(type);
     }
 
     const searchType = type as SearchableType;

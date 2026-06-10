@@ -25,6 +25,7 @@ describe('Attendee social (e2e)', () => {
   let eventId: string;
   let eventSlug: string;
   let interestIds: number[];
+  let runId: string;
 
   const server = () => ctx.app.getHttpServer();
   const auth = (token: string) => `Bearer ${token}`;
@@ -71,6 +72,7 @@ describe('Attendee social (e2e)', () => {
 
     const category = await ctx.prisma.organisationCategory.findFirstOrThrow();
     const run = Date.now().toString(36);
+    runId = run;
 
     ownerToken = await signIn(uniqueEmail('social-owner'));
     orgSlug = `social-org-${run}`;
@@ -285,7 +287,7 @@ describe('Attendee social (e2e)', () => {
 
   it('searches events, organisations, and users', async () => {
     const all = await request(server())
-      .get('/api/v1/search?q=social')
+      .get(`/api/v1/search?q=${runId}`)
       .set('Authorization', auth(attendeeToken))
       .expect(200);
 
@@ -307,7 +309,7 @@ describe('Attendee social (e2e)', () => {
     ).toBe(true);
 
     const userHits = await request(server())
-      .get('/api/v1/search/user?q=att')
+      .get(`/api/v1/search/user?q=${runId}`)
       .set('Authorization', auth(attendeeToken))
       .expect(200);
 
@@ -352,7 +354,7 @@ describe('Attendee social (e2e)', () => {
     ).toBe(false);
 
     const search = await request(server())
-      .get('/api/v1/search?q=social')
+      .get(`/api/v1/search?q=${runId}`)
       .set('Authorization', auth(attendeeToken))
       .expect(200);
     expect(

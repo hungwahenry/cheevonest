@@ -1,4 +1,5 @@
-export class ApiException extends Error {
+/** Never thrown directly — every domain failure gets a named subclass in its module's exceptions/ folder. */
+export abstract class ApiException extends Error {
   constructor(
     message = 'Something went wrong.',
     readonly status: number = 400,
