@@ -15,9 +15,12 @@ export class BroadcastRules {
     private readonly systemConfig: SystemConfigService,
   ) {}
 
-  async quota(
-    event: Event,
-  ): Promise<{ used: number; limit: number; cooldownUntil: Date | null }> {
+  async quota(event: Event): Promise<{
+    used: number;
+    limit: number;
+    cooldownMinutes: number;
+    cooldownUntil: Date | null;
+  }> {
     const [limit, cooldownMinutes, used, latest] = await Promise.all([
       this.systemConfig.int('broadcasts.max_per_event', 3),
       this.systemConfig.int('broadcasts.cooldown_minutes', 720),
@@ -37,6 +40,7 @@ export class BroadcastRules {
     return {
       used,
       limit,
+      cooldownMinutes,
       cooldownUntil:
         cooldownUntil && cooldownUntil > new Date() ? cooldownUntil : null,
     };

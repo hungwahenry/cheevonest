@@ -63,6 +63,7 @@ export class OrganizerBroadcastsController {
         quota: {
           used: quota.used,
           limit: quota.limit,
+          cooldown_minutes: quota.cooldownMinutes,
           cooldown_until: quota.cooldownUntil?.toISOString() ?? null,
         },
       },

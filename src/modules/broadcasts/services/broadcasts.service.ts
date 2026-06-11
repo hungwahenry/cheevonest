@@ -134,9 +134,12 @@ export class BroadcastsService {
     return { items, total };
   }
 
-  async quota(
-    event: Event,
-  ): Promise<{ used: number; limit: number; cooldownUntil: Date | null }> {
+  async quota(event: Event): Promise<{
+    used: number;
+    limit: number;
+    cooldownMinutes: number;
+    cooldownUntil: Date | null;
+  }> {
     return this.rules.quota(event);
   }
 
