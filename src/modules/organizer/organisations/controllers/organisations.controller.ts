@@ -66,7 +66,7 @@ export class OrganisationsController {
     @CurrentUser() user: User,
   ): Promise<ApiResult<unknown>> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertManage(organisation.id, user.id);
+    await this.policy.ensureManage(organisation.id, user.id);
 
     const updated = await this.manager.update(organisation, dto);
 

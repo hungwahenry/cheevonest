@@ -42,7 +42,7 @@ export class OrganizerPayoutsController {
     @CurrentUser() user: User,
   ): Promise<unknown> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertManage(organisation.id, user.id);
+    await this.policy.ensureManage(organisation.id, user.id);
 
     const account = await this.accounts.find(organisation.id);
 
@@ -56,7 +56,7 @@ export class OrganizerPayoutsController {
     @CurrentUser() user: User,
   ): Promise<ApiResult<unknown>> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertManage(organisation.id, user.id);
+    await this.policy.ensureManage(organisation.id, user.id);
 
     const account = await this.accounts.upsert(
       organisation,
@@ -77,7 +77,7 @@ export class OrganizerPayoutsController {
     @CurrentUser() user: User,
   ): Promise<ApiResult<null>> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertManage(organisation.id, user.id);
+    await this.policy.ensureManage(organisation.id, user.id);
 
     await this.accounts.delete(organisation.id);
 
@@ -90,7 +90,7 @@ export class OrganizerPayoutsController {
     @CurrentUser() user: User,
   ): Promise<unknown> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertView(organisation.id, user.id);
+    await this.policy.ensureView(organisation.id, user.id);
 
     return this.balance.summary(organisation);
   }
@@ -102,7 +102,7 @@ export class OrganizerPayoutsController {
     @CurrentUser() user: User,
   ): Promise<Paginated<unknown>> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertView(organisation.id, user.id);
+    await this.policy.ensureView(organisation.id, user.id);
 
     const page = dto.page ?? 1;
     const perPage = Math.min(dto.per_page ?? 20, 50);
@@ -129,7 +129,7 @@ export class OrganizerPayoutsController {
     @CurrentUser() user: User,
   ): Promise<ApiResult<unknown>> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertManage(organisation.id, user.id);
+    await this.policy.ensureManage(organisation.id, user.id);
 
     const payout = await this.payouts.request(
       organisation,
@@ -147,7 +147,7 @@ export class OrganizerPayoutsController {
     @CurrentUser() user: User,
   ): Promise<unknown> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertView(organisation.id, user.id);
+    await this.policy.ensureView(organisation.id, user.id);
 
     const payout = await this.payouts.findScoped(organisation.id, payoutId);
 

@@ -6,13 +6,13 @@ import { OrganisationsService } from './organisations.service';
 export class OrganisationsPolicy {
   constructor(private readonly organisations: OrganisationsService) {}
 
-  async assertView(organisationId: string, userId: string): Promise<void> {
+  async ensureView(organisationId: string, userId: string): Promise<void> {
     if (!(await this.organisations.hasMember(organisationId, userId))) {
       throw new NotFoundException();
     }
   }
 
-  async assertManage(organisationId: string, userId: string): Promise<void> {
+  async ensureManage(organisationId: string, userId: string): Promise<void> {
     const role = await this.organisations.roleOf(organisationId, userId);
 
     if (role !== 'owner') {
@@ -20,10 +20,10 @@ export class OrganisationsPolicy {
     }
   }
 
-  async assertManageMembers(
+  async ensureManageMembers(
     organisationId: string,
     userId: string,
   ): Promise<void> {
-    return this.assertManage(organisationId, userId);
+    return this.ensureManage(organisationId, userId);
   }
 }

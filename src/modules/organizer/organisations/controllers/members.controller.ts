@@ -31,7 +31,7 @@ export class MembersController {
     @CurrentUser() user: User,
   ): Promise<unknown[]> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertView(organisation.id, user.id);
+    await this.policy.ensureView(organisation.id, user.id);
 
     const members = await this.members.list(organisation.id);
 
@@ -46,7 +46,7 @@ export class MembersController {
     @CurrentUser() user: User,
   ): Promise<ApiResult<unknown>> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertManageMembers(organisation.id, user.id);
+    await this.policy.ensureManageMembers(organisation.id, user.id);
 
     const member = await this.members.addByEmail(organisation.id, dto.email);
 
@@ -60,7 +60,7 @@ export class MembersController {
     @CurrentUser() user: User,
   ): Promise<ApiResult<null>> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertManageMembers(organisation.id, user.id);
+    await this.policy.ensureManageMembers(organisation.id, user.id);
 
     await this.members.removeByUserId(organisation.id, userId);
 

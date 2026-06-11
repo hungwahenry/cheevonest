@@ -1,5 +1,5 @@
-import { ValidationFailedException } from '../../../../common/exceptions/api.exception';
 import type { Event } from '../../../../generated/prisma/client';
+import { EventNotOpenForRsvpException } from '../exceptions/event-not-open-for-rsvp.exception';
 
 export function ensureOpenForRsvp(event: Event): void {
   const ended =
@@ -7,14 +7,10 @@ export function ensureOpenForRsvp(event: Event): void {
     (event.endsAt !== null && event.endsAt <= new Date());
 
   if (ended) {
-    throw new ValidationFailedException({
-      event: ['This event has already ended.'],
-    });
+    throw EventNotOpenForRsvpException.ended();
   }
 
   if (event.status !== 'published') {
-    throw new ValidationFailedException({
-      event: ['This event is not open for RSVPs yet.'],
-    });
+    throw EventNotOpenForRsvpException.notPublished();
   }
 }

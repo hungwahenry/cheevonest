@@ -20,19 +20,14 @@ import {
   TransferWebhookEvent,
 } from '../../payments/contracts/payment-provider.interface';
 import { PaymentProviderRegistry } from '../../payments/services/payment-provider-registry.service';
-import { FeatureFlagsService } from '../../platform/system-config/feature-flags.service';
 import { InsufficientBalanceException } from '../exceptions/insufficient-balance.exception';
 import { PayoutAccountMissingException } from '../exceptions/payout-account-missing.exception';
 import { PayoutAlreadyInFlightException } from '../exceptions/payout-already-in-flight.exception';
-import { PayoutNotApprovableException } from '../exceptions/payout-not-approvable.exception';
-import { PayoutNotPayableException } from '../exceptions/payout-not-payable.exception';
-import { PayoutNotRejectableException } from '../exceptions/payout-not-rejectable.exception';
-import { PayoutNotRetryableException } from '../exceptions/payout-not-retryable.exception';
-import { PayoutsDisabledException } from '../exceptions/payouts-disabled.exception';
 import {
   PAYOUT_SETTLED,
   PayoutSettledEvent,
 } from '../events/payout-settled.event';
+import { PayoutRules } from '../rules/payout.rules';
 import { BalanceService } from './balance.service';
 import { PayoutFeesService } from './payout-fees.service';
 
@@ -49,7 +44,7 @@ export class PayoutsService {
     private readonly registry: PaymentProviderRegistry,
     private readonly balance: BalanceService,
     private readonly fees: PayoutFeesService,
-    private readonly features: FeatureFlagsService,
+    private readonly rules: PayoutRules,
     private readonly emitter: EventEmitter2,
     private readonly config: ConfigService<Env, true>,
   ) {}
@@ -59,11 +54,7 @@ export class PayoutsService {
     user: User,
     amountMinor: number,
   ): Promise<Payout> {
-    if (
-      !(await this.features.enabled('payouts.enabled', { userId: user.id }))
-    ) {
-      throw new PayoutsDisabledException();
-    }
+    await this.rules.ensureEnabled(user.id);
 
     const account = await this.prisma.payoutAccount.findUnique({
       where: { organisationId: organisation.id },
@@ -134,9 +125,7 @@ export class PayoutsService {
   }
 
   async reject(payout: Payout, admin: User, note: string): Promise<Payout> {
-    if (!['requested', 'approved'].includes(payout.status)) {
-      throw new PayoutNotRejectableException(payout.status);
-    }
+    this.rules.ensureRejectable(payout);
 
     const rejected = await this.prisma.payout.update({
       where: { id: payout.id },
@@ -157,9 +146,7 @@ export class PayoutsService {
   }
 
   async markPaid(payout: Payout, admin: User, note: string): Promise<Payout> {
-    if (!['approved', 'processing'].includes(payout.status)) {
-      throw new PayoutNotPayableException(payout.status);
-    }
+    this.rules.ensurePayable(payout);
 
     const paid = await this.prisma.payout.update({
       where: { id: payout.id },
@@ -180,9 +167,7 @@ export class PayoutsService {
   }
 
   async retry(payout: Payout, admin: User): Promise<Payout> {
-    if (payout.status !== 'failed' || payout.transferMethod !== 'provider') {
-      throw new PayoutNotRetryableException(payout.status);
-    }
+    this.rules.ensureRetryable(payout);
 
     await this.prisma.payout.update({
       where: { id: payout.id },
@@ -323,9 +308,7 @@ export class PayoutsService {
     note: string | null,
     method: TransferMethod,
   ): Promise<Payout> {
-    if (payout.status !== 'requested') {
-      throw new PayoutNotApprovableException(payout.status);
-    }
+    this.rules.ensureApprovable(payout);
 
     return this.prisma.payout.update({
       where: { id: payout.id },

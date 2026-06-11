@@ -27,7 +27,7 @@ export class DashboardController {
     @CurrentUser() user: User,
   ): Promise<unknown> {
     const organisation = await this.organisations.findOrFail(organisationId);
-    await this.policy.assertView(organisation.id, user.id);
+    await this.policy.ensureView(organisation.id, user.id);
 
     return this.dashboard.summary(organisation, dto.range ?? '30d');
   }
