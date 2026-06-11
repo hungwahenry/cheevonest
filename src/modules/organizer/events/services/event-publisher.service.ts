@@ -11,6 +11,8 @@ import {
   EventPublishedEvent,
 } from '../../../events/events/event-published.event';
 import { SearchIndexerService } from '../../../search/services/search-indexer.service';
+import { CannotUnpublishWithSalesException } from '../exceptions/cannot-unpublish-with-sales.exception';
+import { EventNotPublishedException } from '../exceptions/event-not-published.exception';
 import { PublishRules } from '../rules/publish.rules';
 
 @Injectable()
@@ -41,5 +43,24 @@ export class EventPublisherService {
     );
 
     return published;
+  }
+
+  async unpublish(event: Event): Promise<EventForResource> {
+    if (event.status !== 'published') {
+      throw new EventNotPublishedException();
+    }
+
+    if (event.ticketsSold > 0) {
+      throw new CannotUnpublishWithSalesException();
+    }
+
+    await this.prisma.event.update({
+      where: { id: event.id },
+      data: { status: 'draft', publishedAt: null },
+    });
+
+    await this.searchIndexer.deindex('event', event.id);
+
+    return this.events.loadForResource(event.id);
   }
 }

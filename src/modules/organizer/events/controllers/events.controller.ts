@@ -127,6 +127,23 @@ export class EventsController {
     return new ApiResult(this.serializer.full(published), 'Event published.');
   }
 
+  @Post(':eventId/unpublish')
+  @HttpCode(200)
+  async unpublish(
+    @Param('eventId') eventId: string,
+    @CurrentUser() user: User,
+  ): Promise<ApiResult<unknown>> {
+    const event = await this.events.findOrFail(eventId);
+    await this.policy.ensureMember(event, user.id);
+
+    const unpublished = await this.publisher.unpublish(event);
+
+    return new ApiResult(
+      this.serializer.full(unpublished),
+      'Event unpublished.',
+    );
+  }
+
   @Post(':eventId/duplicate')
   @HttpCode(201)
   async duplicate(
