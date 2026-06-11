@@ -17,6 +17,7 @@ export interface DecoratedComment {
   isLiked: boolean;
   isMine: boolean;
   isGoing: boolean;
+  isFlaggedByMe: boolean;
   mentionedUsers: Array<{
     id: string;
     profile: {
@@ -179,9 +180,13 @@ export class CommentListingService {
       ),
     ];
 
-    const [likes, rsvps, mentionedUsers] = await Promise.all([
+    const [likes, flags, rsvps, mentionedUsers] = await Promise.all([
       this.prisma.eventCommentLike.findMany({
         where: { userId: viewer.id, commentId: { in: commentIds } },
+        select: { commentId: true },
+      }),
+      this.prisma.eventCommentFlag.findMany({
+        where: { flaggedByUserId: viewer.id, commentId: { in: commentIds } },
         select: { commentId: true },
       }),
       this.prisma.eventRsvp.findMany({
@@ -197,6 +202,7 @@ export class CommentListingService {
     ]);
 
     const likedIds = new Set(likes.map((like) => like.commentId));
+    const flaggedIds = new Set(flags.map((flag) => flag.commentId));
     const goingIds = new Set(rsvps.map((rsvp) => rsvp.userId));
     const mentionedById = new Map(
       mentionedUsers.map((user) => [user.id, user]),
@@ -207,6 +213,7 @@ export class CommentListingService {
       isLiked: likedIds.has(comment.id),
       isMine: comment.userId === viewer.id,
       isGoing: goingIds.has(comment.userId),
+      isFlaggedByMe: flaggedIds.has(comment.id),
       mentionedUsers: (Array.isArray(comment.mentions)
         ? (comment.mentions as string[])
         : []

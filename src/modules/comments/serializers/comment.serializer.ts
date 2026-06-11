@@ -33,9 +33,11 @@ export class CommentSerializer {
       })),
       likes_count: comment.likesCount,
       replies_count: comment.repliesCount,
+      flags_count: comment.flagsCount,
       is_liked: decorated.isLiked,
       is_mine: decorated.isMine,
       is_going: decorated.isGoing,
+      is_flagged_by_me: decorated.isFlaggedByMe,
       created_at: comment.createdAt.toISOString(),
       author: {
         id: comment.author.id,
