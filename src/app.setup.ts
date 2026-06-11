@@ -16,6 +16,7 @@ export const REQUEST_ID_HEADER = 'x-request-id';
 
 export function createFastifyAdapter(): FastifyAdapter {
   return new FastifyAdapter({
+    maxParamLength: 512,
     genReqId: (req: IncomingMessage) => {
       const header = req.headers[REQUEST_ID_HEADER];
       const value = Array.isArray(header) ? header[0] : header;
