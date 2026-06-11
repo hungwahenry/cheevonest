@@ -12,6 +12,7 @@ import {
 import { ensureEventNotEnded } from '../../../events/rules/event.rules';
 import { CreateEventDto } from '../dto/create-event.dto';
 import { UpdateEventDto } from '../dto/update-event.dto';
+import { CannotDeleteWithSalesException } from '../exceptions/cannot-delete-with-sales.exception';
 import { EventInterestRules } from '../rules/event-interests.rules';
 import { ensureValidFlyer, flyerTypeFor } from '../rules/media.rules';
 import {
@@ -214,6 +215,10 @@ export class EventManagerService {
   }
 
   async delete(event: Event): Promise<void> {
+    if (event.ticketsSold > 0) {
+      throw new CannotDeleteWithSalesException();
+    }
+
     const [images, features] = await Promise.all([
       this.prisma.eventImage.findMany({
         where: { eventId: event.id },

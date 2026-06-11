@@ -165,7 +165,7 @@ export class EventsController {
     @CurrentUser() user: User,
   ): Promise<ApiResult<null>> {
     const event = await this.events.findOrFail(eventId);
-    await this.policy.ensureMember(event, user.id);
+    await this.policy.ensureOwner(event, user.id);
 
     await this.manager.delete(event);
 

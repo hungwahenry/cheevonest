@@ -35,4 +35,23 @@ export class EventsPolicy {
       throw new ForbiddenException();
     }
   }
+
+  async ensureOwner(
+    event: Pick<Event, 'organisationId'>,
+    userId: string,
+  ): Promise<void> {
+    const membership = await this.prisma.organisationMember.findUnique({
+      where: {
+        organisationId_userId: {
+          organisationId: event.organisationId,
+          userId,
+        },
+      },
+      select: { role: true },
+    });
+
+    if (!membership || membership.role !== 'owner') {
+      throw new ForbiddenException();
+    }
+  }
 }
