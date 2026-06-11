@@ -10,6 +10,16 @@ import { SKIP_ENVELOPE_KEY } from '../decorators/api-response.decorators';
 import { ApiResult } from '../responses/api-result';
 import { Paginated } from '../responses/paginated';
 
+function serializePaginated(value: Paginated<unknown>): Record<string, unknown> {
+  return {
+    items: value.items,
+    page: value.page,
+    last_page: value.lastPage,
+    per_page: value.perPage,
+    total: value.total,
+  };
+}
+
 @Injectable()
 export class ApiEnvelopeInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
@@ -29,23 +39,21 @@ export class ApiEnvelopeInterceptor implements NestInterceptor {
           return {
             status: 'success',
             message: fallbackMessage,
-            data: {
-              items: value.items,
-              page: value.page,
-              last_page: value.lastPage,
-              per_page: value.perPage,
-              total: value.total,
-            },
+            data: serializePaginated(value),
           };
         }
 
         if (value instanceof ApiResult) {
           const result = value as ApiResult<unknown>;
+          const data =
+            result.data instanceof Paginated
+              ? serializePaginated(result.data)
+              : (result.data ?? null);
 
           return {
             status: 'success',
             message: result.message ?? fallbackMessage,
-            data: result.data ?? null,
+            data,
             ...(result.meta && Object.keys(result.meta).length > 0
               ? { meta: result.meta }
               : {}),

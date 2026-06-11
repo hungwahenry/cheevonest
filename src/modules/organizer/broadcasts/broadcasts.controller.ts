@@ -50,24 +50,14 @@ export class OrganizerBroadcastsController {
       result.total,
     );
 
-    return new ApiResult(
-      {
-        items: paginated.items,
-        page: paginated.page,
-        last_page: paginated.lastPage,
-        per_page: paginated.perPage,
-        total: paginated.total,
+    return new ApiResult(paginated, undefined, {
+      quota: {
+        used: quota.used,
+        limit: quota.limit,
+        cooldown_minutes: quota.cooldownMinutes,
+        cooldown_until: quota.cooldownUntil?.toISOString() ?? null,
       },
-      undefined,
-      {
-        quota: {
-          used: quota.used,
-          limit: quota.limit,
-          cooldown_minutes: quota.cooldownMinutes,
-          cooldown_until: quota.cooldownUntil?.toISOString() ?? null,
-        },
-      },
-    );
+    });
   }
 
   @Post()
