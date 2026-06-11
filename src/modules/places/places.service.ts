@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Env } from '../../config/env';
-import { FeatureFlagsService } from '../platform/system-config/feature-flags.service';
 import { SystemConfigService } from '../platform/system-config/system-config.service';
 
 const AUTOCOMPLETE_URL = 'https://places.googleapis.com/v1/places:autocomplete';
@@ -30,19 +29,13 @@ interface AddressComponent {
 export class PlacesService {
   constructor(
     private readonly config: ConfigService<Env, true>,
-    private readonly features: FeatureFlagsService,
     private readonly systemConfig: SystemConfigService,
   ) {}
 
   async search(
     query: string,
-    userId: string,
     sessionToken?: string | null,
   ): Promise<PlacePrediction[]> {
-    if (!(await this.features.enabled('places.search', { userId }))) {
-      return [];
-    }
-
     const key = this.config.get('GOOGLE_PLACES_API_KEY', { infer: true });
 
     if (!key) {

@@ -1,7 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import type { User } from '../../generated/prisma/client';
-import { CurrentUser } from '../auth/decorators/auth.decorators';
 import { PlaceNotFoundException } from './exceptions/place-not-found.exception';
 import { PlacesService } from './places.service';
 
@@ -29,11 +27,8 @@ export class PlacesController {
   constructor(private readonly places: PlacesService) {}
 
   @Get('search')
-  async search(
-    @Query() dto: SearchPlacesDto,
-    @CurrentUser() user: User,
-  ): Promise<unknown> {
-    return this.places.search(dto.query, user.id, dto.session_token);
+  async search(@Query() dto: SearchPlacesDto): Promise<unknown> {
+    return this.places.search(dto.query, dto.session_token);
   }
 
   @Get(':placeId')

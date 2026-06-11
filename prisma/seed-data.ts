@@ -33,8 +33,8 @@ export interface SystemConfigSeed {
 }
 
 export const SYSTEM_CONFIGS: ReadonlyArray<SystemConfigSeed> = [
-  { key: 'broadcasts.max_per_event', group: 'broadcasts', type: 'int', default: 3, description: 'Hard cap on broadcasts an organiser can send per event lifetime.' },
-  { key: 'broadcasts.cooldown_minutes', group: 'broadcasts', type: 'int', default: 720, description: 'Minimum wait between consecutive broadcasts on the same event (minutes).' },
+  { key: 'broadcasts.max_per_event', group: 'broadcasts', type: 'int', default: 3, description: 'Hard cap on broadcasts an organiser can send per event lifetime.', isPublic: true },
+  { key: 'broadcasts.cooldown_minutes', group: 'broadcasts', type: 'int', default: 720, description: 'Minimum wait between consecutive broadcasts on the same event (minutes).', isPublic: true },
   { key: 'broadcasts.daily_volume_cap_per_org', group: 'broadcasts', type: 'int', default: 5000, description: 'Platform daily email cap per organisation.' },
   { key: 'broadcasts.chunk_size', group: 'broadcasts', type: 'int', default: 100, description: 'Recipients per dispatch job chunk.' },
 
@@ -99,8 +99,8 @@ export interface FeatureFlagSeed {
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagSeed> = [
   { key: 'comments.enabled', description: 'Master switch for event comments. Disable to hide and refuse new posts.', enabled: true, isPublic: true },
   { key: 'comments.giphy_picker', description: 'GIF picker inside the comment composer. Kill switch for the Giphy dependency.', enabled: true, isPublic: true },
+  { key: 'events.creation', description: 'Organisers can create new events (duplicate included). Editing existing events is unaffected.', enabled: true, isPublic: true },
   { key: 'rsvp.enabled', description: 'Free RSVP on events. Disabling removes the RSVP button across the app.', enabled: true, isPublic: true },
-  { key: 'places.search', description: 'Google Places autocomplete for event venue search. Kill switch for the Places dependency.', enabled: true, isPublic: true },
   { key: 'notifications.push', description: 'Expo push notifications. Kill switch when Expo is degraded.', enabled: true, isPublic: true },
   { key: 'broadcasts.enabled', description: 'Email broadcasts to ticket holders / RSVPs. Disable to halt new sends.', enabled: true, isPublic: true },
   { key: 'payouts.enabled', description: 'Organisers can request payouts. Disable to pause the payout workflow.', enabled: true, isPublic: true },

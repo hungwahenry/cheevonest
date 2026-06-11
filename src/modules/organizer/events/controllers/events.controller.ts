@@ -16,11 +16,13 @@ import { EventStatus } from '../../../../generated/prisma/client';
 import type { User } from '../../../../generated/prisma/client';
 import { CurrentUser } from '../../../auth/decorators/auth.decorators';
 import { EventsPolicy } from '../../../events/events.policy';
+import { FeatureFlagsService } from '../../../platform/system-config/feature-flags.service';
 import { EventsService } from '../../../events/events.service';
 import { EventSerializer } from '../../../events/serializers/event.serializer';
 import { CreateEventDto } from '../dto/create-event.dto';
 import { ListEventsDto } from '../dto/list-events.dto';
 import { UpdateEventDto } from '../dto/update-event.dto';
+import { EventCreationDisabledException } from '../exceptions/event-creation-disabled.exception';
 import { EventDuplicatorService } from '../services/event-duplicator.service';
 import { EventManagerService } from '../services/event-manager.service';
 import { EventPublisherService } from '../services/event-publisher.service';
@@ -34,6 +36,7 @@ export class EventsController {
     private readonly publisher: EventPublisherService,
     private readonly duplicator: EventDuplicatorService,
     private readonly serializer: EventSerializer,
+    private readonly features: FeatureFlagsService,
   ) {}
 
   @Get()
@@ -70,6 +73,7 @@ export class EventsController {
     @Body() dto: CreateEventDto,
     @CurrentUser() user: User,
   ): Promise<ApiResult<unknown>> {
+    await this.ensureCreationEnabled(user.id);
     await this.policy.ensureCanCreate(user.id);
 
     const event = await this.manager.create(user, dto);
@@ -150,6 +154,8 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @CurrentUser() user: User,
   ): Promise<ApiResult<unknown>> {
+    await this.ensureCreationEnabled(user.id);
+
     const event = await this.events.findOrFail(eventId);
     await this.policy.ensureMember(event, user.id);
 
@@ -170,5 +176,11 @@ export class EventsController {
     await this.manager.delete(event);
 
     return new ApiResult(null, 'Event deleted.');
+  }
+
+  private async ensureCreationEnabled(userId: string): Promise<void> {
+    if (!(await this.features.enabled('events.creation', { userId }))) {
+      throw new EventCreationDisabledException();
+    }
   }
 }
