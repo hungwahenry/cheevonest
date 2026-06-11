@@ -20,9 +20,13 @@ export interface PublicOrganisationFlags {
 export class OrganisationSerializer {
   constructor(private readonly storage: StorageService) {}
 
-  organisation(organisation: OrganisationForResource): Record<string, unknown> {
+  organisation(
+    organisation: OrganisationForResource,
+    myRole: string | null = null,
+  ): Record<string, unknown> {
     return {
       ...this.bare(organisation),
+      my_role: myRole,
       category: organisation.category
         ? this.category(organisation.category)
         : null,

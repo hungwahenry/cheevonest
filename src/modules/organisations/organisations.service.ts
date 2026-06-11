@@ -41,12 +41,22 @@ export class OrganisationsService {
     });
   }
 
-  async listForMember(userId: string): Promise<OrganisationForResource[]> {
-    return this.prisma.organisation.findMany({
+  async listForMember(
+    userId: string,
+  ): Promise<Array<{ organisation: OrganisationForResource; role: string }>> {
+    const rows = await this.prisma.organisation.findMany({
       where: { members: { some: { userId } } },
-      include: ORGANISATION_RESOURCE_INCLUDE,
+      include: {
+        ...ORGANISATION_RESOURCE_INCLUDE,
+        members: { where: { userId }, select: { role: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
+
+    return rows.map(({ members, ...organisation }) => ({
+      organisation,
+      role: members[0]?.role ?? 'member',
+    }));
   }
 
   async activeCategories() {

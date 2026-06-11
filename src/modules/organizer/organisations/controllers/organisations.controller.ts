@@ -29,10 +29,10 @@ export class OrganisationsController {
 
   @Get()
   async list(@CurrentUser() user: User): Promise<unknown[]> {
-    const organisations = await this.organisations.listForMember(user.id);
+    const memberships = await this.organisations.listForMember(user.id);
 
-    return organisations.map((organisation) =>
-      this.serializer.organisation(organisation),
+    return memberships.map(({ organisation, role }) =>
+      this.serializer.organisation(organisation, role),
     );
   }
 
