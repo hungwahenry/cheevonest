@@ -15,6 +15,33 @@ export class BroadcastRules {
     private readonly systemConfig: SystemConfigService,
   ) {}
 
+  async quota(
+    event: Event,
+  ): Promise<{ used: number; limit: number; cooldownUntil: Date | null }> {
+    const [limit, cooldownMinutes, used, latest] = await Promise.all([
+      this.systemConfig.int('broadcasts.max_per_event', 3),
+      this.systemConfig.int('broadcasts.cooldown_minutes', 720),
+      this.prisma.broadcast.count({
+        where: { eventId: event.id, status: { in: [...COMMITTED_STATUSES] } },
+      }),
+      this.prisma.broadcast.findFirst({
+        where: { eventId: event.id, status: { in: [...COMMITTED_STATUSES] } },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    const cooldownUntil = latest
+      ? new Date(latest.createdAt.getTime() + cooldownMinutes * 60_000)
+      : null;
+
+    return {
+      used,
+      limit,
+      cooldownUntil:
+        cooldownUntil && cooldownUntil > new Date() ? cooldownUntil : null,
+    };
+  }
+
   async ensureWithinPerEventLimit(event: Event): Promise<void> {
     const limit = await this.systemConfig.int('broadcasts.max_per_event', 3);
 

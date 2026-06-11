@@ -31,20 +31,41 @@ export class OrganizerBroadcastsController {
     @Param('eventId') eventId: string,
     @Query() dto: ListBroadcastsDto,
     @CurrentUser() user: User,
-  ): Promise<Paginated<unknown>> {
+  ): Promise<ApiResult<unknown>> {
     const event = await this.events.findOrFail(eventId);
     await this.policy.ensureMember(event, user.id);
 
     const page = dto.page ?? 1;
     const perPage = Math.min(dto.per_page ?? 20, 50);
 
-    const result = await this.broadcasts.pageForEvent(event.id, page, perPage);
+    const [result, quota] = await Promise.all([
+      this.broadcasts.pageForEvent(event.id, page, perPage),
+      this.broadcasts.quota(event),
+    ]);
 
-    return new Paginated(
+    const paginated = new Paginated(
       result.items.map((broadcast) => this.serializer.broadcast(broadcast)),
       page,
       perPage,
       result.total,
+    );
+
+    return new ApiResult(
+      {
+        items: paginated.items,
+        page: paginated.page,
+        last_page: paginated.lastPage,
+        per_page: paginated.perPage,
+        total: paginated.total,
+      },
+      undefined,
+      {
+        quota: {
+          used: quota.used,
+          limit: quota.limit,
+          cooldown_until: quota.cooldownUntil?.toISOString() ?? null,
+        },
+      },
     );
   }
 
