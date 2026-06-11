@@ -7,6 +7,8 @@ import type {
 } from '../../../generated/prisma/client';
 import { PaymentProviderRegistry } from '../../payments/services/payment-provider-registry.service';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
+import { PayoutAccountLockedException } from '../exceptions/payout-account-locked.exception';
+import { IN_FLIGHT_PAYOUT_STATUSES } from '../payout.constants';
 import { BankResolverService } from './bank-resolver.service';
 
 @Injectable()
@@ -30,6 +32,8 @@ export class PayoutAccountsService {
     bankCode: string,
     accountNumber: string,
   ): Promise<PayoutAccount> {
+    await this.ensureNoInFlightPayout(organisation.id);
+
     const resolved = await this.resolver.resolve(accountNumber, bankCode);
     const bankName = await this.resolver.bankName(bankCode);
     const providerName = await this.systemConfig.string(
@@ -65,8 +69,23 @@ export class PayoutAccountsService {
   }
 
   async delete(organisationId: string): Promise<void> {
+    await this.ensureNoInFlightPayout(organisationId);
+
     await this.prisma.payoutAccount.deleteMany({
       where: { organisationId },
     });
+  }
+
+  private async ensureNoInFlightPayout(organisationId: string): Promise<void> {
+    const inFlight = await this.prisma.payout.count({
+      where: {
+        organisationId,
+        status: { in: [...IN_FLIGHT_PAYOUT_STATUSES] },
+      },
+    });
+
+    if (inFlight > 0) {
+      throw new PayoutAccountLockedException();
+    }
   }
 }

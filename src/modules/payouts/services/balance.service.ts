@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import type { Organisation } from '../../../generated/prisma/client';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
+import { IN_FLIGHT_PAYOUT_STATUSES } from '../payout.constants';
 
-const IN_FLIGHT_STATUSES = ['requested', 'approved', 'processing'] as const;
 
 export interface BalanceSummary {
   currency: string;
@@ -53,7 +53,7 @@ export class BalanceService {
       this.prisma.payout.aggregate({
         where: {
           organisationId: organisation.id,
-          status: { in: [...IN_FLIGHT_STATUSES] },
+          status: { in: [...IN_FLIGHT_PAYOUT_STATUSES] },
         },
         _sum: { amountMinor: true },
         _count: true,
