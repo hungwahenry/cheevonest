@@ -95,6 +95,17 @@ export class OrganizerIssuedTicketsController {
     );
   }
 
+  @Get('summary')
+  async summary(
+    @Param('eventId') eventId: string,
+    @CurrentUser() user: User,
+  ): Promise<unknown> {
+    const event = await this.events.findOrFail(eventId);
+    await this.policy.ensureMember(event, user.id);
+
+    return this.listing.checkInSummary(event.id);
+  }
+
   @Get(':ticketId')
   async show(
     @Param('eventId') eventId: string,

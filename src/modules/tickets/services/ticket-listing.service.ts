@@ -121,4 +121,22 @@ export class TicketListingService {
       include: ORGANIZER_TICKET_INCLUDE,
     });
   }
+
+  async checkInSummary(
+    eventId: string,
+  ): Promise<{ scanned: number; valid: number; revoked: number }> {
+    const rows = await this.prisma.issuedTicket.groupBy({
+      by: ['status'],
+      where: { eventId },
+      _count: { _all: true },
+    });
+
+    const counts = { scanned: 0, valid: 0, revoked: 0 };
+
+    for (const row of rows) {
+      counts[row.status] = row._count._all;
+    }
+
+    return counts;
+  }
 }
