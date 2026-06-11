@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Env } from '../../../config/env';
 import { ValidationFailedException } from '../../../common/exceptions/api.exception';
 import { PrismaService } from '../../../database/prisma.service';
 import type { StepUpFactor, User } from '../../../generated/prisma/client';
@@ -21,6 +23,7 @@ export class ChangeEmailAction implements StepUpActionContract {
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
     private readonly serializer: UserSerializer,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   async validate(user: User, payload: Record<string, unknown>): Promise<void> {
@@ -87,12 +90,12 @@ export class ChangeEmailAction implements StepUpActionContract {
   ): Omit<MailMessage, 'to'> {
     return factor.sortOrder === 0
       ? {
-          subject: 'Confirm your cheevo email change',
+          subject: `Confirm your ${this.config.get('APP_NAME', { infer: true })} email change`,
           template: 'change-email-current-otp',
           context: { code, ttlMinutes, newEmail: this.newEmail(payload) },
         }
       : {
-          subject: 'Confirm this is your new cheevo email',
+          subject: `Confirm this is your new ${this.config.get('APP_NAME', { infer: true })} email`,
           template: 'change-email-new-otp',
           context: { code, ttlMinutes },
         };

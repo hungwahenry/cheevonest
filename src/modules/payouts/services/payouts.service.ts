@@ -1,6 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ulid } from 'ulid';
+import { Env } from '../../../config/env';
 import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import type {
@@ -49,6 +51,7 @@ export class PayoutsService {
     private readonly fees: PayoutFeesService,
     private readonly features: FeatureFlagsService,
     private readonly emitter: EventEmitter2,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   async request(
@@ -206,7 +209,7 @@ export class PayoutsService {
       amountMinor: Number(payout.netMinor),
       currency: payout.currency,
       reference,
-      reason: `cheevo payout ${payout.id}`,
+      reason: `${this.config.get('APP_NAME', { infer: true })} payout ${payout.id}`,
       recipientCode: await this.ensureRecipientCode(payout.account, provider),
       bankCode: payout.bankCode,
       accountNumber: payout.accountNumber,

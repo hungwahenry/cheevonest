@@ -17,7 +17,10 @@ export class MailTemplatesService {
   private readonly defaults: Record<string, unknown>;
 
   constructor(config: ConfigService<Env, true>) {
-    this.defaults = { webUrl: config.get('WEB_URL', { infer: true }) };
+    this.defaults = {
+      webUrl: config.get('WEB_URL', { infer: true }),
+      appName: config.get('APP_NAME', { infer: true }),
+    };
     this.loadTemplates(join(__dirname, 'templates'));
   }
 

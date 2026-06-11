@@ -37,7 +37,7 @@ export class OnboardingController {
 
     return new ApiResult(
       this.serializer.user(loaded),
-      'Profile complete. Welcome to cheevo!',
+      'Profile complete. Welcome!',
     );
   }
 }

@@ -123,7 +123,7 @@ describe('Auth (e2e)', () => {
 
     expect(response.body).toMatchObject({
       status: 'success',
-      message: 'Welcome to cheevo!',
+      message: 'Welcome!',
       data: {
         is_new_user: true,
         user: {

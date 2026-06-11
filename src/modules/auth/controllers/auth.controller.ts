@@ -51,7 +51,7 @@ export class AuthController {
         }),
         is_new_user: session.isNewUser,
       },
-      session.isNewUser ? 'Welcome to cheevo!' : 'Welcome back!',
+      session.isNewUser ? 'Welcome!' : 'Welcome back!',
     );
   }
 

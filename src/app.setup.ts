@@ -67,7 +67,7 @@ export function setupSwagger(app: NestFastifyApplication): void {
   const builder = new DocumentBuilder()
     .setTitle(config.get<string>('APP_NAME') ?? 'cheevo')
     .setDescription(
-      'cheevo API — the social events platform. All responses use a consistent envelope: ' +
+      `${config.get<string>('APP_NAME') ?? 'cheevo'} API — the social events platform. All responses use a consistent envelope: ` +
         '{ status, message, data } on success and { status, message, code, errors } on error.',
     )
     .setVersion('0.0.1')

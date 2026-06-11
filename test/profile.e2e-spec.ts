@@ -109,7 +109,7 @@ describe('Onboarding & profile (e2e)', () => {
 
     expect(response.body).toMatchObject({
       status: 'success',
-      message: 'Profile complete. Welcome to cheevo!',
+      message: 'Profile complete. Welcome!',
       data: {
         onboarding_completed: true,
         profile: {

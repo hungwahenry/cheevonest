@@ -47,7 +47,7 @@ export class OtpService {
     if (reviewCode === null) {
       await this.mail.send({
         to: normalized,
-        subject: 'Your cheevo verification code',
+        subject: `Your ${this.config.get('APP_NAME', { infer: true })} verification code`,
         template: 'otp-code',
         context: { code, ttlMinutes },
       });

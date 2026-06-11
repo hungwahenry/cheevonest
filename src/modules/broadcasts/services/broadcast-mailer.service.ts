@@ -19,6 +19,7 @@ export interface BroadcastMailInput {
 @Injectable()
 export class BroadcastMailerService {
   private readonly fromAddress: string;
+  private readonly appName: string;
 
   constructor(
     private readonly mail: MailService,
@@ -26,6 +27,7 @@ export class BroadcastMailerService {
     config: ConfigService<Env, true>,
   ) {
     this.fromAddress = config.get('BROADCASTS_FROM_ADDRESS', { infer: true });
+    this.appName = config.get('APP_NAME', { infer: true });
   }
 
   async send(input: BroadcastMailInput): Promise<void> {
@@ -43,7 +45,7 @@ export class BroadcastMailerService {
         bodyText: input.bodyText,
         unsubscribeUrl,
       },
-      from: `${orgName} via cheevo <${this.fromAddress}>`,
+      from: `${orgName} via ${this.appName} <${this.fromAddress}>`,
       replyTo: input.organisation.contactEmail ?? this.fromAddress,
       headers: {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
