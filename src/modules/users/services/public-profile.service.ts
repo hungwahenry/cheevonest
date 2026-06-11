@@ -48,7 +48,7 @@ export class PublicProfileService {
       this.prisma.organisation.findMany({
         where,
         include: { category: true },
-        orderBy: { name: 'asc' },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),
@@ -68,7 +68,7 @@ export class PublicProfileService {
       this.prisma.event.findMany({
         where,
         include: { organisation: true },
-        orderBy: { endsAt: 'desc' },
+        orderBy: [{ endsAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),

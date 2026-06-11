@@ -49,6 +49,7 @@ export class TicketListingService {
         orderBy: [
           { event: { startsAt: { sort: 'desc', nulls: 'last' } } },
           { createdAt: 'desc' },
+          { id: 'desc' },
         ],
         skip: (options.page - 1) * options.perPage,
         take: options.perPage,
@@ -105,7 +106,7 @@ export class TicketListingService {
       this.prisma.issuedTicket.findMany({
         where,
         include: ORGANIZER_TICKET_INCLUDE,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (options.page - 1) * options.perPage,
         take: options.perPage,
       }),

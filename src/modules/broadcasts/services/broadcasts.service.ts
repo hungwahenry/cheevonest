@@ -125,7 +125,7 @@ export class BroadcastsService {
       this.prisma.broadcast.count({ where }),
       this.prisma.broadcast.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),

@@ -40,7 +40,7 @@ export class AdminPayoutsService {
       this.prisma.payout.findMany({
         where,
         include: ADMIN_PAYOUT_INCLUDE,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (filters.page - 1) * filters.perPage,
         take: filters.perPage,
       }),

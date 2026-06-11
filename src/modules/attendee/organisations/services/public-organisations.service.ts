@@ -61,7 +61,9 @@ export class PublicOrganisationsService {
         where,
         include: { organisation: true },
         orderBy:
-          status === 'published' ? { startsAt: 'asc' } : { endsAt: 'desc' },
+          status === 'published'
+            ? [{ startsAt: 'asc' }, { id: 'asc' }]
+            : [{ endsAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),

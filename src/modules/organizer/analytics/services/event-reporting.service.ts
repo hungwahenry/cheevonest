@@ -38,7 +38,7 @@ export class EventReportingService {
       this.prisma.order.findMany({
         where,
         include: EVENT_ORDER_INCLUDE,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (options.page - 1) * options.perPage,
         take: options.perPage,
       }),
@@ -65,7 +65,7 @@ export class EventReportingService {
       this.prisma.eventRsvp.findMany({
         where,
         include: EVENT_RSVP_INCLUDE,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { userId: 'desc' }],
         skip: (options.page - 1) * options.perPage,
         take: options.perPage,
       }),

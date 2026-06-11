@@ -18,7 +18,7 @@ export class InboxService {
       this.prisma.notification.count({ where }),
       this.prisma.notification.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),

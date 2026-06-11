@@ -308,7 +308,7 @@ export class PayoutsService {
       this.prisma.payout.count({ where }),
       this.prisma.payout.findMany({
         where,
-        orderBy: { requestedAt: 'desc' },
+        orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),

@@ -121,7 +121,7 @@ export class BlocksService {
       this.prisma.block.count({ where }),
       this.prisma.block.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { blockableId: 'desc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),

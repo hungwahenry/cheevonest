@@ -105,7 +105,7 @@ export class EventsService {
       this.prisma.event.findMany({
         where,
         include: EVENT_RESOURCE_INCLUDE,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (options.page - 1) * options.perPage,
         take: options.perPage,
       }),

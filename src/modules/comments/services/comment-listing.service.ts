@@ -91,7 +91,7 @@ export class CommentListingService {
       this.prisma.eventComment.findMany({
         where,
         include: COMMENT_RESOURCE_INCLUDE,
-        orderBy: { createdAt: 'asc' },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),
@@ -120,7 +120,7 @@ export class CommentListingService {
       this.prisma.eventComment.findMany({
         where,
         include: { event: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),
