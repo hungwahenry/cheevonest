@@ -1,8 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsEmail, Matches, MaxLength } from 'class-validator';
+import { OTP_LENGTH } from '../otp.constants';
 import { lowercaseTrim } from './send-otp.dto';
-
-const OTP_LENGTH = Number(process.env.OTP_LENGTH ?? 6);
 
 export class VerifyOtpDto {
   @Transform(lowercaseTrim)

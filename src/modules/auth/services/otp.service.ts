@@ -6,6 +6,7 @@ import { ulid } from 'ulid';
 import { Env } from '../../../config/env';
 import { PrismaService } from '../../../database/prisma.service';
 import { MailService } from '../../../integrations/mail/mail.service';
+import { OTP_LENGTH } from '../otp.constants';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import { OtpExpiredException } from '../exceptions/otp-expired.exception';
 import { OtpInvalidException } from '../exceptions/otp-invalid.exception';
@@ -117,13 +118,9 @@ export class OtpService {
   }
 
   private async generateCode(): Promise<string> {
-    const length = await this.systemConfig.int(
-      'auth.otp_length',
-      this.config.get('OTP_LENGTH', { infer: true }),
-    );
-    const max = 10 ** length;
+    const max = 10 ** OTP_LENGTH;
 
-    return String(randomInt(0, max)).padStart(length, '0');
+    return String(randomInt(0, max)).padStart(OTP_LENGTH, '0');
   }
 
   private normalize(email: string): string {

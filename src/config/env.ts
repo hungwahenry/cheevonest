@@ -31,7 +31,6 @@ const envSchema = z.object({
   MAIL_FROM_NAME: z.string().default('cheevo'),
   RESEND_API_KEY: z.string().optional(),
 
-  OTP_LENGTH: z.coerce.number().int().positive().default(6),
   OTP_TTL_MINUTES: z.coerce.number().int().positive().default(10),
   OTP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   OTP_RESEND_COOLDOWN_SECONDS: z.coerce

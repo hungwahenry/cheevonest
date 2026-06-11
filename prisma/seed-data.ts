@@ -70,7 +70,6 @@ export const SYSTEM_CONFIGS: ReadonlyArray<SystemConfigSeed> = [
   { key: 'feed.recency_bonus_30d', group: 'feed', type: 'decimal', default: 0.4, description: 'Score multiplier for events published within 30 days.' },
   { key: 'feed.geo_distance_scale_km', group: 'feed', type: 'decimal', default: 50.0, description: 'Distance decay scale (km) for geo scoring.' },
 
-  { key: 'auth.otp_length', group: 'auth', type: 'int', default: 6, description: 'OTP code length (digits).', isPublic: true },
   { key: 'auth.otp_ttl_minutes', group: 'auth', type: 'int', default: 10, description: 'OTP validity duration (minutes).', isPublic: true },
   { key: 'auth.otp_max_attempts', group: 'auth', type: 'int', default: 5, description: 'Max failed OTP attempts before expiry.', isPublic: true },
   { key: 'auth.otp_resend_cooldown_seconds', group: 'auth', type: 'int', default: 60, description: 'Cooldown between OTP resend requests.', isPublic: true },
