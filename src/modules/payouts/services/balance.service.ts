@@ -11,6 +11,7 @@ export interface BalanceSummary {
   pending_minor: number;
   paid_out_minor: number;
   hold_window_days: number;
+  has_in_flight_payout: boolean;
   per_event: Array<{
     event_id: string;
     title: string;
@@ -55,6 +56,7 @@ export class BalanceService {
           status: { in: [...IN_FLIGHT_STATUSES] },
         },
         _sum: { amountMinor: true },
+        _count: true,
       }),
       this.prisma.payout.aggregate({
         where: { organisationId: organisation.id, status: 'paid' },
@@ -77,6 +79,7 @@ export class BalanceService {
       pending_minor: unsettledMinor + inFlightMinor,
       paid_out_minor: paidOutMinor,
       hold_window_days: holdDays,
+      has_in_flight_payout: inFlight._count > 0,
       per_event: events.map((event) => ({
         event_id: event.id,
         title: event.title,
