@@ -39,7 +39,7 @@ export class BankResolverService {
       return [];
     }
 
-    const banks = (Array.isArray(payload) ? payload : []).flatMap((bank) =>
+    const parsed = (Array.isArray(payload) ? payload : []).flatMap((bank) =>
       typeof bank === 'object' && bank !== null
         ? [
             {
@@ -50,6 +50,15 @@ export class BankResolverService {
           ]
         : [],
     );
+
+    const seen = new Set<string>();
+    const banks = parsed.filter((bank) => {
+      if (bank.code === '' || seen.has(bank.code)) {
+        return false;
+      }
+      seen.add(bank.code);
+      return true;
+    });
 
     this.banksCache = { fetchedAt: Date.now(), banks };
 
