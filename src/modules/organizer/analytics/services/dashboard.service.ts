@@ -202,6 +202,7 @@ export class DashboardService {
         tickets_sold: row._sum.itemsQuantityTotal ?? 0,
         flyer_url:
           event?.flyerPath != null ? this.storage.url(event.flyerPath) : null,
+        flyer_type: event?.flyerType ?? null,
         share_pct: total > 0 ? Math.round((revenue / total) * 1000) / 10 : 0.0,
       };
     });
