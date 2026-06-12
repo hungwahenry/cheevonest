@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Env } from '../../../config/env';
 import { PrismaService } from '../../../database/prisma.service';
 import type { User } from '../../../generated/prisma/client';
-import { UserSerializer } from '../../users/serializers/user.serializer';
+import { UserSerializer } from '../serializers/user.serializer';
 
 @Injectable()
 export class DataExportService {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch } from '@nestjs/common';
+import { Body, Controller, Patch } from '@nestjs/common';
 import { ApiResult } from '../../../common/responses/api-result';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
@@ -7,7 +7,6 @@ import { InterestsService } from '../interests/interests.service';
 import { InterestRules } from '../interests/rules/interest.rules';
 import { UpdateInterestsDto } from './dto/update-interests.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { DataExportService } from './data-export.service';
 import { ProfileService } from './profile.service';
 
 @Controller('attendee')
@@ -17,7 +16,6 @@ export class ProfileController {
     private readonly interests: InterestsService,
     private readonly interestRules: InterestRules,
     private readonly serializer: UserSerializer,
-    private readonly exports: DataExportService,
   ) {}
 
   @Patch('profile')
@@ -47,10 +45,5 @@ export class ProfileController {
       interests.map((interest) => this.serializer.interest(interest)),
       'Interests updated.',
     );
-  }
-
-  @Get('data-export')
-  async dataExport(@CurrentUser() user: User): Promise<unknown> {
-    return this.exports.build(user);
   }
 }

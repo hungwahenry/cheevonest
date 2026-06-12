@@ -414,7 +414,7 @@ describe('Organizer analytics & exports (e2e)', () => {
 
   it('returns the attendee data export', async () => {
     const response = await request(server())
-      .get('/api/v1/attendee/data-export')
+      .get('/api/v1/data-export')
       .set('Authorization', auth(buyerToken))
       .expect(200);
 
