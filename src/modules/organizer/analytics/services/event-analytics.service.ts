@@ -53,8 +53,9 @@ export class EventAnalyticsService {
     const byDay = new Map(rows.map((row) => [row.day, row]));
 
     const days: Array<Record<string, unknown>> = [];
-    const cursor = new Date(from);
-    cursor.setHours(0, 0, 0, 0);
+    const cursor = new Date(
+      Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()),
+    );
     const now = new Date();
 
     while (cursor <= now) {
@@ -67,7 +68,7 @@ export class EventAnalyticsService {
         revenue_minor: Number(row?.revenue_minor ?? 0n),
       });
 
-      cursor.setDate(cursor.getDate() + 1);
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
     return days;

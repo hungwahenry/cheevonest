@@ -10,7 +10,9 @@ import { SKIP_ENVELOPE_KEY } from '../decorators/api-response.decorators';
 import { ApiResult } from '../responses/api-result';
 import { Paginated } from '../responses/paginated';
 
-function serializePaginated(value: Paginated<unknown>): Record<string, unknown> {
+function serializePaginated(
+  value: Paginated<unknown>,
+): Record<string, unknown> {
   return {
     items: value.items,
     page: value.page,

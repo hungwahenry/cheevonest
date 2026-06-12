@@ -270,11 +270,15 @@ describe('Organizer analytics & exports (e2e)', () => {
     ).data;
 
     expect(data.currency).toBe('NGN');
-    expect(data.daily_series.at(-1)).toMatchObject({
+    expect(
+      data.daily_series.some(
+        (day) => day.tickets_sold === 2 && day.revenue_minor === 600000,
+      ),
+    ).toBe(true);
+    expect(data.cumulative_series.at(-1)).toMatchObject({
       tickets_sold: 2,
       revenue_minor: 600000,
     });
-    expect(data.cumulative_series.at(-1)).toMatchObject({ tickets_sold: 2 });
     expect(data.top_cities).toEqual([{ city: 'Lagos', buyers_count: 1 }]);
   });
 

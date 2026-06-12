@@ -102,13 +102,16 @@ export class PlacesService {
       ? `?${new URLSearchParams({ sessionToken }).toString()}`
       : '';
 
-    const response = await fetch(`${DETAILS_URL}${encodeURIComponent(placeId)}${query}`, {
-      headers: {
-        'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask':
-          'id,displayName,formattedAddress,location,addressComponents',
+    const response = await fetch(
+      `${DETAILS_URL}${encodeURIComponent(placeId)}${query}`,
+      {
+        headers: {
+          'X-Goog-Api-Key': key,
+          'X-Goog-FieldMask':
+            'id,displayName,formattedAddress,location,addressComponents',
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       return null;

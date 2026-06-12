@@ -30,7 +30,7 @@ export class OtpService {
     await this.prisma.otpCode.deleteMany({ where: { email: normalized } });
 
     const reviewCode = this.reviewCodeFor(normalized);
-    const code = reviewCode ?? (await this.generateCode());
+    const code = reviewCode ?? this.generateCode();
     const ttlMinutes = await this.systemConfig.int(
       'auth.otp_ttl_minutes',
       this.config.get('OTP_TTL_MINUTES', { infer: true }),
@@ -117,7 +117,7 @@ export class OtpService {
     }
   }
 
-  private async generateCode(): Promise<string> {
+  private generateCode(): string {
     const max = 10 ** OTP_LENGTH;
 
     return String(randomInt(0, max)).padStart(OTP_LENGTH, '0');

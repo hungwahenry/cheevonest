@@ -40,9 +40,10 @@ export class DashboardService {
     const days = RANGE_DAYS[range];
 
     const now = new Date();
-    const currentFrom = new Date(now);
-    currentFrom.setDate(currentFrom.getDate() - (days - 1));
-    currentFrom.setHours(0, 0, 0, 0);
+    const currentFrom = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) -
+        (days - 1) * 86_400_000,
+    );
     const previousFrom = new Date(currentFrom.getTime() - days * 86_400_000);
     const previousTo = new Date(currentFrom.getTime() - 1000);
 
@@ -144,7 +145,7 @@ export class DashboardService {
         rsvps: rsvp?.rsvps ?? 0,
       });
 
-      cursor.setDate(cursor.getDate() + 1);
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
     return days;

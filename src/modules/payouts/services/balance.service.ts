@@ -4,7 +4,6 @@ import type { Organisation } from '../../../generated/prisma/client';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import { IN_FLIGHT_PAYOUT_STATUSES } from '../payout.constants';
 
-
 export interface BalanceSummary {
   currency: string;
   available_minor: number;

@@ -11,7 +11,8 @@ import { PreferenceCell } from '../services/notification-preferences.service';
 export class NotificationSerializer {
   inboxItem(notification: Notification): Record<string, unknown> {
     const raw = (notification.data ?? {}) as Record<string, unknown>;
-    const { title = null, body = null, type: _type, ...payload } = raw;
+    const { title = null, body = null, ...payload } = raw;
+    delete payload.type;
 
     return {
       id: notification.id,
