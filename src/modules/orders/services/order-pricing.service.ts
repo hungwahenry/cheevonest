@@ -5,8 +5,12 @@ import { SystemConfigService } from '../../platform/system-config/system-config.
 export class OrderPricingService {
   constructor(private readonly systemConfig: SystemConfigService) {}
 
-  /** Hybrid platform fee: percentage of subtotal (basis points) plus a flat amount, in minor units. */
+  /** Hybrid platform fee: percentage of subtotal (basis points) plus a flat amount, in minor units. Free orders incur no fee. */
   async fees(subtotalMinor: number): Promise<number> {
+    if (subtotalMinor === 0) {
+      return 0;
+    }
+
     const bps = await this.systemConfig.int('orders.fee_percentage_bps', 300);
     const flat = await this.systemConfig.int('orders.fee_flat_minor', 10000);
 
