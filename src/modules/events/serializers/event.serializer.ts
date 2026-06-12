@@ -167,6 +167,7 @@ export class EventSerializer {
       valid_from: ticket.validFrom?.toISOString() ?? null,
       valid_to: ticket.validTo?.toISOString() ?? null,
       max_per_order: ticket.maxPerOrder,
+      max_per_user: ticket.maxPerUser,
     };
   }
 

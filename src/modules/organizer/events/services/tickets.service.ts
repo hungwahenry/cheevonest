@@ -54,6 +54,7 @@ export class TicketsService {
           validFrom: dates.validFrom ?? null,
           validTo: dates.validTo ?? null,
           maxPerOrder: dto.max_per_order ?? null,
+          maxPerUser: dto.max_per_user ?? null,
           sortOrder: (maxSort._max.sortOrder ?? 0) + 1,
         },
       });
@@ -89,6 +90,7 @@ export class TicketsService {
     if (dto.valid_from !== undefined) data.validFrom = dates.validFrom;
     if (dto.valid_to !== undefined) data.validTo = dates.validTo;
     if (dto.max_per_order !== undefined) data.maxPerOrder = dto.max_per_order;
+    if (dto.max_per_user !== undefined) data.maxPerUser = dto.max_per_user;
 
     const affectsAggregates =
       dto.gross_price !== undefined ||

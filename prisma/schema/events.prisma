@@ -91,6 +91,7 @@ model EventTicket {
   validFrom     DateTime?    @map("valid_from") @db.Timestamptz(6)
   validTo       DateTime?    @map("valid_to") @db.Timestamptz(6)
   maxPerOrder   Int?         @map("max_per_order")
+  maxPerUser    Int?         @map("max_per_user")
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
 

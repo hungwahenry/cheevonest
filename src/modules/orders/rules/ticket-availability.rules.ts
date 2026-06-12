@@ -3,6 +3,7 @@ import { Prisma } from '../../../generated/prisma/client';
 import type { EventTicket } from '../../../generated/prisma/client';
 import { TicketMaxPerOrderExceededException } from '../exceptions/ticket-max-per-order-exceeded.exception';
 import { TicketNotOnSaleException } from '../exceptions/ticket-not-on-sale.exception';
+import { TicketPerUserLimitExceededException } from '../exceptions/ticket-per-user-limit-exceeded.exception';
 import { TicketSalesEndedException } from '../exceptions/ticket-sales-ended.exception';
 import { TicketSalesNotStartedException } from '../exceptions/ticket-sales-not-started.exception';
 import { TicketSoldOutException } from '../exceptions/ticket-sold-out.exception';
@@ -17,6 +18,7 @@ export class TicketAvailabilityRules {
     ticket: EventTicket | null,
     quantity: number,
     now: Date,
+    userId: string,
   ): Promise<EventTicket> {
     if (ticket === null) {
       throw new UnknownTicketException();
@@ -31,6 +33,17 @@ export class TicketAvailabilityRules {
         ticket.name,
         ticket.maxPerOrder,
       );
+    }
+
+    if (ticket.maxPerUser !== null) {
+      const owned = await this.ownedByUser(tx, ticket.id, userId, now);
+
+      if (owned + quantity > ticket.maxPerUser) {
+        throw new TicketPerUserLimitExceededException(
+          ticket.name,
+          ticket.maxPerUser,
+        );
+      }
     }
 
     if (ticket.salesStartsAt !== null && ticket.salesStartsAt > now) {
@@ -62,5 +75,31 @@ export class TicketAvailabilityRules {
     }
 
     return ticket;
+  }
+
+  private async ownedByUser(
+    tx: Prisma.TransactionClient,
+    ticketId: string,
+    userId: string,
+    now: Date,
+  ): Promise<number> {
+    const issued = await tx.issuedTicket.count({
+      where: {
+        eventTicketId: ticketId,
+        holderUserId: userId,
+        status: { in: ['valid', 'scanned'] },
+      },
+    });
+
+    const held = await tx.ticketHold.aggregate({
+      where: {
+        eventTicketId: ticketId,
+        expiresAt: { gt: now },
+        order: { userId },
+      },
+      _sum: { quantity: true },
+    });
+
+    return issued + (held._sum.quantity ?? 0);
   }
 }

@@ -98,6 +98,7 @@ export class OrdersService {
           found,
           item.quantity,
           now,
+          user.id,
         );
 
         const lineSubtotal = ticket.grossPrice * item.quantity;

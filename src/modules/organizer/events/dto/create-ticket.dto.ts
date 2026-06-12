@@ -69,4 +69,11 @@ export class CreateTicketDto {
   @Min(1)
   @Max(100)
   max_per_order?: number | null;
+
+  @IsOptional()
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  @Max(100000)
+  max_per_user?: number | null;
 }
