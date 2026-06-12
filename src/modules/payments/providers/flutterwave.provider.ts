@@ -55,7 +55,7 @@ export class FlutterwaveProvider implements PaymentProvider {
 
   async verify(lookupKey: string): Promise<VerifiedPayment> {
     const data = await this.request(
-      `/transactions/${encodeURIComponent(lookupKey)}/verify`,
+      `/transactions/verify_by_reference?tx_ref=${encodeURIComponent(lookupKey)}`,
       { method: 'GET' },
     );
 
