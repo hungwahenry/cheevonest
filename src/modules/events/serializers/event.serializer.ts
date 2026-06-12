@@ -35,6 +35,7 @@ export interface AttendeeEventFlags {
   isRsvped: boolean;
   isMuted: boolean;
   interestOverlap: number;
+  ownedByTicket: Map<string, number>;
 }
 
 @Injectable()
@@ -114,7 +115,10 @@ export class EventSerializer {
       organisation: this.organisations.organisation(event.organisation),
       images: event.images.map((image) => this.image(image)),
       features: event.features.map((feature) => this.feature(feature)),
-      tickets: event.tickets.map((ticket) => this.ticket(ticket)),
+      tickets: event.tickets.map((ticket) => ({
+        ...this.ticket(ticket),
+        owned_by_me: flags.ownedByTicket.get(ticket.id) ?? 0,
+      })),
       is_subscribed: flags.isSubscribed,
       is_rsvped: flags.isRsvped,
       is_muted: flags.isMuted,
