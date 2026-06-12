@@ -10,10 +10,15 @@ import { PreferenceCell } from '../services/notification-preferences.service';
 @Injectable()
 export class NotificationSerializer {
   inboxItem(notification: Notification): Record<string, unknown> {
+    const raw = (notification.data ?? {}) as Record<string, unknown>;
+    const { title = null, body = null, type: _type, ...payload } = raw;
+
     return {
       id: notification.id,
       type: notification.type,
-      data: notification.data,
+      title,
+      body,
+      data: payload,
       read_at: notification.readAt?.toISOString() ?? null,
       created_at: notification.createdAt.toISOString(),
     };

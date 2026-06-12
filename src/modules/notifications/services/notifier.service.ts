@@ -35,6 +35,10 @@ export class NotifierService {
     const inappRows: Prisma.NotificationCreateManyInput[] = [];
     const pushMessages: ExpoPushMessage[] = [];
     const data = { type: message.type, ...message.data() };
+    const push = message.push();
+    const inappData = push
+      ? { ...data, title: push.title, body: push.body }
+      : data;
 
     for (const user of users) {
       let channels = await this.preferences.channelsFor(user.id, message.type);
@@ -48,12 +52,12 @@ export class NotifierService {
           id: ulid(),
           userId: user.id,
           type: message.type,
-          data: data,
+          data: inappData,
         });
       }
 
       if (channels.includes('push') && user.expoPushTokens.length > 0) {
-        const payload = message.push();
+        const payload = push;
 
         if (
           payload &&
