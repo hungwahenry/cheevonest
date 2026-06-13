@@ -24,6 +24,31 @@ export class PublicProfileService {
     return user;
   }
 
+  /** Like findCompletedOrFail, but hidden from viewers the owner has blocked. */
+  async findVisibleOrFail(
+    userId: string,
+    viewerId: string,
+  ): Promise<CompletedUser> {
+    const user = await this.findCompletedOrFail(userId);
+
+    const blocked = await this.prisma.block.findUnique({
+      where: {
+        blockerUserId_blockableType_blockableId: {
+          blockerUserId: userId,
+          blockableType: 'user',
+          blockableId: viewerId,
+        },
+      },
+      select: { blockerUserId: true },
+    });
+
+    if (blocked) {
+      throw new NotFoundException();
+    }
+
+    return user;
+  }
+
   async interests(userId: string) {
     const pivot = await this.prisma.interestUser.findMany({
       where: { userId },

@@ -34,7 +34,7 @@ export class PublicUsersController {
     @Param('userId') userId: string,
     @CurrentUser() viewer: User,
   ): Promise<unknown> {
-    const user = await this.profiles.findCompletedOrFail(userId);
+    const user = await this.profiles.findVisibleOrFail(userId, viewer.id);
 
     return this.userSerializer.publicUser(
       user,
@@ -43,8 +43,11 @@ export class PublicUsersController {
   }
 
   @Get(':userId/interests')
-  async interests(@Param('userId') userId: string): Promise<unknown[]> {
-    const user = await this.profiles.findCompletedOrFail(userId);
+  async interests(
+    @Param('userId') userId: string,
+    @CurrentUser() viewer: User,
+  ): Promise<unknown[]> {
+    const user = await this.profiles.findVisibleOrFail(userId, viewer.id);
     const interests = await this.profiles.interests(user.id);
 
     return interests.map((interest) => this.userSerializer.interest(interest));
@@ -54,8 +57,9 @@ export class PublicUsersController {
   async organisations(
     @Param('userId') userId: string,
     @Query() dto: PublicPageDto,
+    @CurrentUser() viewer: User,
   ): Promise<Paginated<unknown>> {
-    const user = await this.profiles.findCompletedOrFail(userId);
+    const user = await this.profiles.findVisibleOrFail(userId, viewer.id);
     const page = dto.page ?? 1;
     const perPage = 20;
 
@@ -79,8 +83,9 @@ export class PublicUsersController {
   async attendedEvents(
     @Param('userId') userId: string,
     @Query() dto: PublicPageDto,
+    @CurrentUser() viewer: User,
   ): Promise<Paginated<unknown>> {
-    const user = await this.profiles.findCompletedOrFail(userId);
+    const user = await this.profiles.findVisibleOrFail(userId, viewer.id);
     const page = dto.page ?? 1;
     const perPage = 20;
 

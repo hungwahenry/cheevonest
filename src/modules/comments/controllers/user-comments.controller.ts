@@ -3,6 +3,8 @@ import { Transform } from 'class-transformer';
 import { IsInt, IsOptional, Min } from 'class-validator';
 import { Paginated } from '../../../common/responses/paginated';
 import { toNumber } from '../../../common/validation/transforms';
+import type { User } from '../../../generated/prisma/client';
+import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { PublicProfileService } from '../../users/services/public-profile.service';
 import { CommentSerializer } from '../serializers/comment.serializer';
 import { CommentListingService } from '../services/comment-listing.service';
@@ -27,8 +29,9 @@ export class UserCommentsController {
   async list(
     @Param('userId') userId: string,
     @Query() dto: UserCommentsPageDto,
+    @CurrentUser() viewer: User,
   ): Promise<Paginated<unknown>> {
-    await this.profiles.findCompletedOrFail(userId);
+    await this.profiles.findVisibleOrFail(userId, viewer.id);
 
     const page = dto.page ?? 1;
     const perPage = 20;
