@@ -219,40 +219,7 @@ export class EventManagerService {
       throw new CannotDeleteWithSalesException();
     }
 
-    const [images, features] = await Promise.all([
-      this.prisma.eventImage.findMany({
-        where: { eventId: event.id },
-        select: { path: true },
-      }),
-      this.prisma.eventFeature.findMany({
-        where: { eventId: event.id },
-        select: { imagePath: true },
-      }),
-    ]);
-
-    if (event.flyerPath !== null) {
-      await this.storage.delete(event.flyerPath);
-    }
-
-    for (const image of images) {
-      await this.storage.delete(image.path);
-    }
-
-    for (const feature of features) {
-      if (feature.imagePath !== null) {
-        await this.storage.delete(feature.imagePath);
-      }
-    }
-
-    await this.searchIndexer.deindex('event', event.id);
-
-    await this.prisma.$transaction([
-      this.prisma.event.delete({ where: { id: event.id } }),
-      this.prisma.organisation.update({
-        where: { id: event.organisationId },
-        data: { eventsCount: { decrement: 1 } },
-      }),
-    ]);
+    await this.events.purge(event);
   }
 
   async uniqueSlug(title: string): Promise<string> {

@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { StorageService } from '../../integrations/storage/storage.service';
+import { SearchIndexerService } from '../search/services/search-indexer.service';
 import { Prisma } from '../../generated/prisma/client';
 import type { Event, EventStatus, User } from '../../generated/prisma/client';
 import { ORGANISATION_RESOURCE_INCLUDE } from '../organisations/organisations.service';
@@ -20,7 +22,51 @@ export type EventForResource = Prisma.EventGetPayload<{
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+    private readonly searchIndexer: SearchIndexerService,
+  ) {}
+
+  /** Removes an event and all side effects: stored media, search index, org counter. */
+  async purge(event: Event): Promise<void> {
+    const [images, features] = await Promise.all([
+      this.prisma.eventImage.findMany({
+        where: { eventId: event.id },
+        select: { path: true },
+      }),
+      this.prisma.eventFeature.findMany({
+        where: { eventId: event.id },
+        select: { imagePath: true },
+      }),
+    ]);
+
+    if (event.flyerPath !== null) {
+      await this.storage.delete(event.flyerPath);
+    }
+    for (const image of images) {
+      await this.storage.delete(image.path);
+    }
+    for (const feature of features) {
+      if (feature.imagePath !== null) {
+        await this.storage.delete(feature.imagePath);
+      }
+    }
+
+    await this.searchIndexer.deindex('event', event.id);
+
+    await this.prisma.$transaction(async (tx) => {
+      // Orders + issued tickets first: order_items hold a RESTRICT FK to
+      // event_tickets, so the event cascade can't drop tickets until these go.
+      await tx.order.deleteMany({ where: { eventId: event.id } });
+      await tx.issuedTicket.deleteMany({ where: { eventId: event.id } });
+      await tx.event.delete({ where: { id: event.id } });
+      await tx.organisation.update({
+        where: { id: event.organisationId },
+        data: { eventsCount: { decrement: 1 } },
+      });
+    });
+  }
 
   async findOrFail(id: string): Promise<Event> {
     const event = await this.prisma.event.findUnique({ where: { id } });

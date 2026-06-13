@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
-import { Observable, tap } from 'rxjs';
+import { from, mergeMap, Observable } from 'rxjs';
 import type { User } from '../../../generated/prisma/client';
 import { AUDIT_ACTION_KEY } from './audit-action.decorator';
 import { AuditService } from './audit.service';
@@ -31,7 +31,10 @@ export class AuditInterceptor implements NestInterceptor {
     private readonly audit: AuditService,
   ) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler<unknown>,
+  ): Observable<unknown> {
     const action = this.reflector.get<string | undefined>(
       AUDIT_ACTION_KEY,
       context.getHandler(),
@@ -43,11 +46,12 @@ export class AuditInterceptor implements NestInterceptor {
 
     const request = context.switchToHttp().getRequest<AuditableRequest>();
 
-    // Only record after the handler succeeds (no audit row for a failed mutation).
+    // Record after the handler succeeds (no audit row for a failed mutation),
+    // and await the write so the audit trail is durable before we respond.
     return next.handle().pipe(
-      tap(() => {
+      mergeMap((value: unknown) => {
         if (!request.user) {
-          return;
+          return from(Promise.resolve(value));
         }
 
         const target = request.auditTarget ?? {};
@@ -56,7 +60,7 @@ export class AuditInterceptor implements NestInterceptor {
           target.reason ??
           (typeof body.reason === 'string' ? body.reason : null);
 
-        void this.audit.record({
+        const write = this.audit.record({
           adminUserId: request.user.id,
           action,
           targetType: target.targetType ?? null,
@@ -70,6 +74,8 @@ export class AuditInterceptor implements NestInterceptor {
           userAgent: request.headers['user-agent'] ?? null,
           requestId: String(request.id),
         });
+
+        return from(write.then(() => value));
       }),
     );
   }

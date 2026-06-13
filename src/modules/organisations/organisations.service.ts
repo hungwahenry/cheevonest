@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { SearchIndexerService } from '../search/services/search-indexer.service';
 import { Prisma } from '../../generated/prisma/client';
 import type {
   Organisation,
@@ -20,7 +21,25 @@ export type OrganisationForResource = Prisma.OrganisationGetPayload<{
 
 @Injectable()
 export class OrganisationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly searchIndexer: SearchIndexerService,
+  ) {}
+
+  /** Deindexes the org and its events from search, then cascade-deletes everything. */
+  async purge(organisationId: string): Promise<void> {
+    const events = await this.prisma.event.findMany({
+      where: { organisationId },
+      select: { id: true },
+    });
+
+    await this.searchIndexer.deindex('organisation', organisationId);
+    for (const event of events) {
+      await this.searchIndexer.deindex('event', event.id);
+    }
+
+    await this.prisma.organisation.delete({ where: { id: organisationId } });
+  }
 
   async findOrFail(id: string): Promise<Organisation> {
     const organisation = await this.prisma.organisation.findUnique({
