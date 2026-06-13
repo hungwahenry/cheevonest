@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { ulid } from 'ulid';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { upsertSearchDocument } from '../src/generated/prisma/sql';
 
 const CITIES = [
   'Lagos',
@@ -107,6 +108,23 @@ async function main(): Promise<void> {
     });
   }
   console.log(`Interests attached to ${buyers.length} buyers.`);
+
+  for (const buyer of buyers) {
+    const profile = buyer.profile;
+    if (!profile) continue;
+
+    const displayName = `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim();
+    await prisma.$queryRawTyped(
+      upsertSearchDocument(
+        'user',
+        buyer.id,
+        `${profile.username ?? ''} ${displayName}`.trim(),
+        '',
+        profile.city ?? '',
+      ),
+    );
+  }
+  console.log(`Indexed ${buyers.length} buyers for search.`);
 
   const events = await prisma.event.findMany({
     where: { organisationId: organisation.id, status: { in: ['published', 'past'] } },
