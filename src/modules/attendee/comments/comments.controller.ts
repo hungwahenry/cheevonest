@@ -9,11 +9,8 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
 import { ApiResult } from '../../../common/responses/api-result';
 import { Paginated } from '../../../common/responses/paginated';
-import { toNumber } from '../../../common/validation/transforms';
 import type { Event, User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { CommentsPolicy } from '../../comments/comments.policy';
@@ -22,20 +19,7 @@ import { CommentListingService } from '../../comments/services/comment-listing.s
 import { CommentsService } from '../../comments/services/comments.service';
 import { EventsService } from '../../events/events.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
-
-class CommentsPageDto {
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  per_page?: number;
-
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  page?: number;
-}
+import { CommentsPageDto } from './dto/list-comments.dto';
 
 @Controller('attendee/events/:eventId/comments')
 export class AttendeeCommentsController {

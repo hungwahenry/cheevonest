@@ -1,27 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { PlaceNotFoundException } from './exceptions/place-not-found.exception';
 import { PlacesService } from './places.service';
-
-class SearchPlacesDto {
-  @IsString()
-  @MinLength(2)
-  @MaxLength(200)
-  query!: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(64)
-  session_token?: string | null;
-}
-
-class PlaceDetailsDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(64)
-  session_token?: string | null;
-}
-
+import { PlaceDetailsDto, SearchPlacesDto } from './dto/places.dto';
 @Controller('places')
 export class PlacesController {
   constructor(private readonly places: PlacesService) {}

@@ -19,6 +19,12 @@ export default defineConfig({
       STORAGE_DISK: 'local',
       STORAGE_DIR: 'storage/test',
       SYSTEM_CONFIG_CACHE_TTL_SECONDS: '0',
+      // Hermetic: never inherit a developer's real integration keys from .env.
+      GIPHY_API_KEY: '',
+      GOOGLE_PLACES_API_KEY: '',
+      PAYSTACK_SECRET_KEY: '',
+      FLUTTERWAVE_SECRET_KEY: '',
+      RESEND_API_KEY: '',
     },
   },
   plugins: [swc.vite({ module: { type: 'es6' } })],

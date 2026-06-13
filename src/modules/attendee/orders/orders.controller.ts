@@ -8,10 +8,9 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
+
 import { Paginated } from '../../../common/responses/paginated';
-import { toNumber } from '../../../common/validation/transforms';
+
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { EventsService } from '../../events/events.service';
@@ -19,20 +18,7 @@ import { OrderSerializer } from '../../orders/serializers/order.serializer';
 import { OrderQuotingService } from '../../orders/services/order-quoting.service';
 import { OrdersService } from '../../orders/services/orders.service';
 import { CreateOrderDto, QuoteOrderDto, VerifyOrderDto } from './dto/order.dto';
-
-class ListOrdersDto {
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  per_page?: number;
-
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  page?: number;
-}
+import { ListOrdersDto } from './dto/list-orders.dto';
 
 @Controller('attendee')
 export class AttendeeOrdersController {

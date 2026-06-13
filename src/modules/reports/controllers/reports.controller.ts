@@ -1,38 +1,9 @@
 import { Body, Controller, Get, HttpCode, Post, Query } from '@nestjs/common';
-import { IsIn, IsOptional, IsString, Length, MaxLength } from 'class-validator';
 import { ApiResult } from '../../../common/responses/api-result';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
-import {
-  REPORT_TARGET_TYPES,
-  ReportsService,
-} from '../services/reports.service';
-
-class CreateReportDto {
-  @IsString()
-  @IsIn(REPORT_TARGET_TYPES)
-  target_type!: string;
-
-  @IsString()
-  @Length(26, 26)
-  target_id!: string;
-
-  @IsString()
-  @Length(26, 26)
-  report_reason_id!: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  details?: string | null;
-}
-
-class ListReasonsDto {
-  @IsString()
-  @IsIn(REPORT_TARGET_TYPES)
-  target_type!: string;
-}
-
+import { CreateReportDto, ListReasonsDto } from '../dto/reports.dto';
+import { ReportsService } from '../services/reports.service';
 @Controller()
 export class ReportsController {
   constructor(private readonly reports: ReportsService) {}

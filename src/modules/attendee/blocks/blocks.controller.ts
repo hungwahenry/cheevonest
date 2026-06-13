@@ -8,7 +8,6 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { IsIn, IsString, Length } from 'class-validator';
 import { ApiResult } from '../../../common/responses/api-result';
 import { Paginated } from '../../../common/responses/paginated';
 import type { User } from '../../../generated/prisma/client';
@@ -16,17 +15,8 @@ import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { OrganisationSerializer } from '../../organisations/organisation.serializer';
 import { UserSerializer } from '../../users/serializers/user.serializer';
 import { PageQueryDto } from '../organisations/dto/page-query.dto';
-import { BLOCKABLE_TYPES, BlocksService } from './blocks.service';
-
-class CreateBlockDto {
-  @IsString()
-  @IsIn(BLOCKABLE_TYPES)
-  target_type!: string;
-
-  @IsString()
-  @Length(26, 26)
-  target_id!: string;
-}
+import { BlocksService } from './blocks.service';
+import { CreateBlockDto } from './dto/blocks.dto';
 
 @Controller('attendee/blocks')
 export class BlocksController {

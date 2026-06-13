@@ -7,56 +7,16 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Transform } from 'class-transformer';
-import {
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  MaxLength,
-  Min,
-} from 'class-validator';
 import { ApiResult } from '../../../common/responses/api-result';
 import { Paginated } from '../../../common/responses/paginated';
-import { toNumber } from '../../../common/validation/transforms';
-import type {
-  IssuedTicketStatus,
-  User,
-} from '../../../generated/prisma/client';
+import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { EventsPolicy } from '../../events/events.policy';
 import { EventsService } from '../../events/events.service';
 import { IssuedTicketsService } from '../../tickets/services/issued-tickets.service';
 import { TicketListingService } from '../../tickets/services/ticket-listing.service';
 import { OrganizerIssuedTicketSerializer } from './issued-ticket.serializer';
-
-class ListIssuedTicketsDto {
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  per_page?: number;
-
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @IsOptional()
-  @IsIn(['valid', 'scanned', 'revoked'])
-  status?: IssuedTicketStatus;
-
-  @IsOptional()
-  @IsString()
-  q?: string;
-}
-
-class ScanTicketDto {
-  @IsString()
-  @MaxLength(64)
-  code!: string;
-}
+import { ListIssuedTicketsDto, ScanTicketDto } from './dto/issued-tickets.dto';
 
 @Controller('organizer/events/:eventId/issued-tickets')
 export class OrganizerIssuedTicketsController {

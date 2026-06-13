@@ -8,10 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { Paginated } from '../../../common/responses/paginated';
-import { toBoolean, toNumber } from '../../../common/validation/transforms';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { CommentSerializer } from '../../comments/serializers/comment.serializer';
@@ -19,35 +16,7 @@ import { CommentListingService } from '../../comments/services/comment-listing.s
 import { CommentsService } from '../../comments/services/comments.service';
 import { EventsPolicy } from '../../events/events.policy';
 import { EventsService } from '../../events/events.service';
-
-class ModerationListDto {
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  per_page?: number;
-
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @IsOptional()
-  @IsString()
-  q?: string;
-
-  @IsOptional()
-  @Transform(toBoolean)
-  flagged_only?: boolean;
-}
-
-class FlagCommentDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  reason?: string | null;
-}
+import { FlagCommentDto, ModerationListDto } from './dto/moderation.dto';
 
 @Controller('organizer/events/:eventId/comments')
 export class ModerationController {

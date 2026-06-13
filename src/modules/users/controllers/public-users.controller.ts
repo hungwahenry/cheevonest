@@ -1,8 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
 import { Paginated } from '../../../common/responses/paginated';
-import { toNumber } from '../../../common/validation/transforms';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { EventSerializer } from '../../events/serializers/event.serializer';
@@ -10,14 +7,7 @@ import { OrganisationSerializer } from '../../organisations/organisation.seriali
 import { UserSerializer } from '../serializers/user.serializer';
 import { PublicProfileService } from '../services/public-profile.service';
 import { UsersService } from '../services/users.service';
-
-class PublicPageDto {
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  page?: number;
-}
+import { PublicPageDto } from '../dto/public-page.dto';
 
 @Controller('users')
 export class PublicUsersController {

@@ -1,16 +1,10 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { IsIn, IsOptional } from 'class-validator';
 import type { User } from '../../../../generated/prisma/client';
 import { CurrentUser } from '../../../auth/decorators/auth.decorators';
 import { OrganisationsPolicy } from '../../../organisations/organisations.policy';
 import { OrganisationsService } from '../../../organisations/organisations.service';
 import { DashboardService } from '../services/dashboard.service';
-
-class DashboardQueryDto {
-  @IsOptional()
-  @IsIn(['7d', '30d', '90d', '12mo'])
-  range?: string;
-}
+import { DashboardQueryDto } from '../dto/dashboard.dto';
 
 @Controller('organizer/organisations/:organisationId/dashboard')
 export class DashboardController {

@@ -1,21 +1,13 @@
 import { Controller, Get, Param, Query, Res } from '@nestjs/common';
-import { IsIn, IsOptional } from 'class-validator';
 import type { FastifyReply } from 'fastify';
 import { SkipEnvelope } from '../../../common/decorators/api-response.decorators';
-import { EXPORT_FORMATS } from '../../../common/exports/export-definition';
-import type { ExportFormat } from '../../../common/exports/export-definition';
 import { ExportEngineService } from '../../../common/exports/export-engine.service';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { EventsPolicy } from '../../events/events.policy';
 import { EventsService } from '../../events/events.service';
 import { EventExportsService } from './services/event-exports.service';
-
-class ExportQueryDto {
-  @IsOptional()
-  @IsIn(EXPORT_FORMATS)
-  format?: ExportFormat;
-}
+import { ExportQueryDto } from './dto/export-query.dto';
 
 @SkipEnvelope()
 @Controller('organizer/events/:eventId')

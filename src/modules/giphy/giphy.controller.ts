@@ -1,38 +1,8 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { Transform } from 'class-transformer';
-import {
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
-import { toNumber } from '../../common/validation/transforms';
 import type { User } from '../../generated/prisma/client';
 import { CurrentUser } from '../auth/decorators/auth.decorators';
 import { GiphyService } from './giphy.service';
-
-class SearchGifsDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  query?: string | null;
-
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  @Max(50)
-  limit?: number;
-
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(0)
-  @Max(5000)
-  offset?: number;
-}
+import { SearchGifsDto } from './dto/search-gifs.dto';
 
 @Controller('giphy')
 export class GiphyController {

@@ -1,21 +1,11 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
 import { Paginated } from '../../../common/responses/paginated';
-import { toNumber } from '../../../common/validation/transforms';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { PublicProfileService } from '../../users/services/public-profile.service';
 import { CommentSerializer } from '../serializers/comment.serializer';
 import { CommentListingService } from '../services/comment-listing.service';
-
-class UserCommentsPageDto {
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  page?: number;
-}
+import { UserCommentsPageDto } from '../dto/user-comments.dto';
 
 @Controller('users/:userId/comments')
 export class UserCommentsController {

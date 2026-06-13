@@ -7,85 +7,20 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Transform, Type } from 'class-transformer';
-import {
-  IsDate,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Length,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+
 import { ApiResult } from '../../../common/responses/api-result';
 import { Paginated } from '../../../common/responses/paginated';
-import { toNumber } from '../../../common/validation/transforms';
-import type { PayoutStatus, User } from '../../../generated/prisma/client';
+
+import type { User } from '../../../generated/prisma/client';
 import { CurrentUser, Roles } from '../../auth/decorators/auth.decorators';
 import { PayoutsService } from '../../payouts/services/payouts.service';
 import { AdminPayoutSerializer } from './admin-payout.serializer';
 import { AdminPayoutsService } from './admin-payouts.service';
-
-const PAYOUT_STATUSES = [
-  'requested',
-  'approved',
-  'processing',
-  'paid',
-  'rejected',
-  'failed',
-];
-
-class ListAdminPayoutsDto {
-  @IsOptional()
-  @IsIn(PAYOUT_STATUSES)
-  status?: PayoutStatus;
-
-  @IsOptional()
-  @IsString()
-  @Length(26, 26)
-  organisation_id?: string;
-
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  from?: Date;
-
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  to?: Date;
-
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  per_page?: number;
-
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  page?: number;
-}
-
-class ApprovePayoutDto {
-  @IsIn(['provider', 'manual'])
-  method!: 'provider' | 'manual';
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  note?: string | null;
-}
-
-class ReviewNoteDto {
-  @IsString()
-  @MaxLength(1000)
-  note!: string;
-}
+import {
+  ApprovePayoutDto,
+  ListAdminPayoutsDto,
+  ReviewNoteDto,
+} from './dto/admin-payouts.dto';
 
 @Roles('admin')
 @Controller('admin/payouts')

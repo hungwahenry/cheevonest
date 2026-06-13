@@ -5,11 +5,8 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, Min } from 'class-validator';
 import { Paginated } from '../../../../common/responses/paginated';
-import { toNumber } from '../../../../common/validation/transforms';
-import type { OrderStatus, User } from '../../../../generated/prisma/client';
+import type { User } from '../../../../generated/prisma/client';
 import { CurrentUser } from '../../../auth/decorators/auth.decorators';
 import { EventsPolicy } from '../../../events/events.policy';
 import { EventsService } from '../../../events/events.service';
@@ -17,24 +14,7 @@ import { EventReportingSerializer } from '../serializers/event-reporting.seriali
 import { EventAnalyticsService } from '../services/event-analytics.service';
 import { EventReportingService } from '../services/event-reporting.service';
 import { EventSalesService } from '../services/event-sales.service';
-
-class ReportingPageDto {
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @IsOptional()
-  @Transform(toNumber)
-  @IsInt()
-  @Min(1)
-  per_page?: number;
-
-  @IsOptional()
-  @IsIn(['pending', 'paid', 'cancelled', 'refunded'])
-  status?: OrderStatus;
-}
+import { ReportingPageDto } from '../dto/reporting-page.dto';
 
 @Controller('organizer/events/:eventId')
 export class EventAnalyticsController {
