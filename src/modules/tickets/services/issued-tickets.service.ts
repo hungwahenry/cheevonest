@@ -98,6 +98,60 @@ export class IssuedTicketsService {
     });
   }
 
+  /**
+   * Revokes every non-scanned ticket on an order (a refund) and decrements the
+   * sold counters for each — scanned tickets stay counted (the holder attended).
+   * Returns how many were revoked. Runs inside the caller's transaction.
+   */
+  async revokeUnscannedForOrder(
+    tx: Prisma.TransactionClient,
+    orderId: string,
+  ): Promise<number> {
+    const tickets = await tx.issuedTicket.findMany({
+      where: { orderId, status: { not: 'scanned' } },
+    });
+
+    if (tickets.length === 0) {
+      return 0;
+    }
+
+    await tx.issuedTicket.updateMany({
+      where: { id: { in: tickets.map((ticket) => ticket.id) } },
+      data: { status: 'revoked' },
+    });
+
+    const perTicketType = new Map<string, number>();
+    let perEvent = 0;
+
+    for (const ticket of tickets) {
+      if (ticket.status === 'revoked') {
+        continue;
+      }
+      perTicketType.set(
+        ticket.eventTicketId,
+        (perTicketType.get(ticket.eventTicketId) ?? 0) + 1,
+      );
+      perEvent += 1;
+    }
+
+    for (const [eventTicketId, count] of perTicketType) {
+      await tx.eventTicket.updateMany({
+        where: { id: eventTicketId, soldCount: { gte: count } },
+        data: { soldCount: { decrement: count } },
+      });
+    }
+
+    if (perEvent > 0) {
+      const eventId = tickets[0].eventId;
+      await tx.event.updateMany({
+        where: { id: eventId, ticketsSold: { gte: perEvent } },
+        data: { ticketsSold: { decrement: perEvent } },
+      });
+    }
+
+    return tickets.length;
+  }
+
   /** Idempotent; frees the seat — sold counters decrement whether the ticket was valid or scanned. */
   async revoke(ticketId: string): Promise<IssuedTicket> {
     return this.prisma.$transaction(async (tx) => {

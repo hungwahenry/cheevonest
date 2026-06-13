@@ -215,6 +215,24 @@ export class CommentsService {
     return comment;
   }
 
+  /** Admin "dismiss flags": clears every flag and zeroes the counter. Returns the count cleared. */
+  async dismissAllFlags(comment: EventComment): Promise<number> {
+    return this.prisma.$transaction(async (tx) => {
+      const cleared = await tx.eventCommentFlag.deleteMany({
+        where: { commentId: comment.id },
+      });
+
+      if (cleared.count > 0) {
+        await tx.eventComment.update({
+          where: { id: comment.id },
+          data: { flagsCount: 0 },
+        });
+      }
+
+      return cleared.count;
+    });
+  }
+
   async findScoped(eventId: string, commentId: string): Promise<EventComment> {
     const comment = await this.prisma.eventComment.findFirst({
       where: { id: commentId, eventId },
