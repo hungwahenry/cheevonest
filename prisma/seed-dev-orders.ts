@@ -19,11 +19,28 @@ const CITIES = [
 const FIRST_NAMES = ['Ada', 'Tunde', 'Chioma', 'Emeka', 'Funke', 'Kunle', 'Ngozi', 'Segun', 'Amara', 'Femi', 'Zainab', 'Ibrahim', 'Tope', 'Halima', 'Obinna'];
 const LAST_NAMES = ['Okafor', 'Adeyemi', 'Balogun', 'Eze', 'Mohammed', 'Okonkwo', 'Adebayo', 'Nwosu', 'Lawal', 'Umeh'];
 
+const COMMENT_BODIES = [
+  'Cannot wait for this! 🔥',
+  'Who else is pulling up?',
+  'Last edition was unreal.',
+  'Just grabbed my ticket 🎟️',
+  'Is there parking at the venue?',
+  'The lineup is crazy this year.',
+  'Bringing the whole squad.',
+  'What time do doors open?',
+  'Been waiting for this all month.',
+  'See you all there!',
+];
+
 const FEE_RATE = 0.05;
 const BUYERS_COUNT = 25;
 
 function pick<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+function sample<T>(items: T[], count: number): T[] {
+  return [...items].sort(() => Math.random() - 0.5).slice(0, count);
 }
 
 function randomBetween(from: Date, to: Date): Date {
@@ -80,6 +97,16 @@ async function main(): Promise<void> {
     buyers.push(created);
   }
   console.log(`Buyers ready: ${buyers.length}`);
+
+  const interests = await prisma.interest.findMany({ where: { isActive: true } });
+  for (const buyer of buyers) {
+    const chosen = sample(interests, 3 + Math.floor(Math.random() * 4));
+    await prisma.interestUser.createMany({
+      data: chosen.map((interest) => ({ userId: buyer.id, interestId: interest.id })),
+      skipDuplicates: true,
+    });
+  }
+  console.log(`Interests attached to ${buyers.length} buyers.`);
 
   const events = await prisma.event.findMany({
     where: { organisationId: organisation.id, status: { in: ['published', 'past'] } },
@@ -200,6 +227,34 @@ async function main(): Promise<void> {
     console.log(
       `${event.title}: ${eventQuantity} tickets across orders, ₦${Number(eventSubtotal) / 100} revenue, ${rsvpers.length} RSVPs`
     );
+  }
+
+  for (const event of events) {
+    const existingComments = await prisma.eventComment.count({ where: { eventId: event.id } });
+    if (existingComments > 0) continue;
+
+    const now = new Date();
+    const windowEnd = event.status === 'past' && event.startsAt ? event.startsAt : now;
+    const windowStart = new Date(windowEnd.getTime() - 21 * 24 * 60 * 60 * 1000);
+
+    const commenters = sample(buyers, 3 + Math.floor(Math.random() * 6));
+    if (commenters.length === 0) continue;
+
+    await prisma.eventComment.createMany({
+      data: commenters.map((buyer) => ({
+        id: ulid(),
+        eventId: event.id,
+        userId: buyer.id,
+        body: pick(COMMENT_BODIES),
+        createdAt: randomBetween(windowStart, windowEnd),
+      })),
+    });
+    await prisma.event.update({
+      where: { id: event.id },
+      data: { commentsCount: commenters.length },
+    });
+
+    console.log(`${event.title}: ${commenters.length} comments`);
   }
 
   await prisma.$disconnect();
