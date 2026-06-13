@@ -85,7 +85,10 @@ export class EventDetailService {
     ]);
 
     for (const row of issued) {
-      owned.set(row.eventTicketId, (owned.get(row.eventTicketId) ?? 0) + row._count._all);
+      owned.set(
+        row.eventTicketId,
+        (owned.get(row.eventTicketId) ?? 0) + row._count._all,
+      );
     }
     for (const row of held) {
       owned.set(

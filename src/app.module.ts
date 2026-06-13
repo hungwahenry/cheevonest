@@ -7,7 +7,11 @@ import { ThrottlerGuard, ThrottlerModule, seconds } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 import { MultipartInterceptor } from './common/interceptors/multipart.interceptor';
+import { AdminCommonModule } from './common/admin/admin-common.module';
 import { ApiEnvelopeInterceptor } from './common/interceptors/api-envelope.interceptor';
+import { AuditInterceptor } from './modules/admin/audit/audit.interceptor';
+
+import { AuditModule } from './modules/admin/audit/audit.module';
 import { validationExceptionFactory } from './common/validation/validation-exception.factory';
 import { Env, validateEnv } from './config/env';
 import { ExportsEngineModule } from './common/exports/exports.module';
@@ -62,6 +66,8 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     ExportsEngineModule,
+    AdminCommonModule,
+    AuditModule,
     HtmlPagesModule,
     SigningModule,
     DatabaseModule,
@@ -100,6 +106,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     },
     { provide: APP_INTERCEPTOR, useClass: MultipartInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ApiEnvelopeInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     {
       provide: APP_FILTER,
       inject: [ConfigService],

@@ -1,0 +1,21 @@
+model AdminAction {
+  id          String   @id @db.Char(26)
+  adminUserId String   @map("admin_user_id") @db.Char(26)
+  action      String   @db.VarChar(80)
+  targetType  String?  @map("target_type") @db.VarChar(64)
+  targetId    String?  @map("target_id")
+  payload     Json?
+  reason      String?
+  ip          String?  @db.VarChar(45)
+  userAgent   String?  @map("user_agent")
+  requestId   String?  @map("request_id") @db.VarChar(26)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  admin User @relation("AdminActions", fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, createdAt])
+  @@index([targetType, targetId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("admin_actions")
+}

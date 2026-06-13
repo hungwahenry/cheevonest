@@ -49,6 +49,7 @@ model User {
   eventMutes              EventNotificationMute[]
   stepUpChallenges        StepUpChallenge[]
   createdBroadcasts       Broadcast[]
+  adminActions            AdminAction[]        @relation("AdminActions")
   suppressions            BroadcastSuppression[]
 
   @@index([suspendedAt])
