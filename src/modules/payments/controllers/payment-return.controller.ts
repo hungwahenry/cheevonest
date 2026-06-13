@@ -23,7 +23,7 @@ export class PaymentReturnController {
   @Header('Content-Type', 'text/html; charset=utf-8')
   async return(@Query() query: Record<string, string>): Promise<string> {
     const scheme = this.config.get('APP_DEEP_LINK_SCHEME', { infer: true });
-    const fallback = `${scheme}:///orders/return`;
+    const fallback = `${scheme}:///checkout/return`;
 
     let target = query.return ?? fallback;
 

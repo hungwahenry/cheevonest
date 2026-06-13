@@ -73,9 +73,7 @@ export class PaymentsService {
       amountMinor: input.amountMinor,
       currency: input.currency,
       email: input.user.email,
-      callbackUrl: provider.requiresHttpsCallback()
-        ? this.bridgeCallback(input.callbackUrl)
-        : input.callbackUrl,
+      callbackUrl: this.bridgeCallback(input.callbackUrl),
       metadata: input.metadata ?? {},
     });
 

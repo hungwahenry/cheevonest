@@ -87,7 +87,6 @@ describe('Commerce (e2e)', () => {
       overrides: (builder: TestingModuleBuilder) =>
         builder.overrideProvider(PaystackProvider).useValue({
           name: () => 'paystack',
-          requiresHttpsCallback: () => true,
           initialize: (req: { reference: string }) => {
             initializedReferences.push(req.reference);
 

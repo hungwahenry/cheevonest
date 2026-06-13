@@ -120,7 +120,6 @@ describe('Notifications (e2e)', () => {
           .overrideProvider(PaystackProvider)
           .useValue({
             name: () => 'paystack',
-            requiresHttpsCallback: () => true,
             initialize: (req: { reference: string }) => {
               initializedReferences.push(req.reference);
 

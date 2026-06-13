@@ -67,7 +67,6 @@ export interface TransferWebhookEvent {
 
 export interface PaymentProvider {
   name(): string;
-  requiresHttpsCallback(): boolean;
   initialize(request: InitializePaymentRequest): Promise<InitializedPayment>;
   verify(lookupKey: string): Promise<VerifiedPayment>;
   verifyWebhookSignature(rawBody: Buffer | string, signature?: string): boolean;

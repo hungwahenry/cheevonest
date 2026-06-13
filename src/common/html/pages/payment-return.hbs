@@ -9,8 +9,9 @@
 </head>
 <body>
 <main>
-<p>Taking you back to the app…</p>
-<p><a href="{{deepLink}}">Tap here if nothing happens</a></p>
+<p>Payment received. Returning you to {{appName}}…</p>
+<p><a href="{{deepLink}}">Tap here to continue</a></p>
+<p style="color:#666;font-size:14px;margin-top:16px">You can close this tab and return to the app to finish.</p>
 </main>
 <script>window.location.replace({{{deepLinkJson}}});</script>
 </body>

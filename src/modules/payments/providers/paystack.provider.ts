@@ -32,10 +32,6 @@ export class PaystackProvider implements PaymentProvider {
     return 'paystack';
   }
 
-  requiresHttpsCallback(): boolean {
-    return true;
-  }
-
   async initialize(
     request: InitializePaymentRequest,
   ): Promise<InitializedPayment> {

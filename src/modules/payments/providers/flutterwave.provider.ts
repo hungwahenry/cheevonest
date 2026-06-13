@@ -27,10 +27,6 @@ export class FlutterwaveProvider implements PaymentProvider {
     return 'flutterwave';
   }
 
-  requiresHttpsCallback(): boolean {
-    return false;
-  }
-
   async initialize(
     request: InitializePaymentRequest,
   ): Promise<InitializedPayment> {
