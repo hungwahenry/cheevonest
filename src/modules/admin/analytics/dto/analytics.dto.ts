@@ -13,4 +13,11 @@ export class AnalyticsRangeDto {
   @Min(1)
   @Max(365)
   days?: number;
+
+  @IsOptional()
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
 }

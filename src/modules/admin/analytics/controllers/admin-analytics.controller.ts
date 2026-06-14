@@ -27,4 +27,9 @@ export class AdminAnalyticsController {
   async engagement(@Query() dto: AnalyticsRangeDto): Promise<unknown> {
     return this.analytics.engagement(dto.days ?? 30);
   }
+
+  @Get('leaderboards')
+  async leaderboards(@Query() dto: AnalyticsRangeDto): Promise<unknown> {
+    return this.analytics.leaderboards(dto.days ?? 30, dto.limit ?? 5);
+  }
 }

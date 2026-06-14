@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EntityRefBuilder } from '../../../../common/admin/entity-ref.builder';
 import { PrismaService } from '../../../../database/prisma.service';
 
 type Interval = 'day' | 'week' | 'month';
@@ -24,7 +25,155 @@ function bucketKey(date: Date, interval: Interval): string {
 
 @Injectable()
 export class PlatformAnalyticsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly refs: EntityRefBuilder,
+  ) {}
+
+  /** Revenue leaderboards + breakdowns over a range — top events, organisers, categories, cities. */
+  async leaderboards(
+    days: number,
+    limit: number,
+  ): Promise<Record<string, unknown>> {
+    const cutoff = new Date(Date.now() - days * 86_400_000);
+    const orders = await this.prisma.order.findMany({
+      where: { status: 'paid', paidAt: { gte: cutoff } },
+      select: {
+        eventId: true,
+        userId: true,
+        totalMinor: true,
+        itemsQuantityTotal: true,
+      },
+    });
+
+    if (orders.length === 0) {
+      return {
+        currency: 'NGN',
+        top_events: [],
+        top_organisers: [],
+        by_category: [],
+        top_cities: [],
+      };
+    }
+
+    const perEvent = new Map<
+      string,
+      { gmv: number; orders: number; tickets: number }
+    >();
+    for (const order of orders) {
+      const agg = perEvent.get(order.eventId) ?? {
+        gmv: 0,
+        orders: 0,
+        tickets: 0,
+      };
+      agg.gmv += Number(order.totalMinor);
+      agg.orders += 1;
+      agg.tickets += order.itemsQuantityTotal;
+      perEvent.set(order.eventId, agg);
+    }
+
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: [...perEvent.keys()] } },
+    });
+    const eventById = new Map(events.map((event) => [event.id, event]));
+
+    const orgs = await this.prisma.organisation.findMany({
+      where: { id: { in: [...new Set(events.map((e) => e.organisationId))] } },
+      include: { category: true },
+    });
+    const orgById = new Map(orgs.map((org) => [org.id, org]));
+
+    const perOrg = new Map<
+      string,
+      { gmv: number; orders: number; events: Set<string> }
+    >();
+    const perCategory = new Map<number, number>();
+    for (const [eventId, agg] of perEvent) {
+      const event = eventById.get(eventId);
+      if (!event) continue;
+      const org = perOrg.get(event.organisationId) ?? {
+        gmv: 0,
+        orders: 0,
+        events: new Set<string>(),
+      };
+      org.gmv += agg.gmv;
+      org.orders += agg.orders;
+      org.events.add(eventId);
+      perOrg.set(event.organisationId, org);
+
+      const categoryId = orgById.get(event.organisationId)?.categoryId ?? -1;
+      perCategory.set(categoryId, (perCategory.get(categoryId) ?? 0) + agg.gmv);
+    }
+
+    const categoryName = new Map<number, string>();
+    for (const org of orgs) {
+      if (org.category) categoryName.set(org.category.id, org.category.name);
+    }
+
+    const profiles = await this.prisma.profile.findMany({
+      where: {
+        userId: { in: [...new Set(orders.map((o) => o.userId))] },
+        city: { not: null },
+      },
+      select: { userId: true, city: true },
+    });
+    const cityByUser = new Map(profiles.map((p) => [p.userId, p.city!]));
+    const perCity = new Map<string, { gmv: number; orders: number }>();
+    for (const order of orders) {
+      const city = cityByUser.get(order.userId);
+      if (!city) continue;
+      const agg = perCity.get(city) ?? { gmv: 0, orders: 0 };
+      agg.gmv += Number(order.totalMinor);
+      agg.orders += 1;
+      perCity.set(city, agg);
+    }
+
+    return {
+      currency: 'NGN',
+      top_events: [...perEvent.entries()]
+        .map(([id, agg]) => ({ event: eventById.get(id), agg }))
+        .filter((row) => row.event)
+        .sort((a, b) => b.agg.gmv - a.agg.gmv)
+        .slice(0, limit)
+        .map((row) => ({
+          event: this.refs.event(row.event!),
+          gmv_minor: row.agg.gmv,
+          orders: row.agg.orders,
+          tickets: row.agg.tickets,
+        })),
+      top_organisers: [...perOrg.entries()]
+        .map(([id, agg]) => ({ org: orgById.get(id), agg }))
+        .filter((row) => row.org)
+        .sort((a, b) => b.agg.gmv - a.agg.gmv)
+        .slice(0, limit)
+        .map((row) => ({
+          organisation: this.refs.organisation(row.org!),
+          gmv_minor: row.agg.gmv,
+          orders: row.agg.orders,
+          events: row.agg.events.size,
+        })),
+      by_category: [...perCategory.entries()]
+        .map(([categoryId, gmv]) => ({
+          category:
+            categoryId === -1
+              ? { id: null, name: 'Uncategorised' }
+              : {
+                  id: categoryId,
+                  name: categoryName.get(categoryId) ?? 'Unknown',
+                },
+          gmv_minor: gmv,
+        }))
+        .sort((a, b) => b.gmv_minor - a.gmv_minor),
+      top_cities: [...perCity.entries()]
+        .map(([city, agg]) => ({
+          city,
+          gmv_minor: agg.gmv,
+          orders: agg.orders,
+        }))
+        .sort((a, b) => b.gmv_minor - a.gmv_minor)
+        .slice(0, limit),
+    };
+  }
 
   async overview(): Promise<Record<string, unknown>> {
     const cutoff30 = new Date(Date.now() - 30 * 86_400_000);

@@ -461,4 +461,37 @@ describe('Admin commerce & content (e2e)', () => {
       type: 'user',
     });
   });
+
+  it('builds revenue leaderboards from paid orders', async () => {
+    await payOrder(buyer, 1);
+
+    const res = await request(server())
+      .get('/api/v1/admin/analytics/leaderboards?days=365&limit=10')
+      .set('Authorization', a(admin))
+      .expect(200);
+
+    const data = (
+      res.body as {
+        data: {
+          currency: string;
+          top_events: Array<{
+            event: { type: string; id: string };
+            gmv_minor: number;
+            tickets: number;
+          }>;
+          top_organisers: Array<{ organisation: { type: string } }>;
+          by_category: Array<{ category: { name: string }; gmv_minor: number }>;
+        };
+      }
+    ).data;
+
+    expect(data.currency).toBe('NGN');
+    expect(data.top_events.length).toBeGreaterThan(0);
+    expect(data.top_events[0].event).toMatchObject({ type: 'event' });
+    expect(typeof data.top_events[0].gmv_minor).toBe('number');
+    expect(data.top_organisers[0].organisation).toMatchObject({
+      type: 'organisation',
+    });
+    expect(data.by_category.length).toBeGreaterThan(0);
+  });
 });
