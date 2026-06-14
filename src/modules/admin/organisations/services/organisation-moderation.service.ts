@@ -16,10 +16,12 @@ export class OrganisationModerationService {
     organisation: Organisation,
     reason: string,
   ): Promise<Organisation> {
-    return this.prisma.organisation.update({
+    const updated = await this.prisma.organisation.update({
       where: { id: organisation.id },
       data: { suspendedAt: new Date(), suspendedReason: reason },
     });
+    await this.organisations.deindexFromSearch(organisation.id);
+    return updated;
   }
 
   async unsuspend(organisation: Organisation): Promise<Organisation> {
@@ -27,10 +29,12 @@ export class OrganisationModerationService {
       throw new OrganisationNotSuspendedException();
     }
 
-    return this.prisma.organisation.update({
+    const updated = await this.prisma.organisation.update({
       where: { id: organisation.id },
       data: { suspendedAt: null, suspendedReason: null },
     });
+    await this.organisations.reindexInSearch(updated);
+    return updated;
   }
 
   /** Demotes the current owner and promotes a member, atomically. */

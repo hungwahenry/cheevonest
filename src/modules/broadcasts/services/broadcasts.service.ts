@@ -9,6 +9,7 @@ import type {
   User,
 } from '../../../generated/prisma/client';
 import { ensureEventNotEnded } from '../../events/rules/event.rules';
+import { OrganisationSuspendedException } from '../../organisations/exceptions/organisation-suspended.exception';
 import { FeatureFlagsService } from '../../platform/system-config/feature-flags.service';
 import { BroadcastAudienceEmptyException } from '../exceptions/broadcast-audience-empty.exception';
 import { BroadcastsDisabledException } from '../exceptions/broadcasts-disabled.exception';
@@ -43,6 +44,14 @@ export class BroadcastsService {
       !(await this.features.enabled('broadcasts.enabled', { userId: user.id }))
     ) {
       throw new BroadcastsDisabledException();
+    }
+
+    const organisation = await this.prisma.organisation.findUnique({
+      where: { id: event.organisationId },
+      select: { suspendedAt: true },
+    });
+    if (organisation?.suspendedAt != null) {
+      throw new OrganisationSuspendedException();
     }
 
     ensureEventNotEnded(event);

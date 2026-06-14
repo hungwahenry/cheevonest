@@ -28,6 +28,9 @@ export class SearchIndexerService {
   }
 
   async indexOrganisation(organisation: Organisation): Promise<void> {
+    if (organisation.suspendedAt !== null) {
+      return this.deindex('organisation', organisation.id);
+    }
     return this.upsert('organisation', organisation.id, {
       weightA: `${organisation.name} ${organisation.slug}`.trim(),
       weightB: organisation.about ?? '',

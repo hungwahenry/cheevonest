@@ -494,4 +494,48 @@ describe('Admin commerce & content (e2e)', () => {
     });
     expect(data.by_category.length).toBeGreaterThan(0);
   });
+
+  // Runs last: suspending the org freezes the sales/visibility surface, and we
+  // restore it at the end so no later test inherits a frozen org.
+  it('freezes a suspended organisation across the public + sales surface', async () => {
+    const event = await ctx.prisma.event.findUniqueOrThrow({
+      where: { id: eventId },
+    });
+    const orgId = event.organisationId;
+
+    await request(server())
+      .post(`/api/v1/admin/organisations/${orgId}/suspend`)
+      .set('Authorization', a(admin))
+      .send({ reason: 'Frozen for enforcement test.' })
+      .expect(200);
+
+    const blocked = await request(server())
+      .post(`/api/v1/attendee/events/${eventId}/orders`)
+      .set('Authorization', a(buyer))
+      .send({
+        items: [{ ticket_id: ticketId, quantity: 1 }],
+        callback_url: 'cheevo:///orders/return',
+      })
+      .expect(403);
+    expect(blocked.body).toMatchObject({ code: 'organisation_suspended' });
+
+    await request(server())
+      .get(`/api/v1/attendee/events/${event.slug}`)
+      .set('Authorization', a(buyer))
+      .expect(404);
+
+    await request(server())
+      .post(`/api/v1/admin/organisations/${orgId}/unsuspend`)
+      .set('Authorization', a(admin))
+      .expect(200);
+
+    await request(server())
+      .post(`/api/v1/attendee/events/${eventId}/orders`)
+      .set('Authorization', a(buyer))
+      .send({
+        items: [{ ticket_id: ticketId, quantity: 1 }],
+        callback_url: 'cheevo:///orders/return',
+      })
+      .expect(200);
+  });
 });

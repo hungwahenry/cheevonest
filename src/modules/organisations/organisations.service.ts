@@ -6,6 +6,7 @@ import type {
   Organisation,
   OrganisationRole,
 } from '../../generated/prisma/client';
+import { OrganisationSuspendedException } from './exceptions/organisation-suspended.exception';
 
 export const ORGANISATION_RESOURCE_INCLUDE = {
   category: true,
@@ -51,6 +52,41 @@ export class OrganisationsService {
     }
 
     return organisation;
+  }
+
+  /** Gate every organiser-side mutation: a suspended org is frozen. */
+  async ensureActive(organisationId: string): Promise<void> {
+    const organisation = await this.prisma.organisation.findUnique({
+      where: { id: organisationId },
+      select: { suspendedAt: true },
+    });
+
+    if (organisation?.suspendedAt != null) {
+      throw new OrganisationSuspendedException();
+    }
+  }
+
+  /** Pull a suspended org and its events out of search so they stop surfacing. */
+  async deindexFromSearch(organisationId: string): Promise<void> {
+    await this.searchIndexer.deindex('organisation', organisationId);
+    const events = await this.prisma.event.findMany({
+      where: { organisationId },
+      select: { id: true },
+    });
+    for (const event of events) {
+      await this.searchIndexer.deindex('event', event.id);
+    }
+  }
+
+  /** Re-add an unsuspended org and its events to search. */
+  async reindexInSearch(organisation: Organisation): Promise<void> {
+    await this.searchIndexer.indexOrganisation(organisation);
+    const events = await this.prisma.event.findMany({
+      where: { organisationId: organisation.id },
+    });
+    for (const event of events) {
+      await this.searchIndexer.indexEvent(event);
+    }
   }
 
   async loadForResource(id: string): Promise<OrganisationForResource> {

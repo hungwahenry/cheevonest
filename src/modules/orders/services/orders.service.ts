@@ -6,6 +6,7 @@ import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import type { Event, Order, User } from '../../../generated/prisma/client';
 import { lockEventTicket, lockOrder } from '../../../generated/prisma/sql';
+import { OrganisationSuspendedException } from '../../organisations/exceptions/organisation-suspended.exception';
 import { PaymentsService } from '../../payments/services/payments.service';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import { IssuedTicketsService } from '../../tickets/services/issued-tickets.service';
@@ -61,6 +62,14 @@ export class OrdersService {
   ): Promise<CheckoutResult> {
     this.windowRules.ensureEventOpenForSales(event);
     await this.windowRules.ensurePresaleAccess(event, user.id);
+
+    const seller = await this.prisma.organisation.findUnique({
+      where: { id: event.organisationId },
+      select: { suspendedAt: true },
+    });
+    if (seller?.suspendedAt != null) {
+      throw new OrganisationSuspendedException();
+    }
 
     if (items.length === 0) {
       throw new ValidationFailedException({

@@ -27,7 +27,7 @@ export class PublicOrganisationsService {
       include: ORGANISATION_RESOURCE_INCLUDE,
     });
 
-    if (!organisation) {
+    if (!organisation || organisation.suspendedAt !== null) {
       throw new NotFoundException();
     }
 

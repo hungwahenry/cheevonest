@@ -20,6 +20,7 @@ import {
   TransferWebhookEvent,
 } from '../../payments/contracts/payment-provider.interface';
 import { PaymentProviderRegistry } from '../../payments/services/payment-provider-registry.service';
+import { OrganisationSuspendedException } from '../../organisations/exceptions/organisation-suspended.exception';
 import { InsufficientBalanceException } from '../exceptions/insufficient-balance.exception';
 import { PayoutAccountMissingException } from '../exceptions/payout-account-missing.exception';
 import { PayoutAlreadyInFlightException } from '../exceptions/payout-already-in-flight.exception';
@@ -54,6 +55,9 @@ export class PayoutsService {
     user: User,
     amountMinor: number,
   ): Promise<Payout> {
+    if (organisation.suspendedAt != null) {
+      throw new OrganisationSuspendedException();
+    }
     await this.rules.ensureEnabled(user.id);
 
     const account = await this.prisma.payoutAccount.findUnique({

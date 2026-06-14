@@ -106,7 +106,11 @@ export class EventsService {
   /** The attendee detail page: published or past, full resource + org resource. */
   async findVisibleDetailBySlug(slug: string) {
     const event = await this.prisma.event.findFirst({
-      where: { slug, status: { in: ['published', 'past'] } },
+      where: {
+        slug,
+        status: { in: ['published', 'past'] },
+        organisation: { suspendedAt: null },
+      },
       include: {
         ...EVENT_RESOURCE_INCLUDE,
         organisation: { include: ORGANISATION_RESOURCE_INCLUDE },

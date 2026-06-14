@@ -4,6 +4,10 @@ FROM events e
 WHERE e.status = 'published'
   AND e.ends_at > now()
   AND NOT EXISTS (
+    SELECT 1 FROM organisations o
+    WHERE o.id = e.organisation_id AND o.suspended_at IS NOT NULL
+  )
+  AND NOT EXISTS (
     SELECT 1 FROM organisation_members om
     WHERE om.user_id = $1 AND om.organisation_id = e.organisation_id
   )
