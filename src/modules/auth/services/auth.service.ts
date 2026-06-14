@@ -4,6 +4,7 @@ import {
   UserForResource,
   UsersService,
 } from '../../users/services/users.service';
+import { AccountSuspendedException } from '../exceptions/account-suspended.exception';
 import { OtpService } from './otp.service';
 import { TokenService } from './token.service';
 
@@ -31,6 +32,12 @@ export class AuthService {
     await this.otp.verify(email, code);
 
     const existing = await this.prisma.user.findUnique({ where: { email } });
+
+    // Hard gate: a suspended account can't obtain a session at all.
+    if (existing?.suspendedAt != null) {
+      throw new AccountSuspendedException();
+    }
+
     const isNewUser = existing === null;
     let user = existing ?? (await this.users.createWithProfile(email));
 

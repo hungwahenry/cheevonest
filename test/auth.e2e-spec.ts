@@ -211,6 +211,16 @@ describe('Auth (e2e)', () => {
       code: 'forbidden',
       message: 'Your account has been suspended.',
     });
+
+    // Hard gate: a fresh OTP can't mint a new session for a suspended account.
+    await ctx.prisma.otpCode.deleteMany({ where: { email } });
+    await request(server()).post('/api/v1/auth/send-otp').send({ email });
+    const code = extractOtpCode(ctx.mails.at(-1)!);
+    const relogin = await request(server())
+      .post('/api/v1/auth/verify-otp')
+      .send({ email, code })
+      .expect(403);
+    expect(relogin.body).toMatchObject({ code: 'account_suspended' });
   });
 
   it('rejects malformed payloads with the validation envelope', async () => {

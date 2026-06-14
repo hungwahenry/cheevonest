@@ -88,7 +88,8 @@ export class AuthGuard implements CanActivate {
       where: { id: token.userId },
     });
 
-    if (user) {
+    // Suspended accounts are treated as logged-out everywhere, including public routes.
+    if (user && user.suspendedAt === null) {
       const authenticated = request as AuthenticatedRequest;
       authenticated.user = user;
       authenticated.accessTokenId = token.id;
