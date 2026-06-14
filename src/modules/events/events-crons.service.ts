@@ -9,7 +9,7 @@ export class EventsCronsService {
   constructor(private readonly prisma: PrismaService) {}
 
   @Cron('0 * * * *')
-  async markPastEvents(): Promise<void> {
+  async markPastEvents(): Promise<number> {
     const updated = await this.prisma.event.updateMany({
       where: { status: 'published', endsAt: { lt: new Date() } },
       data: { status: 'past' },
@@ -18,5 +18,7 @@ export class EventsCronsService {
     if (updated.count > 0) {
       this.logger.log(`Marked ${updated.count} event(s) as past.`);
     }
+
+    return updated.count;
   }
 }

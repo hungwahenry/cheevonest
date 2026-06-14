@@ -3,9 +3,12 @@ import { ulid } from 'ulid';
 import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { MailService } from '../../../integrations/mail/mail.service';
+import {
+  ExpoPushMessage,
+  ExpoPushService,
+} from '../../../integrations/push/expo-push.service';
 import { FeatureFlagsService } from '../../platform/system-config/feature-flags.service';
 import { NotificationMessage } from '../contracts/notification-message.interface';
-import { ExpoPushMessage, ExpoPushService } from './expo-push.service';
 import { NotificationPreferencesService } from './notification-preferences.service';
 import { isInQuietHours } from './quiet-hours';
 

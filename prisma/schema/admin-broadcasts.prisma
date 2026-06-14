@@ -1,0 +1,56 @@
+enum AdminBroadcastKind {
+  system
+  marketing
+}
+
+enum AdminBroadcastStatus {
+  draft
+  scheduled
+  sending
+  sent
+  cancelled
+  failed
+}
+
+model AdminBroadcast {
+  id              String               @id @db.Char(26)
+  kind            AdminBroadcastKind
+  status          AdminBroadcastStatus @default(draft)
+  title           String               @db.VarChar(150)
+  body            String
+  channels        String[]
+  audience        Json
+  scheduledAt     DateTime?            @map("scheduled_at") @db.Timestamptz(6)
+  createdByUserId String               @map("created_by_user_id") @db.Char(26)
+  recipientsCount Int                  @default(0) @map("recipients_count")
+  emailCount      Int                  @default(0) @map("email_count")
+  pushCount       Int                  @default(0) @map("push_count")
+  inappCount      Int                  @default(0) @map("inapp_count")
+  failedCount     Int                  @default(0) @map("failed_count")
+  clickCount      Int                  @default(0) @map("click_count")
+  failureReason   String?              @map("failure_reason")
+  startedAt       DateTime?            @map("started_at") @db.Timestamptz(6)
+  sentAt          DateTime?            @map("sent_at") @db.Timestamptz(6)
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdBy User                 @relation("AdminBroadcasts", fields: [createdByUserId], references: [id])
+  links     AdminBroadcastLink[]
+
+  @@index([status, scheduledAt])
+  @@index([kind, createdAt])
+  @@map("admin_broadcasts")
+}
+
+model AdminBroadcastLink {
+  id          String   @id @db.Char(26)
+  broadcastId String   @map("broadcast_id") @db.Char(26)
+  url         String
+  clickCount  Int      @default(0) @map("click_count")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  broadcast AdminBroadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+
+  @@index([broadcastId])
+  @@map("admin_broadcast_links")
+}

@@ -199,9 +199,18 @@ describe('Admin moderation (e2e)', () => {
       .set('Authorization', auth(adminToken))
       .expect(200);
 
-    const data = (res.body as { data: Record<string, any> }).data;
+    const data = (
+      res.body as {
+        data: {
+          id: string;
+          stats: { active_sessions: number };
+          organisations: Array<Record<string, unknown>>;
+          audit_trail: unknown[];
+        };
+      }
+    ).data;
     expect(data.id).toBe(ownerId);
-    expect(data.stats).toMatchObject({ active_sessions: expect.any(Number) });
+    expect(typeof data.stats.active_sessions).toBe('number');
     expect(data.organisations[0]).toMatchObject({
       type: 'organisation',
       id: orgId,
@@ -267,12 +276,16 @@ describe('Admin moderation (e2e)', () => {
       .get(`/api/v1/admin/organisations/${orgId}`)
       .set('Authorization', auth(adminToken))
       .expect(200);
-    const data = (res.body as { data: Record<string, any> }).data;
+    const data = (
+      res.body as {
+        data: {
+          stats: { members_count: number };
+          members: Array<{ role: string }>;
+        };
+      }
+    ).data;
     expect(data.stats.members_count).toBe(2);
-    expect(data.members.map((m: any) => m.role).sort()).toEqual([
-      'member',
-      'owner',
-    ]);
+    expect(data.members.map((m) => m.role).sort()).toEqual(['member', 'owner']);
 
     const stranger = await signIn(uniqueEmail('stranger'));
     const strangerId = await meId(stranger);
@@ -301,8 +314,17 @@ describe('Admin moderation (e2e)', () => {
       .get(`/api/v1/admin/events/${eventId}`)
       .set('Authorization', auth(adminToken))
       .expect(200);
-    expect((res.body as { data: any }).data.organisation.id).toBe(orgId);
-    expect((res.body as { data: any }).data.ticket_types).toHaveLength(1);
+    const data = (
+      res.body as {
+        data: {
+          organisation: { id: string };
+          ticket_types: Array<{ id: string }>;
+        };
+      }
+    ).data;
+    expect(data.organisation.id).toBe(orgId);
+    expect(data.ticket_types).toHaveLength(1);
+    expect(data.ticket_types[0].id).toBe(ticketId);
 
     await request(server())
       .post(`/api/v1/admin/events/${eventId}/lock-comments`)
@@ -333,7 +355,17 @@ describe('Admin moderation (e2e)', () => {
       )
       .set('Authorization', auth(adminToken))
       .expect(200);
-    const items = (res.body as { data: { items: any[] } }).data.items;
+    const items = (
+      res.body as {
+        data: {
+          items: Array<{
+            target_id: string;
+            admin: Record<string, unknown>;
+            action: string;
+          }>;
+        };
+      }
+    ).data.items;
     expect(items.length).toBeGreaterThan(0);
     expect(items.every((i) => i.target_id === orgId)).toBe(true);
     expect(items[0].admin).toMatchObject({ type: 'user' });

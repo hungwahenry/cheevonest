@@ -54,6 +54,60 @@ export class SearchIndexerService {
     });
   }
 
+  /** Rebuilds the entire search index — published/past events, orgs, onboarded users. */
+  async reindexAll(): Promise<{
+    events: number;
+    organisations: number;
+    users: number;
+  }> {
+    const [events, organisations, users] = await Promise.all([
+      this.prisma.event.findMany({
+        where: { status: { in: ['published', 'past'] } },
+      }),
+      this.prisma.organisation.findMany(),
+      this.prisma.user.findMany({
+        where: { profile: { completedAt: { not: null } } },
+        select: { id: true },
+      }),
+    ]);
+
+    for (const event of events) {
+      await this.indexEvent(event);
+    }
+    for (const organisation of organisations) {
+      await this.indexOrganisation(organisation);
+    }
+    for (const user of users) {
+      await this.indexUser(user.id);
+    }
+
+    return {
+      events: events.length,
+      organisations: organisations.length,
+      users: users.length,
+    };
+  }
+
+  async health(): Promise<Record<string, number>> {
+    const byType = await this.prisma.searchIndex.groupBy({
+      by: ['searchableType'],
+      orderBy: { searchableType: 'asc' },
+      _count: { _all: true },
+    });
+
+    const counts: Record<string, number> = {
+      event: 0,
+      organisation: 0,
+      user: 0,
+    };
+    for (const row of byType) {
+      counts[row.searchableType] = row._count._all;
+    }
+    counts.total = byType.reduce((sum, row) => sum + row._count._all, 0);
+
+    return counts;
+  }
+
   async deindex(type: SearchableType, id: string): Promise<void> {
     await this.prisma.searchIndex.deleteMany({
       where: { searchableType: type, searchableId: id },

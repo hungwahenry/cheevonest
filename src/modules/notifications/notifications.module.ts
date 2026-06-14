@@ -11,7 +11,6 @@ import { PayoutSettledListener } from './listeners/payout-settled.listener';
 import { ReportCreatedListener } from './listeners/report-created.listener';
 import { NotificationsCronsService } from './notifications-crons.service';
 import { NotificationSerializer } from './serializers/notification.serializer';
-import { ExpoPushService } from './services/expo-push.service';
 import { InboxService } from './services/inbox.service';
 import { MutesService } from './services/mutes.service';
 import { NotificationPreferencesService } from './services/notification-preferences.service';
@@ -26,7 +25,6 @@ import { StartingSoonService } from './services/scheduled/starting-soon.service'
   providers: [
     NotifierService,
     NotificationPreferencesService,
-    ExpoPushService,
     InboxService,
     PushTokensService,
     MutesService,
@@ -41,6 +39,11 @@ import { StartingSoonService } from './services/scheduled/starting-soon.service'
     ReportCreatedListener,
     BroadcastSentListener,
   ],
-  exports: [NotifierService, MutesService],
+  exports: [
+    NotifierService,
+    MutesService,
+    StartingSoonService,
+    DailySalesDigestService,
+  ],
 })
 export class NotificationsModule {}

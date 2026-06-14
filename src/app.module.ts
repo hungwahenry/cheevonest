@@ -19,6 +19,7 @@ import { HtmlPagesModule } from './common/html/html-pages.module';
 import { SigningModule } from './common/signing/signing.module';
 import { DatabaseModule } from './database/database.module';
 import { MailModule } from './integrations/mail/mail.module';
+import { ExpoPushModule } from './integrations/push/expo-push.module';
 import { StorageModule } from './integrations/storage/storage.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AttendeeModule } from './modules/attendee/attendee.module';
@@ -72,6 +73,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     SigningModule,
     DatabaseModule,
     MailModule,
+    ExpoPushModule,
     StorageModule,
     AuthModule,
     AttendeeModule,

@@ -50,6 +50,7 @@ model User {
   stepUpChallenges        StepUpChallenge[]
   createdBroadcasts       Broadcast[]
   adminActions            AdminAction[]        @relation("AdminActions")
+  adminBroadcasts         AdminBroadcast[]       @relation("AdminBroadcasts")
   suppressions            BroadcastSuppression[]
 
   @@index([suspendedAt])

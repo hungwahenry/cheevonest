@@ -3,7 +3,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { TestingModuleBuilder } from '@nestjs/testing';
 import { PaystackProvider } from '../src/modules/payments/providers/paystack.provider';
-import { ExpoPushService } from '../src/modules/notifications/services/expo-push.service';
+import { ExpoPushService } from '../src/integrations/push/expo-push.service';
 import { DailySalesDigestService } from '../src/modules/notifications/services/scheduled/daily-sales-digest.service';
 import { StartingSoonService } from '../src/modules/notifications/services/scheduled/starting-soon.service';
 import {

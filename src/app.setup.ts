@@ -34,6 +34,8 @@ export async function configureApp(app: NestFastifyApplication): Promise<void> {
       '.well-known/assetlinks.json',
       'payments/return',
       'unsubscribe/broadcasts/:organisationId/:email',
+      'unsubscribe/marketing/:userId',
+      'r/:id',
     ],
   });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });

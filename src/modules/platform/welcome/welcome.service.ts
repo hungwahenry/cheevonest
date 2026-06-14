@@ -20,4 +20,17 @@ export class WelcomeService {
       }))
     );
   }
+
+  async update(data: {
+    headline?: string;
+    subheadline?: string;
+    backgroundPath?: string | null;
+  }): Promise<WelcomeContent> {
+    const current = await this.content();
+
+    return this.prisma.welcomeContent.update({
+      where: { id: current.id },
+      data,
+    });
+  }
 }

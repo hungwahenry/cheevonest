@@ -61,14 +61,16 @@ describe('Admin commerce & content (e2e)', () => {
         callback_url: 'cheevo:///orders/return',
       })
       .expect(200);
-    const orderId = (order.body as { data: { order: { id: string } } }).data.order.id;
+    const orderId = (order.body as { data: { order: { id: string } } }).data
+      .order.id;
     const reference = refs.at(-1)!;
     const raw = JSON.stringify({
       event: 'charge.success',
       data: {
         id: `evt_${reference}`,
         reference,
-        amount: (order.body as { data: { order: { total_minor: number } } }).data.order.total_minor,
+        amount: (order.body as { data: { order: { total_minor: number } } })
+          .data.order.total_minor,
         currency: 'NGN',
         status: 'success',
       },
@@ -76,7 +78,10 @@ describe('Admin commerce & content (e2e)', () => {
     await request(server())
       .post('/api/v1/webhooks/paystack')
       .set('Content-Type', 'application/json')
-      .set('x-paystack-signature', createHmac('sha512', SECRET).update(raw).digest('hex'))
+      .set(
+        'x-paystack-signature',
+        createHmac('sha512', SECRET).update(raw).digest('hex'),
+      )
       .send(raw)
       .expect(200);
     return orderId;
@@ -132,7 +137,10 @@ describe('Admin commerce & content (e2e)', () => {
     const run = Date.now().toString(36);
     const category = await ctx.prisma.organisationCategory.findFirstOrThrow();
     admin = await signIn(uniqueEmail('adm'));
-    await ctx.prisma.user.update({ where: { id: await meId(admin) }, data: { role: 'admin' } });
+    await ctx.prisma.user.update({
+      where: { id: await meId(admin) },
+      data: { role: 'admin' },
+    });
     owner = await signIn(uniqueEmail('own'));
     await request(server())
       .post('/api/v1/organizer/organisations')
@@ -153,7 +161,10 @@ describe('Admin commerce & content (e2e)', () => {
       .field('ends_at', '2028-03-02 02:00')
       .field('venue_name', 'H')
       .field('interests[]', 'afrobeats')
-      .attach('flyer', PNG_PIXEL, { filename: 'f.png', contentType: 'image/png' })
+      .attach('flyer', PNG_PIXEL, {
+        filename: 'f.png',
+        contentType: 'image/png',
+      })
       .expect(200);
     const t = await request(server())
       .post(`/api/v1/organizer/events/${eventId}/tickets`)
@@ -178,7 +189,9 @@ describe('Admin commerce & content (e2e)', () => {
 
   it('refunds an order and fixes the sold counters (Laravel drift fix)', async () => {
     const orderId = await payOrder(buyer, 2);
-    const eventBefore = await ctx.prisma.event.findUniqueOrThrow({ where: { id: eventId } });
+    const eventBefore = await ctx.prisma.event.findUniqueOrThrow({
+      where: { id: eventId },
+    });
     expect(eventBefore.ticketsSold).toBe(2);
 
     const res = await request(server())
@@ -198,12 +211,16 @@ describe('Admin commerce & content (e2e)', () => {
     expect(order.payment?.status).toBe('refunded');
     expect(order.issuedTickets.every((t) => t.status === 'revoked')).toBe(true);
 
-    const eventAfter = await ctx.prisma.event.findUniqueOrThrow({ where: { id: eventId } });
+    const eventAfter = await ctx.prisma.event.findUniqueOrThrow({
+      where: { id: eventId },
+    });
     expect(eventAfter.ticketsSold).toBe(0);
     expect(Number(eventAfter.revenueMinor)).toBe(
       Number(eventBefore.revenueMinor) - 1000000,
     );
-    const ga = await ctx.prisma.eventTicket.findUniqueOrThrow({ where: { id: ticketId } });
+    const ga = await ctx.prisma.eventTicket.findUniqueOrThrow({
+      where: { id: ticketId },
+    });
     expect(ga.soldCount).toBe(0);
 
     const partial = await request(server())
@@ -223,7 +240,8 @@ describe('Admin commerce & content (e2e)', () => {
         callback_url: 'cheevo:///orders/return',
       })
       .expect(200);
-    const orderId = (created.body as { data: { order: { id: string } } }).data.order.id;
+    const orderId = (created.body as { data: { order: { id: string } } }).data
+      .order.id;
 
     await request(server())
       .post(`/api/v1/admin/orders/${orderId}/mark-paid`)
@@ -263,7 +281,9 @@ describe('Admin commerce & content (e2e)', () => {
       .set('Authorization', a(admin))
       .send({ to_user_id: strangerId, reason: 'gift' })
       .expect(200);
-    const moved = await ctx.prisma.issuedTicket.findUniqueOrThrow({ where: { id: ticket.id } });
+    const moved = await ctx.prisma.issuedTicket.findUniqueOrThrow({
+      where: { id: ticket.id },
+    });
     expect(moved.holderUserId).toBe(strangerId);
 
     // scan it, then reissue must fail (only revoked are reissuable)
@@ -291,11 +311,17 @@ describe('Admin commerce & content (e2e)', () => {
       .expect(200);
     const commentId = (comment.body as { data: { id: string } }).data.id;
 
-    const reason = await ctx.prisma.reportReason.findFirstOrThrow({ where: { slug: 'spam' } });
+    const reason = await ctx.prisma.reportReason.findFirstOrThrow({
+      where: { slug: 'spam' },
+    });
     await request(server())
       .post('/api/v1/reports')
       .set('Authorization', a(owner))
-      .send({ target_type: 'event_comment', target_id: commentId, report_reason_id: reason.id })
+      .send({
+        target_type: 'event_comment',
+        target_id: commentId,
+        report_reason_id: reason.id,
+      })
       .expect(201);
     const reportRow = await ctx.prisma.report.findFirstOrThrow({
       where: { targetType: 'event_comment', targetId: commentId },
@@ -305,7 +331,12 @@ describe('Admin commerce & content (e2e)', () => {
       .get(`/api/v1/admin/reports/${reportRow.id}`)
       .set('Authorization', a(admin))
       .expect(200);
-    expect((show.body as { data: any }).data.target).toMatchObject({ type: 'comment', id: commentId });
+    expect(
+      (show.body as { data: { target: Record<string, unknown> } }).data.target,
+    ).toMatchObject({
+      type: 'comment',
+      id: commentId,
+    });
 
     await request(server())
       .post(`/api/v1/admin/reports/${reportRow.id}/start-review`)
@@ -318,8 +349,12 @@ describe('Admin commerce & content (e2e)', () => {
       .send({ action: 'delete_target', resolution_note: 'removed spam' })
       .expect(200);
 
-    expect(await ctx.prisma.eventComment.findUnique({ where: { id: commentId } })).toBeNull();
-    const resolved = await ctx.prisma.report.findUniqueOrThrow({ where: { id: reportRow.id } });
+    expect(
+      await ctx.prisma.eventComment.findUnique({ where: { id: commentId } }),
+    ).toBeNull();
+    const resolved = await ctx.prisma.report.findUniqueOrThrow({
+      where: { id: reportRow.id },
+    });
     expect(resolved.status).toBe('actioned');
   });
 
@@ -341,7 +376,11 @@ describe('Admin commerce & content (e2e)', () => {
       .expect(200);
     expect(dismissed.body).toMatchObject({ data: { cleared: 1 } });
     expect(
-      (await ctx.prisma.eventComment.findUniqueOrThrow({ where: { id: flaggedId } })).flagsCount,
+      (
+        await ctx.prisma.eventComment.findUniqueOrThrow({
+          where: { id: flaggedId },
+        })
+      ).flagsCount,
     ).toBe(0);
 
     await request(server())
@@ -349,12 +388,16 @@ describe('Admin commerce & content (e2e)', () => {
       .set('Authorization', a(admin))
       .send({ reason: 'cleanup' })
       .expect(200);
-    expect(await ctx.prisma.eventComment.findUnique({ where: { id: flaggedId } })).toBeNull();
+    expect(
+      await ctx.prisma.eventComment.findUnique({ where: { id: flaggedId } }),
+    ).toBeNull();
 
     const audit = await ctx.prisma.adminAction.findFirst({
       where: { action: 'comments.delete', targetId: flaggedId },
     });
-    expect((audit?.payload as any)?.body).toBe('comment to flag');
+    expect((audit?.payload as { body?: string } | null)?.body).toBe(
+      'comment to flag',
+    );
   });
 
   it('resyncs and force-marks payments', async () => {
@@ -367,7 +410,10 @@ describe('Admin commerce & content (e2e)', () => {
       })
       .expect(200);
     const payment = await ctx.prisma.payment.findFirstOrThrow({
-      where: { purposableId: (created.body as { data: { order: { id: string } } }).data.order.id },
+      where: {
+        purposableId: (created.body as { data: { order: { id: string } } }).data
+          .order.id,
+      },
     });
 
     const marked = await request(server())
@@ -388,15 +434,30 @@ describe('Admin commerce & content (e2e)', () => {
       .get(`/api/v1/admin/orders?event_id=${eventId}`)
       .set('Authorization', a(admin))
       .expect(200);
-    const item = (orders.body as { data: { items: any[] } }).data.items[0];
-    expect(item.buyer).toMatchObject({ type: 'user' });
+    const item = (
+      orders.body as {
+        data: {
+          items: Array<{
+            buyer: Record<string, unknown>;
+            event: Record<string, unknown>;
+          }>;
+        };
+      }
+    ).data.items[0];
+    expect(item.buyer).toMatchObject({ type: 'user', id: buyerId });
     expect(item.event).toMatchObject({ type: 'event', id: eventId });
 
     const tickets = await request(server())
       .get('/api/v1/admin/issued-tickets?status=valid')
       .set('Authorization', a(admin))
       .expect(200);
-    expect((tickets.body as { data: { items: any[] } }).data.items[0].holder).toMatchObject({
+    expect(
+      (
+        tickets.body as {
+          data: { items: Array<{ holder: Record<string, unknown> }> };
+        }
+      ).data.items[0].holder,
+    ).toMatchObject({
       type: 'user',
     });
   });

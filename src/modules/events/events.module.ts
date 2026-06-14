@@ -10,6 +10,6 @@ import { EventSerializer } from './serializers/event.serializer';
   imports: [OrganisationsModule],
   controllers: [PublicEventController],
   providers: [EventsService, EventsPolicy, EventSerializer, EventsCronsService],
-  exports: [EventsService, EventsPolicy, EventSerializer],
+  exports: [EventsService, EventsPolicy, EventSerializer, EventsCronsService],
 })
 export class EventsModule {}
