@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Run as the deploy user from the app dir on each release.
 
-APP_DIR="/var/www/cheevo-nest"
+APP_DIR="/var/www/cheevo"
 BRANCH="main"
 
 cd "$APP_DIR"

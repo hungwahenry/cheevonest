@@ -22,7 +22,7 @@ systemctl disable --now "php${PHP_VER}-fpm" 2>/dev/null || true
 
 echo "== swap nginx vhost: Laravel -> NestJS =="
 rm -f /etc/nginx/sites-enabled/cheevo-api
-ln -sf /etc/nginx/sites-available/cheevo-nest /etc/nginx/sites-enabled/cheevo-nest
+ln -sf /etc/nginx/sites-available/cheevo /etc/nginx/sites-enabled/cheevo
 nginx -t
 systemctl reload nginx
 

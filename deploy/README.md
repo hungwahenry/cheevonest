@@ -16,7 +16,7 @@ tasks run inside the one process (`@nestjs/event-emitter` + `@nestjs/schedule`).
 
 | File | Runs as | When |
 | --- | --- | --- |
-| `provision.sh` | root | once — installs Node/PM2, fresh `cheevo_nest` db, app dir, vhost |
+| `provision.sh` | root | once — installs Node/PM2, fresh `cheevo` db, app dir, vhost |
 | `deploy.sh` | deploy | every release — pull, build, migrate, reload |
 | `decommission-laravel.sh` | root | once — stop Laravel, point nginx at Node |
 | `ecosystem.config.js` | — | PM2 process definition |
@@ -28,16 +28,16 @@ tasks run inside the one process (`@nestjs/event-emitter` + `@nestjs/schedule`).
    ```bash
    sudo bash deploy/provision.sh
    ```
-   Prints the generated `cheevo_nest` Postgres password (also in
-   `/root/.cheevo-nest-db-password`). Laravel keeps serving traffic throughout.
+   Prints the generated `cheevo` Postgres password (also in
+   `/root/.cheevo-db-password`). Laravel keeps serving traffic throughout.
 
-2. **Configure** (`deploy` user, in `/var/www/cheevo-nest`): `cp .env.example .env`
+2. **Configure** (`deploy` user, in `/var/www/cheevo`): `cp .env.example .env`
    and set at least:
    ```
    NODE_ENV=production
    APP_URL=https://api.cheevo.vip
    WEB_URL=https://cheevo.events
-   DATABASE_URL=postgresql://cheevo_nest:<password>@127.0.0.1:5432/cheevo_nest
+   DATABASE_URL=postgresql://cheevo:<password>@127.0.0.1:5432/cheevo
    APP_KEY=<openssl rand -hex 32>
 
    STORAGE_DISK=s3
@@ -84,7 +84,7 @@ tasks run inside the one process (`@nestjs/event-emitter` + `@nestjs/schedule`).
 ## Redeploys
 
 ```bash
-ssh deploy@<box> 'cd /var/www/cheevo-nest && ./deploy/deploy.sh'
+ssh deploy@<box> 'cd /var/www/cheevo && ./deploy/deploy.sh'
 ```
 
 `pm2 startOrReload` restarts the process (brief blip — single instance by design).
@@ -101,7 +101,7 @@ npx prisma migrate status  # migration state
 ## Rollback
 
 ```bash
-cd /var/www/cheevo-nest
+cd /var/www/cheevo
 git checkout <previous-sha>
 npm ci && npx prisma generate --sql && npm run build
 pm2 reload deploy/ecosystem.config.js

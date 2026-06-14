@@ -7,10 +7,10 @@ set -euo pipefail
 # The actual cutover happens later via decommission-laravel.sh.
 
 DOMAIN="api.cheevo.vip"
-APP_DIR="/var/www/cheevo-nest"
+APP_DIR="/var/www/cheevo"
 DEPLOY_USER="deploy"
-DB_NAME="cheevo_nest"
-DB_USER="cheevo_nest"
+DB_NAME="cheevo"
+DB_USER="cheevo"
 NODE_MAJOR="24"
 PORT="3000"
 REPO="https://github.com/hungwahenry/cheevonest.git"
@@ -61,8 +61,8 @@ if ! sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'"
   DB_PASS="$(openssl rand -hex 24)"
   sudo -u postgres psql -c "CREATE ROLE \"$DB_USER\" LOGIN PASSWORD '$DB_PASS';"
   sudo -u postgres psql -c "CREATE DATABASE \"$DB_NAME\" OWNER \"$DB_USER\";"
-  printf "%s\n" "$DB_PASS" > /root/.cheevo-nest-db-password
-  chmod 0600 /root/.cheevo-nest-db-password
+  printf "%s\n" "$DB_PASS" > /root/.cheevo-db-password
+  chmod 0600 /root/.cheevo-db-password
 fi
 
 PG_CONF="$(sudo -u postgres psql -tA -c "SHOW config_file;")"
@@ -81,7 +81,7 @@ fi
 
 echo "== nginx vhost (written but NOT enabled — enabled at cutover) =="
 sed -e "s|__DOMAIN__|$DOMAIN|g" -e "s|__PORT__|$PORT|g" \
-    "$APP_DIR/deploy/nginx.conf" > /etc/nginx/sites-available/cheevo-nest
+    "$APP_DIR/deploy/nginx.conf" > /etc/nginx/sites-available/cheevo
 
 echo "== PM2 boot persistence for $DEPLOY_USER =="
 env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$DEPLOY_USER" --hp "/home/$DEPLOY_USER" >/dev/null
@@ -91,7 +91,7 @@ ufw allow OpenSSH
 ufw allow 'Nginx Full'
 ufw --force enable
 
-DB_PASS_DISPLAY="$(cat /root/.cheevo-nest-db-password 2>/dev/null || echo '(already existed)')"
+DB_PASS_DISPLAY="$(cat /root/.cheevo-db-password 2>/dev/null || echo '(already existed)')"
 
 cat <<EOF
 
@@ -101,7 +101,7 @@ cat <<EOF
   Postgres db:        $DB_NAME
   Postgres user:      $DB_USER
   Postgres password:  $DB_PASS_DISPLAY
-  (also at: /root/.cheevo-nest-db-password)
+  (also at: /root/.cheevo-db-password)
 
   Next:
    1. su - $DEPLOY_USER ; cd $APP_DIR
