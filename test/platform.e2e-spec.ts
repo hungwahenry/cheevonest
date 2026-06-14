@@ -60,13 +60,12 @@ describe('Platform (e2e)', () => {
     expect(after.headers.etag).not.toBe(before.headers.etag);
   });
 
-  it('serves public flags and hides private ones', async () => {
+  it('serves public flags with an ETag and honours If-None-Match', async () => {
     const response = await request(server()).get('/api/v1/flags').expect(200);
 
     const body = response.body as { data: Record<string, boolean> };
     expect(body.data['comments.enabled']).toBe(true);
     expect(body.data['payouts.enabled']).toBe(true);
-    expect(body.data['admin.system_announcements']).toBeUndefined();
 
     const etag = response.headers.etag;
     expect(etag).toMatch(/^W\/"flags-/);

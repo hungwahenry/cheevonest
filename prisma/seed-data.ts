@@ -104,7 +104,6 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagSeed> = [
   { key: 'notifications.push', description: 'Expo push notifications. Kill switch when Expo is degraded.', enabled: true, isPublic: true },
   { key: 'broadcasts.enabled', description: 'Email broadcasts to ticket holders / RSVPs. Disable to halt new sends.', enabled: true, isPublic: true },
   { key: 'payouts.enabled', description: 'Organisers can request payouts. Disable to pause the payout workflow.', enabled: true, isPublic: true },
-  { key: 'admin.system_announcements', description: 'Admin ability to broadcast platform-wide system announcements.', enabled: true, isPublic: false },
 ];
 
 export const ORGANISATION_CATEGORIES: ReadonlyArray<{
