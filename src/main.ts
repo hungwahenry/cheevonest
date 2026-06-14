@@ -14,9 +14,13 @@ async function bootstrap(): Promise<void> {
 
   app.useLogger(app.get(Logger));
   await configureApp(app);
-  setupSwagger(app);
 
   const config = app.get(ConfigService);
+
+  if (config.get<string>('NODE_ENV') !== 'production') {
+    setupSwagger(app);
+  }
+
   const port = config.get<number>('PORT') ?? 3000;
   await app.listen(port, '0.0.0.0');
 }

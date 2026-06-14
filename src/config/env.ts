@@ -43,6 +43,8 @@ const envSchema = z.object({
 
   AUTH_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(43200),
 
+  ADMIN_BOOTSTRAP_EMAIL: z.string().optional(),
+
   DICEBEAR_URL: z.string().default('https://api.dicebear.com/9.x'),
   DICEBEAR_STYLE: z.string().default('thumbs'),
   DICEBEAR_FORMAT: z.string().default('png'),
