@@ -83,4 +83,18 @@ export class AudienceSegmentService {
   ): Promise<number> {
     return this.prisma.user.count({ where: this.where(segment, options) });
   }
+
+  /** Distinct cities present on onboarded profiles — populates the segment builder. */
+  async cities(): Promise<string[]> {
+    const rows = await this.prisma.profile.findMany({
+      where: { city: { not: null }, completedAt: { not: null } },
+      distinct: ['city'],
+      select: { city: true },
+      orderBy: { city: 'asc' },
+    });
+
+    return rows
+      .map((row) => row.city)
+      .filter((city): city is string => city !== null);
+  }
 }

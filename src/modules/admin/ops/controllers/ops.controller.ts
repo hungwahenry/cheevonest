@@ -1,4 +1,5 @@
 import { Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiResult } from '../../../../common/responses/api-result';
 import { Roles } from '../../../auth/decorators/auth.decorators';
 import { AuditAction } from '../../audit/audit-action.decorator';
@@ -27,6 +28,7 @@ export class OpsController {
 
   @Post('commands/:command/run')
   @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @AuditAction('ops.run_command')
   async runCommand(
     @Param('command') command: string,

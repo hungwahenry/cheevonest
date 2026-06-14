@@ -137,6 +137,14 @@ export class AdminBroadcastService {
     });
   }
 
+  /** Available filter values for the segment builder. */
+  async segmentOptions(): Promise<{ roles: string[]; cities: string[] }> {
+    return {
+      roles: ['attendee', 'organiser', 'admin'],
+      cities: await this.segments.cities(),
+    };
+  }
+
   async schedule(id: string, scheduledAt: Date): Promise<AdminBroadcast> {
     const broadcast = await this.findOrFail(id);
     this.assertDraft(broadcast);

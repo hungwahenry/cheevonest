@@ -99,6 +99,23 @@ describe('Admin announcements / broadcasts (e2e)', () => {
       .expect(403);
   });
 
+  it('serves segment-builder options (roles + distinct cities)', async () => {
+    await ctx.prisma.profile.update({
+      where: { userId: optedInId },
+      data: { city: 'Lagos', completedAt: new Date() },
+    });
+
+    const res = await request(server())
+      .get(`${base}/segment-options`)
+      .set('Authorization', a(admin))
+      .expect(200);
+
+    const data = (res.body as { data: { roles: string[]; cities: string[] } })
+      .data;
+    expect(data.roles).toContain('attendee');
+    expect(data.cities).toContain('Lagos');
+  });
+
   it('sends a system broadcast to an explicit set, ignoring consent', async () => {
     const created = await createBroadcast({
       kind: 'system',

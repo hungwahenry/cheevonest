@@ -9,6 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiResult } from '../../../../common/responses/api-result';
 import { Paginated } from '../../../../common/responses/paginated';
 import { CurrentUser, Roles } from '../../../auth/decorators/auth.decorators';
@@ -64,6 +65,11 @@ export class AdminBroadcastsController {
     );
 
     return { recipients };
+  }
+
+  @Get('segment-options')
+  async segmentOptions(): Promise<unknown> {
+    return this.broadcasts.segmentOptions();
   }
 
   @Get(':id')
@@ -132,6 +138,7 @@ export class AdminBroadcastsController {
 
   @Post(':id/send')
   @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @AuditAction('announcements.send')
   async send(
     @Param('id') id: string,
