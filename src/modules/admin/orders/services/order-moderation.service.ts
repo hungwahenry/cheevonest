@@ -33,14 +33,11 @@ export class OrderModerationService {
       }
 
       await this.issuedTickets.revokeUnscannedForOrder(tx, order.id);
-
-      await tx.event.updateMany({
-        where: {
-          id: order.eventId,
-          revenueMinor: { gte: order.subtotalMinor },
-        },
-        data: { revenueMinor: { decrement: order.subtotalMinor } },
-      });
+      await this.orders.reverseEventRevenue(
+        tx,
+        order.eventId,
+        order.subtotalMinor,
+      );
 
       return tx.order.update({
         where: { id: order.id },

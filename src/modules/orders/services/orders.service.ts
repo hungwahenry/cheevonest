@@ -237,6 +237,18 @@ export class OrdersService {
     return this.loadForResource(orderId);
   }
 
+  /** Reverses the revenue cache that fulfill() added — used by an admin refund. */
+  async reverseEventRevenue(
+    tx: Prisma.TransactionClient,
+    eventId: string,
+    subtotalMinor: bigint,
+  ): Promise<void> {
+    await tx.event.updateMany({
+      where: { id: eventId, revenueMinor: { gte: subtotalMinor } },
+      data: { revenueMinor: { decrement: subtotalMinor } },
+    });
+  }
+
   async cancel(orderId: string): Promise<OrderForResource> {
     await this.prisma.$transaction(async (tx) => {
       await tx.$queryRawTyped(lockOrder(orderId));

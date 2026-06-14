@@ -16,6 +16,7 @@ import {
 import { TicketAlreadyScannedException } from '../exceptions/ticket-already-scanned.exception';
 import { TicketCodeNotFoundException } from '../exceptions/ticket-code-not-found.exception';
 import { TicketRevokedException } from '../exceptions/ticket-revoked.exception';
+import { TicketNotReissuableException } from '../exceptions/ticket-not-reissuable.exception';
 import { TicketWrongEventException } from '../exceptions/ticket-wrong-event.exception';
 
 @Injectable()
@@ -185,6 +186,42 @@ export class IssuedTicketsService {
       });
 
       return revoked;
+    });
+  }
+
+  /** Brings a revoked ticket back with a fresh code and re-applies the sale counters. */
+  async reissue(ticketId: string): Promise<IssuedTicket> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRawTyped(lockIssuedTicketById(ticketId));
+
+      const ticket = await tx.issuedTicket.findUniqueOrThrow({
+        where: { id: ticketId },
+      });
+
+      if (ticket.status !== 'revoked') {
+        throw new TicketNotReissuableException(ticket.status);
+      }
+
+      const reissued = await tx.issuedTicket.update({
+        where: { id: ticket.id },
+        data: {
+          status: 'valid',
+          code: ulid(),
+          scannedAt: null,
+          scannedByUserId: null,
+        },
+      });
+
+      await tx.eventTicket.update({
+        where: { id: ticket.eventTicketId },
+        data: { soldCount: { increment: 1 } },
+      });
+      await tx.event.update({
+        where: { id: ticket.eventId },
+        data: { ticketsSold: { increment: 1 } },
+      });
+
+      return reissued;
     });
   }
 

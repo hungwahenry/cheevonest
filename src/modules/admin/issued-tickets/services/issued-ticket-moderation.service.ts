@@ -1,76 +1,28 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ulid } from 'ulid';
 import { PrismaService } from '../../../../database/prisma.service';
 import type { IssuedTicket } from '../../../../generated/prisma/client';
-import { lockIssuedTicketById } from '../../../../generated/prisma/sql';
 import { TicketAlreadyScannedException } from '../../../tickets/exceptions/ticket-already-scanned.exception';
-import { TicketNotReissuableException } from '../exceptions/ticket-not-reissuable.exception';
+import { IssuedTicketsService } from '../../../tickets/services/issued-tickets.service';
 
 @Injectable()
 export class IssuedTicketModerationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly issuedTickets: IssuedTicketsService,
+  ) {}
 
-  /** Revoke a single ticket and free its seat — refuses already-scanned ones. */
+  /** Refuses scanned tickets (admin policy), then frees the seat via the kernel. */
   async revoke(ticket: IssuedTicket): Promise<IssuedTicket> {
     if (ticket.status === 'scanned') {
       throw new TicketAlreadyScannedException();
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const revoked = await tx.issuedTicket.update({
-        where: { id: ticket.id },
-        data: { status: 'revoked' },
-      });
-
-      if (ticket.status === 'valid') {
-        await tx.eventTicket.updateMany({
-          where: { id: ticket.eventTicketId, soldCount: { gt: 0 } },
-          data: { soldCount: { decrement: 1 } },
-        });
-        await tx.event.updateMany({
-          where: { id: ticket.eventId, ticketsSold: { gt: 0 } },
-          data: { ticketsSold: { decrement: 1 } },
-        });
-      }
-
-      return revoked;
-    });
+    return this.issuedTickets.revoke(ticket.id);
   }
 
-  /** Bring a revoked ticket back with a fresh code; re-applies the sale counters. */
+  /** Counter-correct reissue lives in the tickets kernel. */
   async reissue(ticket: IssuedTicket): Promise<IssuedTicket> {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRawTyped(lockIssuedTicketById(ticket.id));
-
-      const locked = await tx.issuedTicket.findUniqueOrThrow({
-        where: { id: ticket.id },
-      });
-
-      if (locked.status !== 'revoked') {
-        throw new TicketNotReissuableException(locked.status);
-      }
-
-      const reissued = await tx.issuedTicket.update({
-        where: { id: locked.id },
-        data: {
-          status: 'valid',
-          code: ulid(),
-          scannedAt: null,
-          scannedByUserId: null,
-        },
-      });
-
-      await tx.eventTicket.update({
-        where: { id: locked.eventTicketId },
-        data: { soldCount: { increment: 1 } },
-      });
-      await tx.event.update({
-        where: { id: locked.eventId },
-        data: { ticketsSold: { increment: 1 } },
-      });
-
-      return reissued;
-    });
+    return this.issuedTickets.reissue(ticket.id);
   }
 
   async transfer(
