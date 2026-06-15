@@ -21,6 +21,9 @@ export class MailTemplatesService {
       webUrl: config.get('WEB_URL', { infer: true }),
       appName: config.get('APP_NAME', { infer: true }),
     };
+    this.handlebars.registerHelper('concat', (...args: unknown[]) =>
+      args.slice(0, -1).join(''),
+    );
     this.loadTemplates(join(__dirname, 'templates'));
   }
 
