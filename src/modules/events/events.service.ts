@@ -85,7 +85,7 @@ export class EventsService {
     });
   }
 
-  /** The public event page: published or past, with org, tickets, features. */
+  /** The public event page: published or past, with org, tickets, features, images. */
   async findPublicPageBySlug(slug: string) {
     const event = await this.prisma.event.findFirst({
       where: { slug, status: { in: ['published', 'past'] } },
@@ -93,6 +93,7 @@ export class EventsService {
         organisation: true,
         tickets: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
         features: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
+        images: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
       },
     });
 

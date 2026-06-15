@@ -28,6 +28,7 @@ export type EventForPublicPage = Event & {
   organisation: Organisation;
   tickets: EventTicket[];
   features: EventFeature[];
+  images: EventImage[];
 };
 
 export interface AttendeeEventFlags {
@@ -152,6 +153,7 @@ export class EventSerializer {
       },
       tickets: event.tickets.map((ticket) => this.publicTicket(ticket)),
       features: event.features.map((feature) => this.feature(feature)),
+      images: event.images.map((image) => this.image(image)),
     };
   }
 
