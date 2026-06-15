@@ -17,9 +17,17 @@ import { toBoolean, toNumber } from '../../../common/validation/transforms';
 import {
   NOTIFICATION_CHANNELS,
   NOTIFICATION_TYPE_VALUES,
+  type NotificationAudience,
 } from '../notification-types';
 
-export class ListInboxDto {
+const AUDIENCES: NotificationAudience[] = ['organizer', 'attendee'];
+
+export class AudienceQueryDto {
+  @IsIn(AUDIENCES)
+  audience!: NotificationAudience;
+}
+
+export class ListInboxDto extends AudienceQueryDto {
   @IsOptional()
   @Transform(toNumber)
   @IsInt()
@@ -50,6 +58,9 @@ export class UpdatePreferencesDto {
 const TIME_PATTERN = /^\d{2}:\d{2}(:\d{2})?$/;
 
 export class UpdateQuietHoursDto {
+  @IsIn(AUDIENCES)
+  audience!: NotificationAudience;
+
   @ValidateIf((dto: UpdateQuietHoursDto) => dto.end != null)
   @IsString()
   @Matches(TIME_PATTERN, { message: 'The start must be a HH:MM time.' })
@@ -73,6 +84,9 @@ export class RegisterPushTokenDto {
     message: 'The token must be an Expo push token.',
   })
   token!: string;
+
+  @IsIn(AUDIENCES)
+  audience!: NotificationAudience;
 
   @IsOptional()
   @IsString()

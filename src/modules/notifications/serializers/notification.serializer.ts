@@ -3,9 +3,15 @@ import type { Notification, User } from '../../../generated/prisma/client';
 import {
   CHANNEL_LABELS,
   NOTIFICATION_TYPES,
-  NOTIFICATION_TYPE_VALUES,
+  NotificationAudience,
+  notificationTypesForAudience,
 } from '../notification-types';
 import { PreferenceCell } from '../services/notification-preferences.service';
+
+const AUDIENCE_LABELS: Record<NotificationAudience, string> = {
+  organizer: 'Organizer',
+  attendee: 'Attendee',
+};
 
 @Injectable()
 export class NotificationSerializer {
@@ -25,13 +31,14 @@ export class NotificationSerializer {
     };
   }
 
-  preferences(user: User, matrix: PreferenceCell[]): Record<string, unknown> {
+  preferences(
+    user: User,
+    matrix: PreferenceCell[],
+    audience: NotificationAudience,
+  ): Record<string, unknown> {
     return {
-      audiences: [
-        { value: 'organizer', label: 'Organizer' },
-        { value: 'attendee', label: 'Attendee' },
-      ],
-      types: NOTIFICATION_TYPE_VALUES.map((type) => {
+      audiences: [{ value: audience, label: AUDIENCE_LABELS[audience] }],
+      types: notificationTypesForAudience(audience).map((type) => {
         const meta = NOTIFICATION_TYPES[type];
 
         return {

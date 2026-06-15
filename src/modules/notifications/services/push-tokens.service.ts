@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ulid } from 'ulid';
 import { PrismaService } from '../../../database/prisma.service';
+import { NotificationAudience } from '../notification-types';
 
 @Injectable()
 export class PushTokensService {
@@ -10,15 +11,17 @@ export class PushTokensService {
   async register(
     userId: string,
     token: string,
+    audience: NotificationAudience,
     deviceId: string | null,
   ): Promise<void> {
     await this.prisma.expoPushToken.upsert({
       where: { token },
-      update: { userId, deviceId, lastActiveAt: new Date() },
+      update: { userId, audience, deviceId, lastActiveAt: new Date() },
       create: {
         id: ulid(),
         userId,
         token,
+        audience,
         deviceId,
         lastActiveAt: new Date(),
       },

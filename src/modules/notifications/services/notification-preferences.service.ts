@@ -3,9 +3,10 @@ import { PrismaService } from '../../../database/prisma.service';
 import type { User } from '../../../generated/prisma/client';
 import {
   NOTIFICATION_TYPES,
-  NOTIFICATION_TYPE_VALUES,
+  NotificationAudience,
   NotificationChannel,
   NotificationType,
+  notificationTypesForAudience,
 } from '../notification-types';
 
 export interface PreferenceCell {
@@ -43,7 +44,10 @@ export class NotificationPreferencesService {
     });
   }
 
-  async matrix(userId: string): Promise<PreferenceCell[]> {
+  async matrix(
+    userId: string,
+    audience: NotificationAudience,
+  ): Promise<PreferenceCell[]> {
     const stored = await this.prisma.notificationPreference.findMany({
       where: { userId },
     });
@@ -54,7 +58,7 @@ export class NotificationPreferencesService {
       ]),
     );
 
-    return NOTIFICATION_TYPE_VALUES.flatMap((type) =>
+    return notificationTypesForAudience(audience).flatMap((type) =>
       NOTIFICATION_TYPES[type].allowedChannels.map((channel) => ({
         type,
         channel,

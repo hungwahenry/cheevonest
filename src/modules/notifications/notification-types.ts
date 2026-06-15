@@ -115,6 +115,14 @@ export const NOTIFICATION_TYPE_VALUES = Object.keys(
   NOTIFICATION_TYPES,
 ) as NotificationType[];
 
+export function notificationTypesForAudience(
+  audience: NotificationAudience,
+): NotificationType[] {
+  return NOTIFICATION_TYPE_VALUES.filter(
+    (type) => NOTIFICATION_TYPES[type].audience === audience,
+  );
+}
+
 export const CHANNEL_LABELS: Record<NotificationChannel, string> = {
   email: 'Email',
   push: 'Push',

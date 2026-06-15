@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import type { Notification } from '../../../generated/prisma/client';
 import { NotificationNotFoundException } from '../exceptions/notification-not-found.exception';
+import {
+  NotificationAudience,
+  notificationTypesForAudience,
+} from '../notification-types';
 
 @Injectable()
 export class InboxService {
@@ -9,10 +13,14 @@ export class InboxService {
 
   async page(
     userId: string,
+    audience: NotificationAudience,
     page: number,
     perPage: number,
   ): Promise<{ items: Notification[]; total: number }> {
-    const where = { userId };
+    const where = {
+      userId,
+      type: { in: notificationTypesForAudience(audience) },
+    };
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.notification.count({ where }),
@@ -27,9 +35,16 @@ export class InboxService {
     return { items, total };
   }
 
-  async unreadCount(userId: string): Promise<number> {
+  async unreadCount(
+    userId: string,
+    audience: NotificationAudience,
+  ): Promise<number> {
     return this.prisma.notification.count({
-      where: { userId, readAt: null },
+      where: {
+        userId,
+        readAt: null,
+        type: { in: notificationTypesForAudience(audience) },
+      },
     });
   }
 
@@ -44,9 +59,16 @@ export class InboxService {
     }
   }
 
-  async markAllRead(userId: string): Promise<void> {
+  async markAllRead(
+    userId: string,
+    audience: NotificationAudience,
+  ): Promise<void> {
     await this.prisma.notification.updateMany({
-      where: { userId, readAt: null },
+      where: {
+        userId,
+        readAt: null,
+        type: { in: notificationTypesForAudience(audience) },
+      },
       data: { readAt: new Date() },
     });
   }

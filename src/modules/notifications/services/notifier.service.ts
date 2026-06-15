@@ -9,6 +9,7 @@ import {
 } from '../../../integrations/push/expo-push.service';
 import { FeatureFlagsService } from '../../platform/system-config/feature-flags.service';
 import { NotificationMessage } from '../contracts/notification-message.interface';
+import { NOTIFICATION_TYPES } from '../notification-types';
 import { NotificationPreferencesService } from './notification-preferences.service';
 import { isInQuietHours } from './quiet-hours';
 
@@ -32,9 +33,12 @@ export class NotifierService {
 
     const users = await this.prisma.user.findMany({
       where: { id: { in: [...new Set(userIds)] } },
-      include: { expoPushTokens: { select: { token: true } } },
+      include: {
+        expoPushTokens: { select: { token: true, audience: true } },
+      },
     });
 
+    const audience = NOTIFICATION_TYPES[message.type].audience;
     const inappRows: Prisma.NotificationCreateManyInput[] = [];
     const pushMessages: ExpoPushMessage[] = [];
     const data = { type: message.type, ...message.data() };
@@ -68,8 +72,11 @@ export class NotifierService {
             userId: user.id,
           }))
         ) {
-          for (const { token } of user.expoPushTokens) {
-            pushMessages.push({ to: token, ...payload, data });
+          for (const pushToken of user.expoPushTokens) {
+            if (pushToken.audience !== audience) {
+              continue;
+            }
+            pushMessages.push({ to: pushToken.token, ...payload, data });
           }
         }
       }

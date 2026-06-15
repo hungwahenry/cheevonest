@@ -15,6 +15,7 @@ import type { User } from '../../../generated/prisma/client';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { EventsService } from '../../events/events.service';
 import {
+  AudienceQueryDto,
   ListInboxDto,
   RegisterPushTokenDto,
   UnregisterPushTokenDto,
@@ -47,7 +48,7 @@ export class NotificationsController {
     const page = dto.page ?? 1;
     const perPage = 20;
 
-    const result = await this.inbox.page(user.id, page, perPage);
+    const result = await this.inbox.page(user.id, dto.audience, page, perPage);
 
     return new Paginated(
       result.items.map((notification) =>
@@ -60,13 +61,19 @@ export class NotificationsController {
   }
 
   @Get('unread-count')
-  async unreadCount(@CurrentUser() user: User): Promise<unknown> {
-    return { unread: await this.inbox.unreadCount(user.id) };
+  async unreadCount(
+    @Query() dto: AudienceQueryDto,
+    @CurrentUser() user: User,
+  ): Promise<unknown> {
+    return { unread: await this.inbox.unreadCount(user.id, dto.audience) };
   }
 
   @Patch('read-all')
-  async readAll(@CurrentUser() user: User): Promise<ApiResult<null>> {
-    await this.inbox.markAllRead(user.id);
+  async readAll(
+    @Query() dto: AudienceQueryDto,
+    @CurrentUser() user: User,
+  ): Promise<ApiResult<null>> {
+    await this.inbox.markAllRead(user.id, dto.audience);
 
     return new ApiResult(null);
   }
@@ -82,10 +89,14 @@ export class NotificationsController {
   }
 
   @Get('preferences')
-  async showPreferences(@CurrentUser() user: User): Promise<unknown> {
+  async showPreferences(
+    @Query() dto: AudienceQueryDto,
+    @CurrentUser() user: User,
+  ): Promise<unknown> {
     return this.serializer.preferences(
       user,
-      await this.preferences.matrix(user.id),
+      await this.preferences.matrix(user.id, dto.audience),
+      dto.audience,
     );
   }
 
@@ -119,7 +130,8 @@ export class NotificationsController {
 
     return this.serializer.preferences(
       updated,
-      await this.preferences.matrix(updated.id),
+      await this.preferences.matrix(updated.id, dto.audience),
+      dto.audience,
     );
   }
 
@@ -140,7 +152,12 @@ export class NotificationsController {
     @Body() dto: RegisterPushTokenDto,
     @CurrentUser() user: User,
   ): Promise<ApiResult<null>> {
-    await this.pushTokens.register(user.id, dto.token, dto.device_id ?? null);
+    await this.pushTokens.register(
+      user.id,
+      dto.token,
+      dto.audience,
+      dto.device_id ?? null,
+    );
 
     return new ApiResult(null, 'Push token registered.');
   }

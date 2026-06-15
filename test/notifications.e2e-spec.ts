@@ -194,7 +194,11 @@ describe('Notifications (e2e)', () => {
     await request(server())
       .post('/api/v1/notifications/push-tokens')
       .set('Authorization', auth(buyerToken))
-      .send({ token: `ExponentPushToken[buyer-${run}]`, device_id: 'dev-1' })
+      .send({
+        token: `ExponentPushToken[buyer-${run}]`,
+        audience: 'attendee',
+        device_id: 'dev-1',
+      })
       .expect(200);
 
     const orgRow = await ctx.prisma.organisation.findFirstOrThrow({
@@ -247,6 +251,7 @@ describe('Notifications (e2e)', () => {
   it('fans out new-event notifications to subscribers on publish', async () => {
     const inbox = await request(server())
       .get('/api/v1/notifications')
+      .query({ audience: 'attendee' })
       .set('Authorization', auth(buyerToken))
       .expect(200);
 
@@ -272,6 +277,7 @@ describe('Notifications (e2e)', () => {
 
     const buyerInbox = await request(server())
       .get('/api/v1/notifications')
+      .query({ audience: 'attendee' })
       .set('Authorization', auth(buyerToken))
       .expect(200);
     const buyerItems = (
@@ -283,6 +289,7 @@ describe('Notifications (e2e)', () => {
 
     const ownerInbox = await request(server())
       .get('/api/v1/notifications')
+      .query({ audience: 'organizer' })
       .set('Authorization', auth(ownerToken))
       .expect(200);
     const ownerItems = (
@@ -296,6 +303,7 @@ describe('Notifications (e2e)', () => {
   it('tracks unread counts and read state', async () => {
     const before = await request(server())
       .get('/api/v1/notifications/unread-count')
+      .query({ audience: 'attendee' })
       .set('Authorization', auth(buyerToken))
       .expect(200);
     const unread = (before.body as { data: { unread: number } }).data.unread;
@@ -303,6 +311,7 @@ describe('Notifications (e2e)', () => {
 
     const inbox = await request(server())
       .get('/api/v1/notifications')
+      .query({ audience: 'attendee' })
       .set('Authorization', auth(buyerToken))
       .expect(200);
     const first = (inbox.body as { data: { items: Array<{ id: string }> } })
@@ -320,11 +329,13 @@ describe('Notifications (e2e)', () => {
 
     await request(server())
       .patch('/api/v1/notifications/read-all')
+      .query({ audience: 'attendee' })
       .set('Authorization', auth(buyerToken))
       .expect(200);
 
     const after = await request(server())
       .get('/api/v1/notifications/unread-count')
+      .query({ audience: 'attendee' })
       .set('Authorization', auth(buyerToken))
       .expect(200);
     expect((after.body as { data: { unread: number } }).data.unread).toBe(0);
@@ -375,6 +386,7 @@ describe('Notifications (e2e)', () => {
   it('manages preferences and disables channels', async () => {
     const prefs = await request(server())
       .get('/api/v1/notifications/preferences')
+      .query({ audience: 'attendee' })
       .set('Authorization', auth(buyerToken))
       .expect(200);
 
@@ -388,7 +400,8 @@ describe('Notifications (e2e)', () => {
         };
       }
     ).data.types;
-    expect(types.length).toBe(11);
+    expect(types.length).toBe(4);
+    expect(types.every((row) => row.type.startsWith('attendee.'))).toBe(true);
 
     const orderPaid = types.find((row) => row.type === 'attendee.order_paid')!;
     expect(orderPaid.channels.find((c) => c.channel === 'inapp')?.enabled).toBe(
@@ -425,7 +438,7 @@ describe('Notifications (e2e)', () => {
     await request(server())
       .patch('/api/v1/notifications/quiet-hours')
       .set('Authorization', auth(buyerToken))
-      .send({ start: '00:00', end: '23:59', timezone: 'UTC' })
+      .send({ audience: 'attendee', start: '00:00', end: '23:59', timezone: 'UTC' })
       .expect(200);
 
     const pushCountBefore = pushedMessages.length;
@@ -461,7 +474,7 @@ describe('Notifications (e2e)', () => {
     await request(server())
       .patch('/api/v1/notifications/quiet-hours')
       .set('Authorization', auth(buyerToken))
-      .send({})
+      .send({ audience: 'attendee' })
       .expect(200);
   });
 
