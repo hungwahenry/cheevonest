@@ -136,6 +136,7 @@ export class EventSerializer {
       description: event.description,
       flyer_url: this.flyerUrl(event),
       flyer_type: event.flyerType,
+      flyer_poster_url: this.posterUrl(event),
       starts_at: event.startsAt?.toISOString() ?? null,
       ends_at: event.endsAt?.toISOString() ?? null,
       timezone: event.timezone,
@@ -220,6 +221,7 @@ export class EventSerializer {
       city: event.city,
       flyer_url: this.flyerUrl(event),
       flyer_type: event.flyerType,
+      flyer_poster_url: this.posterUrl(event),
       tickets_count: event.ticketsCount,
       tickets_min_price: event.ticketsMinPrice,
       tickets_max_price: event.ticketsMaxPrice,
@@ -246,5 +248,11 @@ export class EventSerializer {
 
   private flyerUrl(event: Event): string | null {
     return event.flyerPath !== null ? this.storage.url(event.flyerPath) : null;
+  }
+
+  private posterUrl(event: Event): string | null {
+    return event.flyerPosterPath !== null
+      ? this.storage.url(event.flyerPosterPath)
+      : null;
   }
 }

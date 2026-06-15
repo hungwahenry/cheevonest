@@ -14,7 +14,11 @@ import { CreateEventDto } from '../dto/create-event.dto';
 import { UpdateEventDto } from '../dto/update-event.dto';
 import { CannotDeleteWithSalesException } from '../exceptions/cannot-delete-with-sales.exception';
 import { EventInterestRules } from '../rules/event-interests.rules';
-import { ensureValidFlyer, flyerTypeFor } from '../rules/media.rules';
+import {
+  ensureValidFlyer,
+  ensureValidFlyerPoster,
+  flyerTypeFor,
+} from '../rules/media.rules';
 import {
   ensureAfterOrEqual,
   ensureBeforeOrEqual,
@@ -56,10 +60,7 @@ export class EventManagerService {
       'The ends_at must be a date after or equal to starts_at.',
     );
 
-    const flyer = this.prepareFlyer(dto.flyer);
-    const flyerPath = flyer
-      ? await this.storage.put(flyer.file, 'flyers')
-      : null;
+    const flyer = await this.storeFlyer(dto);
 
     const interestIds =
       dto.interests !== undefined
@@ -86,8 +87,12 @@ export class EventManagerService {
           longitude: dto.longitude ?? null,
           city: dto.city ?? null,
           videoUrl: dto.video_url ?? null,
-          ...(flyerPath !== null && flyer
-            ? { flyerPath, flyerType: flyer.type }
+          ...(flyer
+            ? {
+                flyerPath: flyer.flyerPath,
+                flyerType: flyer.flyerType,
+                flyerPosterPath: flyer.flyerPosterPath,
+              }
             : {}),
         },
       });
@@ -175,14 +180,18 @@ export class EventManagerService {
       data.presaleUntil = presaleUntil;
     }
 
-    const flyer = this.prepareFlyer(dto.flyer);
+    const flyer = await this.storeFlyer(dto);
 
     if (flyer) {
       if (event.flyerPath !== null) {
         await this.storage.delete(event.flyerPath);
       }
-      data.flyerPath = await this.storage.put(flyer.file, 'flyers');
-      data.flyerType = flyer.type;
+      if (event.flyerPosterPath !== null) {
+        await this.storage.delete(event.flyerPosterPath);
+      }
+      data.flyerPath = flyer.flyerPath;
+      data.flyerType = flyer.flyerType;
+      data.flyerPosterPath = flyer.flyerPosterPath;
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -261,16 +270,25 @@ export class EventManagerService {
     return parseEventDate(value, timezone, field);
   }
 
-  private prepareFlyer(file: CreateEventDto['flyer']): {
-    file: NonNullable<CreateEventDto['flyer']>;
-    type: 'image' | 'video';
-  } | null {
-    if (!file) {
+  private async storeFlyer(dto: CreateEventDto | UpdateEventDto): Promise<{
+    flyerPath: string;
+    flyerType: 'image' | 'video';
+    flyerPosterPath: string | null;
+  } | null> {
+    if (!dto.flyer) {
       return null;
     }
 
-    ensureValidFlyer(file);
+    ensureValidFlyer(dto.flyer);
+    const flyerType = flyerTypeFor(dto.flyer);
+    const flyerPath = await this.storage.put(dto.flyer, 'flyers');
 
-    return { file, type: flyerTypeFor(file) };
+    let flyerPosterPath: string | null = null;
+    if (flyerType === 'video' && dto.flyer_poster) {
+      ensureValidFlyerPoster(dto.flyer_poster);
+      flyerPosterPath = await this.storage.put(dto.flyer_poster, 'flyers');
+    }
+
+    return { flyerPath, flyerType, flyerPosterPath };
   }
 }

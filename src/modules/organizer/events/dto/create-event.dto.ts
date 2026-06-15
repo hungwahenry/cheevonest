@@ -79,6 +79,9 @@ export class CreateEventDto {
   @Allow()
   flyer?: UploadedFile;
 
+  @Allow()
+  flyer_poster?: UploadedFile;
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

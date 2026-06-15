@@ -44,6 +44,9 @@ export class EventsService {
     if (event.flyerPath !== null) {
       await this.storage.delete(event.flyerPath);
     }
+    if (event.flyerPosterPath !== null) {
+      await this.storage.delete(event.flyerPosterPath);
+    }
     for (const image of images) {
       await this.storage.delete(image.path);
     }

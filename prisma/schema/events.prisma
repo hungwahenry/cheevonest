@@ -36,6 +36,7 @@ model Event {
   currency               Currency    @default(NGN)
   flyerPath              String?     @map("flyer_path")
   flyerType              String?     @map("flyer_type")
+  flyerPosterPath        String?     @map("flyer_poster_path")
   videoUrl               String?     @map("video_url")
   status                 EventStatus @default(draft)
   publishedAt            DateTime?   @map("published_at") @db.Timestamptz(6)

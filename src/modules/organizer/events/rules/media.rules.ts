@@ -10,10 +10,10 @@ const FLYER_MIMETYPES = [
   'image/webp',
   'video/mp4',
   'video/quicktime',
-  'video/webm',
 ];
-const FLYER_TYPES_LABEL = 'jpeg, jpg, png, webp, mp4, mov, webm';
-const FLYER_MAX_KB = 51200;
+const FLYER_TYPES_LABEL = 'jpeg, jpg, png, webp, mp4, mov';
+const FLYER_MAX_KB = 20480;
+const FLYER_POSTER_MAX_KB = 4096;
 const EVENT_IMAGE_MAX_KB = 8192;
 
 export function ensureValidFlyer(file: UploadedFile): void {
@@ -24,6 +24,10 @@ export function ensureValidFlyer(file: UploadedFile): void {
     FLYER_MIMETYPES,
     FLYER_TYPES_LABEL,
   );
+}
+
+export function ensureValidFlyerPoster(file: UploadedFile): void {
+  ensureValidImage(file, 'flyer_poster', FLYER_POSTER_MAX_KB);
 }
 
 export function ensureValidEventImage(file: UploadedFile): void {
