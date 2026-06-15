@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ulid } from 'ulid';
 import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
@@ -17,25 +17,36 @@ export interface AuditContext {
 
 @Injectable()
 export class AuditService {
+  private readonly logger = new Logger(AuditService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Best-effort: an audit-log failure must never fail the admin operation it records. */
   async record(context: AuditContext): Promise<void> {
-    await this.prisma.adminAction.create({
-      data: {
-        id: ulid(),
-        adminUserId: context.adminUserId,
-        action: context.action,
-        targetType: context.targetType ?? null,
-        targetId: context.targetId ?? null,
-        payload:
-          context.payload && Object.keys(context.payload).length > 0
-            ? (context.payload as Prisma.InputJsonValue)
-            : Prisma.JsonNull,
-        reason: context.reason ?? null,
-        ip: context.ip ?? null,
-        userAgent: context.userAgent?.slice(0, 1024) ?? null,
-        requestId: context.requestId ?? null,
-      },
-    });
+    try {
+      await this.prisma.adminAction.create({
+        data: {
+          id: ulid(),
+          adminUserId: context.adminUserId,
+          action: context.action,
+          targetType: context.targetType?.slice(0, 64) ?? null,
+          targetId: context.targetId ?? null,
+          payload:
+            context.payload && Object.keys(context.payload).length > 0
+              ? (context.payload as Prisma.InputJsonValue)
+              : Prisma.JsonNull,
+          reason: context.reason ?? null,
+          ip: context.ip?.slice(0, 45) ?? null,
+          userAgent: context.userAgent?.slice(0, 1024) ?? null,
+          requestId: context.requestId?.slice(0, 26) ?? null,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to record admin action "${context.action}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 }
