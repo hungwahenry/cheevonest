@@ -28,6 +28,24 @@ export interface TicketPage<T> {
   total: number;
 }
 
+function eventWhenFilter(when: 'upcoming' | 'past'): Prisma.EventWhereInput {
+  const now = new Date();
+
+  if (when === 'past') {
+    return {
+      OR: [{ endsAt: { lt: now } }, { endsAt: null, startsAt: { lt: now } }],
+    };
+  }
+
+  return {
+    OR: [
+      { endsAt: { gte: now } },
+      { endsAt: null, startsAt: { gte: now } },
+      { endsAt: null, startsAt: null },
+    ],
+  };
+}
+
 interface CheckInCounts {
   scanned: number;
   valid: number;
@@ -44,12 +62,20 @@ export class TicketListingService {
 
   async heldBy(
     userId: string,
-    options: { page: number; perPage: number; status?: IssuedTicketStatus },
+    options: {
+      page: number;
+      perPage: number;
+      status?: IssuedTicketStatus;
+      when?: 'upcoming' | 'past';
+    },
   ): Promise<TicketPage<MyTicket>> {
     const where: Prisma.IssuedTicketWhereInput = {
       holderUserId: userId,
       ...(options.status ? { status: options.status } : {}),
+      ...(options.when ? { event: eventWhenFilter(options.when) } : {}),
     };
+
+    const order: Prisma.SortOrder = options.when === 'upcoming' ? 'asc' : 'desc';
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.issuedTicket.count({ where }),
@@ -57,7 +83,7 @@ export class TicketListingService {
         where,
         include: MY_TICKET_INCLUDE,
         orderBy: [
-          { event: { startsAt: { sort: 'desc', nulls: 'last' } } },
+          { event: { startsAt: { sort: order, nulls: 'last' } } },
           { createdAt: 'desc' },
           { id: 'desc' },
         ],

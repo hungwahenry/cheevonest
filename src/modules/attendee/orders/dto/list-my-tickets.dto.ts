@@ -19,4 +19,8 @@ export class ListMyTicketsDto {
   @IsOptional()
   @IsIn(['valid', 'scanned', 'revoked'])
   status?: IssuedTicketStatus;
+
+  @IsOptional()
+  @IsIn(['upcoming', 'past'])
+  when?: 'upcoming' | 'past';
 }

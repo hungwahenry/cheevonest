@@ -29,6 +29,7 @@ export class MyTicketsController {
       page,
       perPage,
       status: dto.status,
+      when: dto.when,
     });
 
     return new Paginated(
