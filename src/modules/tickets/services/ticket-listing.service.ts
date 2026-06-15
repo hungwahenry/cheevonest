@@ -28,6 +28,16 @@ export interface TicketPage<T> {
   total: number;
 }
 
+interface CheckInCounts {
+  scanned: number;
+  valid: number;
+  revoked: number;
+}
+
+export interface CheckInSummary extends CheckInCounts {
+  tickets: (CheckInCounts & { ticket_id: string; ticket_name: string })[];
+}
+
 @Injectable()
 export class TicketListingService {
   constructor(private readonly prisma: PrismaService) {}
@@ -122,21 +132,44 @@ export class TicketListingService {
     });
   }
 
-  async checkInSummary(
-    eventId: string,
-  ): Promise<{ scanned: number; valid: number; revoked: number }> {
-    const rows = await this.prisma.issuedTicket.groupBy({
-      by: ['status'],
-      where: { eventId },
-      _count: { _all: true },
-    });
+  async checkInSummary(eventId: string): Promise<CheckInSummary> {
+    const [rows, tickets] = await Promise.all([
+      this.prisma.issuedTicket.groupBy({
+        by: ['eventTicketId', 'status'],
+        where: { eventId },
+        _count: { _all: true },
+        orderBy: { eventTicketId: 'asc' },
+      }),
+      this.prisma.eventTicket.findMany({
+        where: { eventId },
+        select: { id: true, name: true },
+        orderBy: { sortOrder: 'asc' },
+      }),
+    ]);
 
-    const counts = { scanned: 0, valid: 0, revoked: 0 };
+    const totals: CheckInCounts = { scanned: 0, valid: 0, revoked: 0 };
+    const byTicket = new Map<string, CheckInCounts>();
 
     for (const row of rows) {
-      counts[row.status] = row._count._all;
+      const count = row._count._all;
+      totals[row.status] += count;
+
+      const entry = byTicket.get(row.eventTicketId) ?? {
+        scanned: 0,
+        valid: 0,
+        revoked: 0,
+      };
+      entry[row.status] = count;
+      byTicket.set(row.eventTicketId, entry);
     }
 
-    return counts;
+    return {
+      ...totals,
+      tickets: tickets.map((ticket) => ({
+        ticket_id: ticket.id,
+        ticket_name: ticket.name,
+        ...(byTicket.get(ticket.id) ?? { scanned: 0, valid: 0, revoked: 0 }),
+      })),
+    };
   }
 }
