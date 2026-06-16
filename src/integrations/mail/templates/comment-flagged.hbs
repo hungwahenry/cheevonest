@@ -1,3 +1,11 @@
-{{#> layout}}
-<p>A comment on your event was reported:</p><blockquote>{{preview}}</blockquote><p>Open moderation to review it.</p>
+{{#> layout preview="A comment on your event was reported"}}
+    {{> eyebrow text="Moderation"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">A comment was reported</h1>
+    <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.65;">An attendee reported a comment on your event:</p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:16px 0 0;">
+        <tr>
+            <td style="padding:14px 18px;background:#f8f6f1;border-left:3px solid #ea580c;border-radius:0 10px 10px 0;color:#3f3f46;font-size:15px;line-height:1.6;font-style:italic;">{{preview}}</td>
+        </tr>
+    </table>
+    <p style="margin:18px 0 0;color:#3f3f46;font-size:15px;line-height:1.65;">Review it in the {{appName}} Organizer app to keep the conversation healthy.</p>
 {{/layout}}

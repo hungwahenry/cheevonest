@@ -32,7 +32,7 @@ export class EventStartingSoonAttendeeMessage implements NotificationMessage {
     return {
       subject: `${this.event.title} is tomorrow`,
       template: 'event-starting-soon-attendee',
-      context: { eventTitle: this.event.title },
+      context: { eventTitle: this.event.title, eventSlug: this.event.slug },
     };
   }
 }

@@ -53,6 +53,16 @@ export class MailTemplatesService {
   }
 
   private loadTemplates(dir: string): void {
+    for (const file of readdirSync(join(dir, 'partials'))) {
+      if (!file.endsWith('.hbs')) {
+        continue;
+      }
+
+      const name = basename(file, '.hbs');
+      const source = readFileSync(join(dir, 'partials', file), 'utf8');
+      this.handlebars.registerPartial(name, source);
+    }
+
     for (const file of readdirSync(dir)) {
       if (!file.endsWith('.hbs')) {
         continue;

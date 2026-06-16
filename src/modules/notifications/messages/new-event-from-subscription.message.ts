@@ -35,6 +35,7 @@ export class NewEventFromSubscriptionMessage implements NotificationMessage {
       template: 'new-event-from-subscription',
       context: {
         eventTitle: this.event.title,
+        eventSlug: this.event.slug,
         organisationName: this.event.organisation.name,
       },
     };

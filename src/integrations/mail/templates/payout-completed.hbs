@@ -1,3 +1,22 @@
-{{#> layout}}
-<p>Your payout to <strong>{{bankName}}</strong> ({{accountNumber}}) has been completed.</p>
+{{#> layout preview="Your payout is on its way"}}
+    {{> eyebrow text="Payout"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">Your payout is on its way &#127881;</h1>
+    <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.65;">We&rsquo;ve sent your payout to your bank account.</p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:20px 0 0;background:#f8f6f1;border:1px solid #eceae3;border-radius:12px;">
+        <tr>
+            <td style="padding:4px 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                    <tr>
+                        <td style="padding:14px 0;border-bottom:1px solid #eceae3;color:#737373;font-size:14px;">Bank</td>
+                        <td align="right" style="padding:14px 0;border-bottom:1px solid #eceae3;color:#0a0a0a;font-size:15px;font-weight:600;">{{bankName}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:14px 0;color:#737373;font-size:14px;">Account</td>
+                        <td align="right" style="padding:14px 0;color:#0a0a0a;font-size:15px;font-weight:600;">{{accountNumber}}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <p style="margin:18px 0 0;color:#8a857c;font-size:13px;line-height:1.6;">Depending on your bank, it can take a few minutes to reflect in your account.</p>
 {{/layout}}

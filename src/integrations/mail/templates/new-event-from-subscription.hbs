@@ -1,3 +1,7 @@
-{{#> layout}}
-<p><strong>{{organisationName}}</strong> just announced <strong>{{eventTitle}}</strong>.</p><p>Open the app to grab tickets.</p>
+{{#> layout preview=(concat organisationName " just announced " eventTitle)}}
+    {{> eyebrow text="New event"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">{{organisationName}} just dropped something</h1>
+    <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.65;">They&rsquo;ve announced <strong style="color:#0a0a0a;">{{eventTitle}}</strong>. Take a look and grab your spot before it fills up.</p>
+    {{> button label="View event" url=(concat webUrl "/events/" eventSlug)}}
+    <p style="margin:18px 0 0;color:#8a857c;font-size:13px;line-height:1.6;">You&rsquo;re getting this because you follow {{organisationName}} on {{appName}}.</p>
 {{/layout}}

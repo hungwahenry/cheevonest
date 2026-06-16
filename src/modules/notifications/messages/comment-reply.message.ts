@@ -36,6 +36,7 @@ export class CommentReplyMessage implements NotificationMessage {
       template: 'comment-reply',
       context: {
         eventTitle: this.reply.event.title,
+        eventSlug: this.reply.event.slug,
         preview: limit(this.reply.body, 200),
       },
     };

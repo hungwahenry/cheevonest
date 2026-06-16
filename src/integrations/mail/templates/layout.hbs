@@ -12,29 +12,38 @@
         body, table, td { font-family: Arial, Helvetica, sans-serif !important; }
     </style>
     <![endif]-->
+    <style>
+        @media only screen and (max-width:600px) {
+            .container { width: 100% !important; }
+            .px { padding-left: 24px !important; padding-right: 24px !important; }
+        }
+    </style>
 </head>
-<body style="margin:0;padding:0;width:100%;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0a0a0a;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
+<body style="margin:0;padding:0;width:100%;background:#f8f6f1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#3f3f46;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
     {{#if preview}}
-    <div style="display:none;font-size:1px;color:#f4f4f5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">{{preview}}</div>
+    <div style="display:none;font-size:1px;color:#f8f6f1;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">{{preview}}</div>
     {{/if}}
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f4f4f5;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f8f6f1;">
         <tr>
             <td align="center" style="padding:40px 16px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" style="width:100%;max-width:560px;background:#ffffff;border-radius:16px;">
+                <table role="presentation" class="container" cellspacing="0" cellpadding="0" border="0" width="560" style="width:100%;max-width:560px;background:#ffffff;border:1px solid #eceae3;border-radius:16px;">
                     <tr>
-                        <td style="padding:28px 32px 0;text-align:left;">
-                            <a href="{{webUrl}}" style="text-decoration:none;color:#0a0a0a;font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1;">{{appName}}</a>
+                        <td class="px" style="padding:32px 36px 0;text-align:left;">
+                            <a href="{{webUrl}}" style="text-decoration:none;">
+                                <img src="{{webUrl}}/images/logo.png" alt="{{appName}}" width="140" height="41" style="display:block;width:140px;height:41px;border:0;outline:none;-ms-interpolation-mode:bicubic;">
+                            </a>
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding:24px 32px 36px;color:#0a0a0a;font-size:15px;line-height:1.65;">
+                        <td class="px" style="padding:24px 36px 36px;color:#3f3f46;font-size:15px;line-height:1.65;">
                             {{> @partial-block }}
                         </td>
                     </tr>
                 </table>
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" style="width:100%;max-width:560px;margin-top:24px;">
+                <table role="presentation" class="container" cellspacing="0" cellpadding="0" border="0" width="560" style="width:100%;max-width:560px;margin-top:20px;">
                     <tr>
-                        <td style="padding:0 32px;text-align:center;color:#737373;font-size:12px;line-height:1.6;">
+                        <td class="px" style="padding:0 36px;text-align:center;color:#9a958c;font-size:12px;line-height:1.6;">
+                            <p style="margin:0 0 6px;color:#78736b;font-weight:600;">Find what&rsquo;s on near you.</p>
                             <p style="margin:0 0 4px;">&copy; {{year}} {{appName}}. All rights reserved.</p>
                             <p style="margin:0;">You&rsquo;re receiving this because you have a {{appName}} account.</p>
                         </td>

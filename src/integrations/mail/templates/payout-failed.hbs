@@ -1,3 +1,11 @@
-{{#> layout}}
-<p>A payout could not be completed.</p><p>Reason: {{reason}}</p><p>Open the dashboard to review and retry.</p>
+{{#> layout preview="A payout couldn't be completed"}}
+    {{> eyebrow text="Payout"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">Payout couldn&rsquo;t be completed</h1>
+    <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.65;">We tried to send your payout but it didn&rsquo;t go through.</p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:16px 0 0;">
+        <tr>
+            <td style="padding:14px 18px;background:#f8f6f1;border-left:3px solid #ea580c;border-radius:0 10px 10px 0;color:#3f3f46;font-size:15px;line-height:1.6;"><strong style="color:#0a0a0a;">Reason:</strong> {{reason}}</td>
+        </tr>
+    </table>
+    <p style="margin:18px 0 0;color:#3f3f46;font-size:15px;line-height:1.65;">Check your bank details in the {{appName}} Organizer app and retry the payout.</p>
 {{/layout}}

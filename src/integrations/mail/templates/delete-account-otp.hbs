@@ -1,3 +1,7 @@
-{{#> layout}}
-<p>You asked to delete your {{appName}} account.</p><p>Your confirmation code is:</p><h2>{{code}}</h2><p>It expires in {{ttlMinutes}} minutes. This action is permanent.</p>
+{{#> layout preview="Confirm account deletion"}}
+    {{> eyebrow text="Account deletion"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">Confirm account deletion</h1>
+    <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.65;">You asked to delete your {{appName}} account. Enter this code to confirm &mdash; this permanently removes your account and can&rsquo;t be undone.</p>
+    {{> code-box code=code}}
+    <p style="margin:0;color:#8a857c;font-size:13px;line-height:1.6;">This code expires in {{ttlMinutes}} minutes. Didn&rsquo;t request this? Ignore this email and your account stays safe.</p>
 {{/layout}}

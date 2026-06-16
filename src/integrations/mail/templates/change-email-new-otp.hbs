@@ -1,3 +1,7 @@
-{{#> layout}}
-<p>Confirm this is your new {{appName}} email.</p><p>Your confirmation code is:</p><h2>{{code}}</h2><p>It expires in {{ttlMinutes}} minutes.</p>
+{{#> layout preview="Verify your new email"}}
+    {{> eyebrow text="Email change"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">Verify your new email</h1>
+    <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.65;">Confirm this is your new {{appName}} email by entering the code below.</p>
+    {{> code-box code=code}}
+    <p style="margin:0;color:#8a857c;font-size:13px;line-height:1.6;">This code expires in {{ttlMinutes}} minutes.</p>
 {{/layout}}

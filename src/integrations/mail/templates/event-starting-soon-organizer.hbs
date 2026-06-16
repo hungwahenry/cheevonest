@@ -1,3 +1,14 @@
-{{#> layout}}
-<p><strong>{{eventTitle}}</strong> starts tomorrow — time to finalise your setup.</p>
+{{#> layout preview=(concat eventTitle " starts tomorrow")}}
+    {{> eyebrow text="Tomorrow"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">{{eventTitle}} starts tomorrow</h1>
+    <p style="margin:0 0 4px;color:#3f3f46;font-size:15px;line-height:1.65;">Time for final checks so doors run smoothly:</p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:16px 0 0;background:#f8f6f1;border:1px solid #eceae3;border-radius:12px;">
+        <tr>
+            <td style="padding:16px 20px;color:#3f3f46;font-size:15px;line-height:1.9;">
+                &bull;&nbsp; Confirm your ticket types and prices are correct<br>
+                &bull;&nbsp; Brief your door staff on scanning<br>
+                &bull;&nbsp; Make sure the {{appName}} Organizer app is installed and signed in
+            </td>
+        </tr>
+    </table>
 {{/layout}}

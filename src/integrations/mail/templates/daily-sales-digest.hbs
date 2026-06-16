@@ -1,3 +1,25 @@
-{{#> layout}}
-<p>Yesterday on <strong>{{eventTitle}}</strong>:</p><ul><li>Revenue: ₦{{revenue}}</li><li>Tickets sold: {{tickets}}</li><li>Orders: {{orders}}</li></ul>
+{{#> layout preview=(concat "Yesterday on " eventTitle)}}
+    {{> eyebrow text="Daily recap"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">Yesterday on {{eventTitle}}</h1>
+    <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.65;">Here&rsquo;s how the last 24 hours went.</p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:20px 0 0;background:#f8f6f1;border:1px solid #eceae3;border-radius:12px;">
+        <tr>
+            <td style="padding:4px 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                    <tr>
+                        <td style="padding:14px 0;border-bottom:1px solid #eceae3;color:#737373;font-size:14px;">Revenue</td>
+                        <td align="right" style="padding:14px 0;border-bottom:1px solid #eceae3;color:#0a0a0a;font-size:16px;font-weight:700;">&#8358;{{revenue}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:14px 0;border-bottom:1px solid #eceae3;color:#737373;font-size:14px;">Tickets sold</td>
+                        <td align="right" style="padding:14px 0;border-bottom:1px solid #eceae3;color:#0a0a0a;font-size:16px;font-weight:700;">{{tickets}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:14px 0;color:#737373;font-size:14px;">Orders</td>
+                        <td align="right" style="padding:14px 0;color:#0a0a0a;font-size:16px;font-weight:700;">{{orders}}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 {{/layout}}

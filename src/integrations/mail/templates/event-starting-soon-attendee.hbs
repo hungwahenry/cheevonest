@@ -1,3 +1,6 @@
-{{#> layout}}
-<p><strong>{{eventTitle}}</strong> is tomorrow. See you there!</p><p>Your tickets are in the app.</p>
+{{#> layout preview=(concat eventTitle " is tomorrow")}}
+    {{> eyebrow text="Tomorrow"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">{{eventTitle}} is tomorrow</h1>
+    <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.65;">It&rsquo;s almost time. Your tickets are ready in the app &mdash; have your QR code handy at the door and we&rsquo;ll see you there.</p>
+    {{> button label="View event" url=(concat webUrl "/events/" eventSlug)}}
 {{/layout}}

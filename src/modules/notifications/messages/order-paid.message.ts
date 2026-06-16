@@ -34,6 +34,7 @@ export class OrderPaidMessage implements NotificationMessage {
       template: 'order-paid',
       context: {
         eventTitle: this.order.event.title,
+        eventSlug: this.order.event.slug,
         tickets: this.order.itemsQuantityTotal,
       },
     };

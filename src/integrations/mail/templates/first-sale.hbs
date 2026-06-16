@@ -1,3 +1,6 @@
-{{#> layout}}
-<p><strong>{{eventTitle}}</strong> just made its first sale. 🎉</p><p>Open the dashboard to watch it grow.</p>
+{{#> layout preview=(concat "First sale on " eventTitle)}}
+    {{> eyebrow text="Milestone"}}
+    <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">Your first sale! &#127881;</h1>
+    <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;line-height:1.65;"><strong style="color:#0a0a0a;">{{eventTitle}}</strong> just sold its first ticket. The momentum starts here.</p>
+    <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.65;">Open the {{appName}} Organizer app to watch sales roll in and keep the energy going.</p>
 {{/layout}}
