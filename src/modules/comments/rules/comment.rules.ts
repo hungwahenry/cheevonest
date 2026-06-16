@@ -17,7 +17,8 @@ export class CommentRules {
       throw new EventNotOpenForCommentsException();
     }
 
-    if (event.status !== 'published' || event.commentsLockedAt !== null) {
+    const open = event.status === 'published' || event.status === 'past';
+    if (!open || event.commentsLockedAt !== null) {
       throw new EventNotOpenForCommentsException();
     }
   }
