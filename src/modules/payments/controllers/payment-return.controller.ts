@@ -6,6 +6,7 @@ import { Public } from '../../auth/decorators/auth.decorators';
 import { SkipEnvelope } from '../../../common/decorators/api-response.decorators';
 import { HtmlPagesService } from '../../../common/html/html-pages.service';
 import { PaymentsService } from '../services/payments.service';
+import { PurposableRegistry } from '../services/purposable-registry.service';
 
 @Public()
 @SkipEnvelope()
@@ -13,6 +14,7 @@ import { PaymentsService } from '../services/payments.service';
 export class PaymentReturnController {
   constructor(
     private readonly payments: PaymentsService,
+    private readonly purposables: PurposableRegistry,
     private readonly pages: HtmlPagesService,
     private readonly config: ConfigService<Env, true>,
   ) {}
@@ -44,8 +46,15 @@ export class PaymentReturnController {
     if (reference !== '') {
       const payment = await this.payments.findByAnyReference(reference);
 
-      if (payment?.purposableType === 'order' && payment.purposableId) {
-        forward.set('order_id', payment.purposableId);
+      if (payment) {
+        const params = await this.purposables.returnParams(
+          payment.purposableType,
+          payment.purposableId,
+        );
+
+        for (const [key, value] of Object.entries(params)) {
+          forward.set(key, value);
+        }
       }
     }
 

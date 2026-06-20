@@ -6,6 +6,7 @@ import { OrderWindowRules } from './rules/order-window.rules';
 import { TicketAvailabilityRules } from './rules/ticket-availability.rules';
 import { OrderSerializer } from './serializers/order.serializer';
 import { OrderPricingService } from './services/order-pricing.service';
+import { OrderPurposableResolver } from './services/order-purposable.resolver';
 import { OrderQuotingService } from './services/order-quoting.service';
 import { OrdersCronsService } from './services/orders-crons.service';
 import { OrdersService } from './services/orders.service';
@@ -20,6 +21,7 @@ import { OrdersService } from './services/orders.service';
     OrderWindowRules,
     TicketAvailabilityRules,
     OrderSerializer,
+    OrderPurposableResolver,
     PaymentSucceededListener,
   ],
   exports: [OrdersService, OrderQuotingService, OrderSerializer],

@@ -14,6 +14,7 @@ import { ORDER_PAID, OrderPaidEvent } from '../events/order-paid.event';
 import { OrderHasNoPaymentException } from '../exceptions/order-has-no-payment.exception';
 import { OrderWindowRules } from '../rules/order-window.rules';
 import { TicketAvailabilityRules } from '../rules/ticket-availability.rules';
+import { ORDER_PURPOSABLE } from '../orders.constants';
 import { OrderPricingService } from './order-pricing.service';
 
 export const ORDER_RESOURCE_INCLUDE = {
@@ -183,7 +184,7 @@ export class OrdersService {
       amountMinor: Number(order.totalMinor),
       currency: event.currency,
       callbackUrl,
-      purposableType: 'order',
+      purposableType: ORDER_PURPOSABLE,
       purposableId: order.id,
       metadata: { order_id: order.id },
       providerName,

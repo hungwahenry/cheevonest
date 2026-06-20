@@ -5,6 +5,7 @@ import { FlutterwaveProvider } from './providers/flutterwave.provider';
 import { PaystackProvider } from './providers/paystack.provider';
 import { PaymentProviderRegistry } from './services/payment-provider-registry.service';
 import { PaymentsService } from './services/payments.service';
+import { PurposableRegistry } from './services/purposable-registry.service';
 import { WebhookIdempotencyService } from './services/webhook-idempotency.service';
 
 @Module({
@@ -14,8 +15,9 @@ import { WebhookIdempotencyService } from './services/webhook-idempotency.servic
     FlutterwaveProvider,
     PaymentProviderRegistry,
     PaymentsService,
+    PurposableRegistry,
     WebhookIdempotencyService,
   ],
-  exports: [PaymentsService, PaymentProviderRegistry],
+  exports: [PaymentsService, PaymentProviderRegistry, PurposableRegistry],
 })
 export class PaymentsModule {}
