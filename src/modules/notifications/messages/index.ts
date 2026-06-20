@@ -9,3 +9,4 @@ export * from './event-starting-soon-attendee.message';
 export * from './new-event-from-subscription.message';
 export * from './daily-sales-digest.message';
 export * from './broadcast-finished.message';
+export * from './ticket-transfer-received.message';

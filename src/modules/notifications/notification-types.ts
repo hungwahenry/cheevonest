@@ -14,7 +14,8 @@ export type NotificationType =
   | 'attendee.order_paid'
   | 'attendee.event_starting_soon'
   | 'attendee.new_event_from_subscription'
-  | 'attendee.comment_reply';
+  | 'attendee.comment_reply'
+  | 'attendee.ticket_transfer_received';
 
 export interface NotificationTypeMeta {
   audience: NotificationAudience;
@@ -108,6 +109,13 @@ export const NOTIFICATION_TYPES: Record<
     description: 'When someone replies to a comment you posted.',
     defaultChannels: PUSH_INAPP,
     allowedChannels: ALL,
+  },
+  'attendee.ticket_transfer_received': {
+    audience: 'attendee',
+    label: 'You received a ticket',
+    description: 'When another user transfers one of their tickets to you.',
+    defaultChannels: PUSH_INAPP,
+    allowedChannels: PUSH_INAPP,
   },
 };
 

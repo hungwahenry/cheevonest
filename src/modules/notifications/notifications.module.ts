@@ -9,6 +9,7 @@ import { EventPublishedListener } from './listeners/event-published.listener';
 import { OrderPaidListener } from './listeners/order-paid.listener';
 import { PayoutSettledListener } from './listeners/payout-settled.listener';
 import { ReportCreatedListener } from './listeners/report-created.listener';
+import { TicketTransferredListener } from './listeners/ticket-transferred.listener';
 import { NotificationsCronsService } from './notifications-crons.service';
 import { NotificationSerializer } from './serializers/notification.serializer';
 import { InboxService } from './services/inbox.service';
@@ -38,6 +39,7 @@ import { StartingSoonService } from './services/scheduled/starting-soon.service'
     EventPublishedListener,
     ReportCreatedListener,
     BroadcastSentListener,
+    TicketTransferredListener,
   ],
   exports: [
     NotifierService,

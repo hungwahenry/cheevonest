@@ -40,6 +40,7 @@ import { PlatformModule } from './modules/platform/platform.module';
 import { SearchModule } from './modules/search/search.module';
 import { StepUpModule } from './modules/step-up/step-up.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
+import { TicketTransfersModule } from './modules/transfers/ticket-transfers.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     TicketsModule,
     OrdersModule,
     PayoutsModule,
+    TicketTransfersModule,
     NotificationsModule,
     StepUpModule,
     AdminModule,

@@ -400,7 +400,7 @@ describe('Notifications (e2e)', () => {
         };
       }
     ).data.types;
-    expect(types.length).toBe(4);
+    expect(types.length).toBe(5);
     expect(types.every((row) => row.type.startsWith('attendee.'))).toBe(true);
 
     const orderPaid = types.find((row) => row.type === 'attendee.order_paid')!;
