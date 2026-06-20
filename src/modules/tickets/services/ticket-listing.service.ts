@@ -17,6 +17,12 @@ export const ORGANIZER_TICKET_INCLUDE = {
   ticket: { select: { name: true } },
   scannedBy: { include: { profile: true } },
   order: true,
+  transfers: {
+    take: 1,
+    orderBy: { createdAt: 'desc' },
+    select: { createdAt: true },
+  },
+  _count: { select: { transfers: true } },
 } satisfies Prisma.IssuedTicketInclude;
 
 export type OrganizerTicket = Prisma.IssuedTicketGetPayload<{

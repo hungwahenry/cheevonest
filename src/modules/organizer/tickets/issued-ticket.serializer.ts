@@ -22,6 +22,8 @@ export class OrganizerIssuedTicketSerializer {
       order_id: ticket.orderId,
       scanned_at: ticket.scannedAt?.toISOString() ?? null,
       created_at: ticket.createdAt.toISOString(),
+      transferred: ticket._count.transfers > 0,
+      transferred_at: ticket.transfers[0]?.createdAt.toISOString() ?? null,
       holder: {
         email: ticket.holder.email,
         username: profile?.username ?? null,

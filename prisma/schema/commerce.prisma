@@ -104,6 +104,7 @@ model IssuedTicket {
   ticket    EventTicket @relation(fields: [eventTicketId], references: [id], onDelete: Restrict)
   holder    User        @relation("HeldTickets", fields: [holderUserId], references: [id], onDelete: Cascade)
   scannedBy User?       @relation("ScannedTickets", fields: [scannedByUserId], references: [id], onDelete: SetNull)
+  transfers TicketTransfer[]
 
   @@index([eventId, status])
   @@index([holderUserId])
