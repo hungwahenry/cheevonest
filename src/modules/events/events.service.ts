@@ -107,6 +107,16 @@ export class EventsService {
     return event;
   }
 
+  /** Lean list of indexable public events (slug + lastmod) for the marketing sitemap. */
+  async listPublicSitemap(): Promise<{ slug: string; updatedAt: Date }[]> {
+    return this.prisma.event.findMany({
+      where: { status: { in: ['published', 'past'] } },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: Prisma.SortOrder.desc },
+      take: 5000,
+    });
+  }
+
   /** The attendee detail page: published or past, full resource + org resource. */
   async findVisibleDetailBySlug(slug: string) {
     const event = await this.prisma.event.findFirst({
