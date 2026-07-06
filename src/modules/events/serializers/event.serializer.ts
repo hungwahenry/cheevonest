@@ -243,6 +243,7 @@ export class EventSerializer {
       presale_until: event.presaleUntil?.toISOString() ?? null,
       rsvps_count: event.rsvpsCount,
       comments_count: event.commentsCount,
+      comments_locked: event.commentsLockedAt !== null,
     };
   }
 
