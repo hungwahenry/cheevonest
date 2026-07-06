@@ -180,30 +180,43 @@ export class CommentListingService {
       ),
     ];
 
-    const [likes, flags, rsvps, mentionedUsers] = await Promise.all([
-      this.prisma.eventCommentLike.findMany({
-        where: { userId: viewer.id, commentId: { in: commentIds } },
-        select: { commentId: true },
-      }),
-      this.prisma.eventCommentFlag.findMany({
-        where: { flaggedByUserId: viewer.id, commentId: { in: commentIds } },
-        select: { commentId: true },
-      }),
-      this.prisma.eventRsvp.findMany({
-        where: { eventId: event.id, userId: { in: authorIds } },
-        select: { userId: true },
-      }),
-      mentionIds.length > 0
-        ? this.prisma.user.findMany({
-            where: { id: { in: mentionIds } },
-            include: { profile: true },
-          })
-        : Promise.resolve([]),
-    ]);
+    const [likes, flags, rsvps, ticketHolders, mentionedUsers] =
+      await Promise.all([
+        this.prisma.eventCommentLike.findMany({
+          where: { userId: viewer.id, commentId: { in: commentIds } },
+          select: { commentId: true },
+        }),
+        this.prisma.eventCommentFlag.findMany({
+          where: { flaggedByUserId: viewer.id, commentId: { in: commentIds } },
+          select: { commentId: true },
+        }),
+        this.prisma.eventRsvp.findMany({
+          where: { eventId: event.id, userId: { in: authorIds } },
+          select: { userId: true },
+        }),
+        this.prisma.issuedTicket.findMany({
+          where: {
+            eventId: event.id,
+            holderUserId: { in: authorIds },
+            status: { in: ['valid', 'scanned'] },
+          },
+          select: { holderUserId: true },
+          distinct: ['holderUserId'],
+        }),
+        mentionIds.length > 0
+          ? this.prisma.user.findMany({
+              where: { id: { in: mentionIds } },
+              include: { profile: true },
+            })
+          : Promise.resolve([]),
+      ]);
 
     const likedIds = new Set(likes.map((like) => like.commentId));
     const flaggedIds = new Set(flags.map((flag) => flag.commentId));
-    const goingIds = new Set(rsvps.map((rsvp) => rsvp.userId));
+    const goingIds = new Set<string>([
+      ...rsvps.map((rsvp) => rsvp.userId),
+      ...ticketHolders.map((ticket) => ticket.holderUserId),
+    ]);
     const mentionedById = new Map(
       mentionedUsers.map((user) => [user.id, user]),
     );
