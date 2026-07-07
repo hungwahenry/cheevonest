@@ -205,6 +205,10 @@ export class PaymentsService {
   }
 
   private bridgeCallback(originalUrl: string): string {
+    if (/^https?:\/\//i.test(originalUrl)) {
+      return originalUrl;
+    }
+
     const bridge = this.bridgeUrl();
 
     if (bridge === '' || originalUrl.startsWith(bridge)) {
