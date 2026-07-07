@@ -4,7 +4,9 @@ import { PurposableRegistry } from '../../payments/services/purposable-registry.
 import { ORDER_PURPOSABLE } from '../orders.constants';
 
 @Injectable()
-export class OrderPurposableResolver implements PaymentPurposable, OnModuleInit {
+export class OrderPurposableResolver
+  implements PaymentPurposable, OnModuleInit
+{
   readonly purposableType = ORDER_PURPOSABLE;
 
   constructor(private readonly registry: PurposableRegistry) {}

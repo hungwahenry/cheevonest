@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import type { Currency, Event } from '../../../generated/prisma/client';
 import { UnknownTicketException } from '../exceptions/unknown-ticket.exception';
+import { OrderChannel } from '../orders.constants';
 import { OrderWindowRules } from '../rules/order-window.rules';
 import { OrderPricingService } from './order-pricing.service';
 import { OrderItemInput } from './orders.service';
@@ -28,7 +29,11 @@ export class OrderQuotingService {
     private readonly windowRules: OrderWindowRules,
   ) {}
 
-  async quote(event: Event, items: OrderItemInput[]): Promise<OrderQuote> {
+  async quote(
+    event: Event,
+    items: OrderItemInput[],
+    channel: OrderChannel = 'app',
+  ): Promise<OrderQuote> {
     this.windowRules.ensureEventOpenForSales(event);
 
     const tickets = await this.prisma.eventTicket.findMany({
@@ -59,7 +64,7 @@ export class OrderQuotingService {
       };
     });
 
-    const fees = await this.pricing.fees(subtotal);
+    const fees = await this.pricing.fees(subtotal, channel);
 
     return {
       subtotalMinor: subtotal,

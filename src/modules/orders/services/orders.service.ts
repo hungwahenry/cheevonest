@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ulid } from 'ulid';
@@ -14,7 +15,7 @@ import { ORDER_PAID, OrderPaidEvent } from '../events/order-paid.event';
 import { OrderHasNoPaymentException } from '../exceptions/order-has-no-payment.exception';
 import { OrderWindowRules } from '../rules/order-window.rules';
 import { TicketAvailabilityRules } from '../rules/ticket-availability.rules';
-import { ORDER_PURPOSABLE } from '../orders.constants';
+import { ORDER_PURPOSABLE, OrderChannel } from '../orders.constants';
 import { OrderPricingService } from './order-pricing.service';
 
 export const ORDER_RESOURCE_INCLUDE = {
@@ -60,6 +61,7 @@ export class OrdersService {
     items: OrderItemInput[],
     callbackUrl: string,
     providerName?: string | null,
+    channel: OrderChannel = 'app',
   ): Promise<CheckoutResult> {
     this.windowRules.ensureEventOpenForSales(event);
     await this.windowRules.ensurePresaleAccess(event, user.id);
@@ -77,6 +79,9 @@ export class OrdersService {
         items: ['Pick at least one ticket.'],
       });
     }
+
+    const accessToken =
+      channel === 'web' ? randomBytes(24).toString('base64url') : null;
 
     const holdTtlMinutes = await this.systemConfig.int(
       'orders.hold_ttl_minutes',
@@ -123,7 +128,7 @@ export class OrdersService {
         });
       }
 
-      const fees = await this.pricing.fees(subtotal);
+      const fees = await this.pricing.fees(subtotal, channel);
       const id = ulid();
 
       await tx.order.create({
@@ -140,6 +145,7 @@ export class OrdersService {
             0,
           ),
           currency: event.currency,
+          ...(accessToken ? { accessToken } : {}),
         },
       });
 
@@ -183,7 +189,9 @@ export class OrdersService {
       user,
       amountMinor: Number(order.totalMinor),
       currency: event.currency,
-      callbackUrl,
+      callbackUrl: accessToken
+        ? `${callbackUrl}${callbackUrl.includes('?') ? '&' : '?'}token=${accessToken}`
+        : callbackUrl,
       purposableType: ORDER_PURPOSABLE,
       purposableId: order.id,
       metadata: { order_id: order.id },
@@ -355,6 +363,18 @@ export class OrdersService {
     });
 
     if (!order || order.userId !== userId) {
+      throw new NotFoundException();
+    }
+
+    return order;
+  }
+
+  async findByAccessTokenOrFail(token: string): Promise<Order> {
+    const order = await this.prisma.order.findUnique({
+      where: { accessToken: token },
+    });
+
+    if (!order) {
       throw new NotFoundException();
     }
 

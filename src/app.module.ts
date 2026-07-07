@@ -33,6 +33,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { GuestOrdersModule } from './modules/orders/guest/guest-orders.module';
 import { OrganizerModule } from './modules/organizer/organizer.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PayoutsModule } from './modules/payouts/payouts.module';
@@ -87,6 +88,7 @@ import { TicketTransfersModule } from './modules/transfers/ticket-transfers.modu
     PaymentsModule,
     TicketsModule,
     OrdersModule,
+    GuestOrdersModule,
     PayoutsModule,
     TicketTransfersModule,
     NotificationsModule,

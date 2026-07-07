@@ -30,7 +30,10 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Every user gets a profile holding a unique referral code at sign-up. */
-  async createWithProfile(email: string): Promise<User> {
+  async createWithProfile(
+    email: string,
+    profile?: { firstName?: string | null; lastName?: string | null },
+  ): Promise<User> {
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: { id: ulid(), email },
@@ -41,11 +44,26 @@ export class UsersService {
           id: ulid(),
           userId: user.id,
           referralCode: await this.uniqueReferralCode(),
+          firstName: profile?.firstName ?? null,
+          lastName: profile?.lastName ?? null,
         },
       });
 
       return user;
     });
+  }
+
+  /** Resolve a user by email for web guest checkout; an existing account is returned untouched. */
+  async findOrCreateByEmail(
+    email: string,
+    profile?: { firstName?: string | null; lastName?: string | null },
+  ): Promise<User> {
+    const normalized = email.trim().toLowerCase();
+    const existing = await this.prisma.user.findUnique({
+      where: { email: normalized },
+    });
+
+    return existing ?? (await this.createWithProfile(normalized, profile));
   }
 
   async findForResource(userId: string): Promise<UserForResource> {
