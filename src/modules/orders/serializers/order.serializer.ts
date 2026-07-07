@@ -48,6 +48,7 @@ export class OrderSerializer {
       subtotal_minor: quote.subtotalMinor,
       fees_minor: quote.feesMinor,
       total_minor: quote.totalMinor,
+      app_savings_minor: quote.appSavingsMinor,
       currency: quote.currency,
       items: quote.items.map((item) => ({
         ticket_id: item.ticketId,

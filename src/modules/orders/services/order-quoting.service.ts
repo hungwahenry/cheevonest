@@ -11,6 +11,7 @@ export interface OrderQuote {
   subtotalMinor: number;
   feesMinor: number;
   totalMinor: number;
+  appSavingsMinor: number;
   currency: Currency;
   items: Array<{
     ticketId: string;
@@ -65,11 +66,13 @@ export class OrderQuotingService {
     });
 
     const fees = await this.pricing.fees(subtotal, channel);
+    const appFees = await this.pricing.fees(subtotal, 'app');
 
     return {
       subtotalMinor: subtotal,
       feesMinor: fees,
       totalMinor: subtotal + fees,
+      appSavingsMinor: Math.max(0, fees - appFees),
       currency: event.currency,
       items: lines,
     };

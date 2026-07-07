@@ -41,6 +41,8 @@ export const SYSTEM_CONFIGS: ReadonlyArray<SystemConfigSeed> = [
   { key: 'orders.hold_ttl_minutes', group: 'orders', type: 'int', default: 10, description: 'Soft inventory hold while buyer is on checkout (minutes).', isPublic: true },
   { key: 'orders.fee_flat_minor', group: 'orders', type: 'int', default: 10000, description: 'Flat platform fee in minor units (kobo).', isPublic: true },
   { key: 'orders.fee_percentage_bps', group: 'orders', type: 'int', default: 300, description: 'Percentage platform fee in basis points (300 = 3%).', isPublic: true },
+  { key: 'orders.web.fee_flat_minor', group: 'orders', type: 'int', default: 10000, description: 'Flat fee for web (guest) orders in minor units; defaults to the app fee. Set higher to incentivise buying in the app.', isPublic: false },
+  { key: 'orders.web.fee_percentage_bps', group: 'orders', type: 'int', default: 300, description: 'Percentage fee for web (guest) orders in basis points; defaults to the app fee.', isPublic: false },
   { key: 'orders.items_per_quote_max', group: 'orders', type: 'int', default: 20, description: 'Max distinct ticket items per checkout.', isPublic: true },
   { key: 'orders.item_quantity_max', group: 'orders', type: 'int', default: 100, description: 'Max quantity for a single ticket line.', isPublic: true },
 
