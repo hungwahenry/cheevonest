@@ -43,8 +43,8 @@ export class GuestCheckoutDto extends GuestQuoteDto {
 
   @IsString()
   @MaxLength(500)
-  @Matches(/^https:\/\//i, {
-    message: 'The callback_url must be an https URL.',
+  @Matches(/^https?:\/\//i, {
+    message: 'The callback_url must be an http(s) URL.',
   })
   callback_url!: string;
 
