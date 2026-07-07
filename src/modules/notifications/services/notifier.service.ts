@@ -47,8 +47,14 @@ export class NotifierService {
       ? { ...data, title: push.title, body: push.body }
       : data;
 
+    const guaranteed = message.guaranteedChannels?.() ?? [];
+
     for (const user of users) {
       let channels = await this.preferences.channelsFor(user.id, message.type);
+
+      if (guaranteed.length > 0) {
+        channels = [...new Set([...channels, ...guaranteed])];
+      }
 
       if (isInQuietHours(user)) {
         channels = channels.filter((channel) => channel !== 'push');

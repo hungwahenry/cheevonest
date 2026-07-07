@@ -4,7 +4,7 @@ import {
   NotificationMessage,
   PushPayload,
 } from '../contracts/notification-message.interface';
-import { NotificationType } from '../notification-types';
+import { NotificationChannel, NotificationType } from '../notification-types';
 
 export class OrderPaidMessage implements NotificationMessage {
   readonly type: NotificationType = 'attendee.order_paid';
@@ -26,6 +26,10 @@ export class OrderPaidMessage implements NotificationMessage {
       body: `Order for ${this.order.event.title} confirmed.`,
       data: {},
     };
+  }
+
+  guaranteedChannels(): NotificationChannel[] {
+    return this.order.channel === 'web' ? ['email'] : [];
   }
 
   mail(): MailPayload {

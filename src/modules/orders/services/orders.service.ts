@@ -5,7 +5,12 @@ import { ulid } from 'ulid';
 import { ValidationFailedException } from '../../../common/exceptions/api.exception';
 import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
-import type { Event, Order, User } from '../../../generated/prisma/client';
+import type {
+  Event,
+  Order,
+  OrderChannel,
+  User,
+} from '../../../generated/prisma/client';
 import { lockEventTicket, lockOrder } from '../../../generated/prisma/sql';
 import { OrganisationSuspendedException } from '../../organisations/exceptions/organisation-suspended.exception';
 import { PaymentsService } from '../../payments/services/payments.service';
@@ -15,7 +20,7 @@ import { ORDER_PAID, OrderPaidEvent } from '../events/order-paid.event';
 import { OrderHasNoPaymentException } from '../exceptions/order-has-no-payment.exception';
 import { OrderWindowRules } from '../rules/order-window.rules';
 import { TicketAvailabilityRules } from '../rules/ticket-availability.rules';
-import { ORDER_PURPOSABLE, OrderChannel } from '../orders.constants';
+import { ORDER_PURPOSABLE } from '../orders.constants';
 import { OrderPricingService } from './order-pricing.service';
 
 export const ORDER_RESOURCE_INCLUDE = {
@@ -145,6 +150,7 @@ export class OrdersService {
             0,
           ),
           currency: event.currency,
+          channel,
           ...(accessToken ? { accessToken } : {}),
         },
       });

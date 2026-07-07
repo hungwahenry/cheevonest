@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
-import { OrderChannel } from '../orders.constants';
+import type { OrderChannel } from '../../../generated/prisma/client';
 
 const DEFAULT_FEE_BPS = 300;
 const DEFAULT_FEE_FLAT_MINOR = 10000;
@@ -9,11 +9,6 @@ const DEFAULT_FEE_FLAT_MINOR = 10000;
 export class OrderPricingService {
   constructor(private readonly systemConfig: SystemConfigService) {}
 
-  /**
-   * Hybrid platform fee: percentage of subtotal (basis points) plus a flat amount, in minor units.
-   * Free orders incur no fee. Web orders read override keys that fall back to the base (app) rate,
-   * so the app-vs-web incentive is a pure config toggle with no code change.
-   */
   async fees(
     subtotalMinor: number,
     channel: OrderChannel = 'app',

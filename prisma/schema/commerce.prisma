@@ -5,6 +5,11 @@ enum OrderStatus {
   refunded
 }
 
+enum OrderChannel {
+  app
+  web
+}
+
 enum IssuedTicketStatus {
   valid
   scanned
@@ -20,22 +25,23 @@ enum PaymentStatus {
 }
 
 model Order {
-  id                 String      @id @db.Char(26)
-  userId             String      @map("user_id") @db.Char(26)
-  eventId            String      @map("event_id") @db.Char(26)
-  paymentId          String?     @map("payment_id") @db.Char(26)
-  status             OrderStatus @default(pending)
-  subtotalMinor      BigInt      @map("subtotal_minor")
-  feesMinor          BigInt      @map("fees_minor")
-  totalMinor         BigInt      @map("total_minor")
-  itemsQuantityTotal Int         @default(0) @map("items_quantity_total")
-  currency           Currency    @default(NGN)
-  accessToken        String?     @unique @map("access_token") @db.VarChar(64)
-  paidAt             DateTime?   @map("paid_at") @db.Timestamptz(6)
-  cancelledAt        DateTime?   @map("cancelled_at") @db.Timestamptz(6)
-  refundedAt         DateTime?   @map("refunded_at") @db.Timestamptz(6)
-  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                 String       @id @db.Char(26)
+  userId             String       @map("user_id") @db.Char(26)
+  eventId            String       @map("event_id") @db.Char(26)
+  paymentId          String?      @map("payment_id") @db.Char(26)
+  status             OrderStatus  @default(pending)
+  subtotalMinor      BigInt       @map("subtotal_minor")
+  feesMinor          BigInt       @map("fees_minor")
+  totalMinor         BigInt       @map("total_minor")
+  itemsQuantityTotal Int          @default(0) @map("items_quantity_total")
+  currency           Currency     @default(NGN)
+  channel            OrderChannel @default(app)
+  accessToken        String?      @unique @map("access_token") @db.VarChar(64)
+  paidAt             DateTime?    @map("paid_at") @db.Timestamptz(6)
+  cancelledAt        DateTime?    @map("cancelled_at") @db.Timestamptz(6)
+  refundedAt         DateTime?    @map("refunded_at") @db.Timestamptz(6)
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -99,12 +105,12 @@ model IssuedTicket {
   createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderItem OrderItem   @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  event     Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  ticket    EventTicket @relation(fields: [eventTicketId], references: [id], onDelete: Restrict)
-  holder    User        @relation("HeldTickets", fields: [holderUserId], references: [id], onDelete: Cascade)
-  scannedBy User?       @relation("ScannedTickets", fields: [scannedByUserId], references: [id], onDelete: SetNull)
+  order     Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem OrderItem        @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticket    EventTicket      @relation(fields: [eventTicketId], references: [id], onDelete: Restrict)
+  holder    User             @relation("HeldTickets", fields: [holderUserId], references: [id], onDelete: Cascade)
+  scannedBy User?            @relation("ScannedTickets", fields: [scannedByUserId], references: [id], onDelete: SetNull)
   transfers TicketTransfer[]
 
   @@index([eventId, status])

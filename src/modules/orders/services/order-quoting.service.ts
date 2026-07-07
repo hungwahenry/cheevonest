@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
-import type { Currency, Event } from '../../../generated/prisma/client';
+import type {
+  Currency,
+  Event,
+  OrderChannel,
+} from '../../../generated/prisma/client';
 import { UnknownTicketException } from '../exceptions/unknown-ticket.exception';
-import { OrderChannel } from '../orders.constants';
 import { OrderWindowRules } from '../rules/order-window.rules';
 import { OrderPricingService } from './order-pricing.service';
 import { OrderItemInput } from './orders.service';

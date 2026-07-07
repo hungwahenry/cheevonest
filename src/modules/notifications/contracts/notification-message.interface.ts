@@ -1,4 +1,4 @@
-import { NotificationType } from '../notification-types';
+import { NotificationChannel, NotificationType } from '../notification-types';
 
 export interface PushPayload {
   title: string;
@@ -17,4 +17,5 @@ export interface NotificationMessage {
   data(): Record<string, unknown>;
   push(): PushPayload | null;
   mail(): MailPayload | null;
+  guaranteedChannels?(): NotificationChannel[];
 }
