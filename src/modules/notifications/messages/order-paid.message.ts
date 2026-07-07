@@ -36,6 +36,7 @@ export class OrderPaidMessage implements NotificationMessage {
         eventTitle: this.order.event.title,
         eventSlug: this.order.event.slug,
         tickets: this.order.itemsQuantityTotal,
+        accessToken: this.order.accessToken,
       },
     };
   }

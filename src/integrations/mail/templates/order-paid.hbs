@@ -2,6 +2,11 @@
     {{> eyebrow text="Order confirmed"}}
     <h1 style="margin:0 0 14px;font-size:23px;font-weight:700;line-height:1.28;letter-spacing:-0.02em;color:#0a0a0a;">You&rsquo;re in &mdash; tickets secured</h1>
     <p style="margin:0 0 4px;color:#3f3f46;font-size:15px;line-height:1.65;">Your order for <strong style="color:#0a0a0a;">{{eventTitle}}</strong> is confirmed. <strong style="color:#0a0a0a;">{{tickets}}</strong> ticket(s) are now in your wallet, ready to scan at the door.</p>
+    {{#if accessToken}}
+    {{> button label="View your tickets" url=(concat webUrl "/orders/" accessToken)}}
+    <p style="margin:18px 0 0;color:#8a857c;font-size:13px;line-height:1.6;">Your QR codes are on that page &mdash; keep this email so you can always get back to them, or get the {{appName}} app to carry every ticket in your pocket.</p>
+    {{else}}
     {{> button label="View event" url=(concat webUrl "/events/" eventSlug)}}
     <p style="margin:18px 0 0;color:#8a857c;font-size:13px;line-height:1.6;">Open the {{appName}} app any time to find your QR code under My Tickets.</p>
+    {{/if}}
 {{/layout}}
