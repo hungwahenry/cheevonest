@@ -39,6 +39,9 @@ export interface AttendeeEventFlags {
   ownedByTicket: Map<string, number>;
 }
 
+/** Below this remaining count we expose the number publicly for urgency; above it stays hidden. */
+const LOW_STOCK_THRESHOLD = 10;
+
 @Injectable()
 export class EventSerializer {
   private readonly webUrl: string;
@@ -129,61 +132,54 @@ export class EventSerializer {
 
   publicPage(event: EventForPublicPage): Record<string, unknown> {
     return {
-      id: event.id,
-      slug: event.slug,
-      title: event.title,
-      web_url: `${this.webUrl}/events/${event.slug}`,
-      description: event.description,
-      flyer_url: this.flyerUrl(event),
-      flyer_type: event.flyerType,
-      flyer_poster_url: this.posterUrl(event),
-      starts_at: event.startsAt?.toISOString() ?? null,
-      ends_at: event.endsAt?.toISOString() ?? null,
-      timezone: event.timezone,
-      venue_name: event.venueName,
-      city: event.city,
-      address: event.address,
-      tickets_min_price: event.ticketsMinPrice,
-      tickets_max_price: event.ticketsMaxPrice,
-      currency: event.currency,
-      status: event.status,
+      ...this.core(event),
+      ...this.detailFields(event),
       organisation: {
+        id: event.organisation.id,
         name: event.organisation.name,
         slug: event.organisation.slug,
         logo_url: this.organisations.logoUrl(event.organisation),
       },
-      tickets: event.tickets.map((ticket) => this.publicTicket(ticket)),
+      tickets: event.tickets.map((ticket) => this.ticketBase(ticket)),
       features: event.features.map((feature) => this.feature(feature)),
       images: event.images.map((image) => this.image(image)),
     };
   }
 
-  ticket(ticket: EventTicket): Record<string, unknown> {
+  /** Public-safe ticket shape: identity, price, and availability — no raw inventory. */
+  ticketBase(ticket: EventTicket): Record<string, unknown> {
+    const remaining =
+      ticket.quantity !== null
+        ? Math.max(ticket.quantity - ticket.soldCount, 0)
+        : null;
+
     return {
       id: ticket.id,
       name: ticket.name,
       description: ticket.description,
       gross_price: ticket.grossPrice,
-      display_price: ticket.displayPrice,
-      quantity: ticket.quantity,
-      sold_count: ticket.soldCount,
-      sort_order: ticket.sortOrder,
       status: ticket.status,
+      sold_out: remaining !== null && remaining <= 0,
+      remaining:
+        remaining !== null && remaining <= LOW_STOCK_THRESHOLD
+          ? remaining
+          : null,
       sales_starts_at: ticket.salesStartsAt?.toISOString() ?? null,
       sales_ends_at: ticket.salesEndsAt?.toISOString() ?? null,
-      valid_from: ticket.validFrom?.toISOString() ?? null,
-      valid_to: ticket.validTo?.toISOString() ?? null,
       max_per_order: ticket.maxPerOrder,
       max_per_user: ticket.maxPerUser,
     };
   }
 
-  publicTicket(ticket: EventTicket): Record<string, unknown> {
+  ticket(ticket: EventTicket): Record<string, unknown> {
     return {
-      id: ticket.id,
-      name: ticket.name,
-      description: ticket.description,
-      gross_price: ticket.grossPrice,
+      ...this.ticketBase(ticket),
+      display_price: ticket.displayPrice,
+      sort_order: ticket.sortOrder,
+      quantity: ticket.quantity,
+      sold_count: ticket.soldCount,
+      valid_from: ticket.validFrom?.toISOString() ?? null,
+      valid_to: ticket.validTo?.toISOString() ?? null,
     };
   }
 
