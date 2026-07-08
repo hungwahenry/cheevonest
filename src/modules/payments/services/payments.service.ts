@@ -107,27 +107,33 @@ export class PaymentsService {
         return { payment, transitioned: false };
       }
 
-      if (
-        event.status === 'successful' &&
-        (BigInt(event.amountMinor) !== payment.amountMinor ||
-          event.currency !== payment.currency)
-      ) {
-        this.logger.warn(
-          `finalize amount/currency mismatch for ${payment.reference}: expected ${payment.amountMinor} ${payment.currency}, got ${event.amountMinor} ${event.currency}`,
-        );
+      if (event.status === 'successful') {
+        const chargedMinor = BigInt(event.amountMinor);
+        const currencyMatches = event.currency === payment.currency;
+        const coversExpected = chargedMinor >= payment.amountMinor;
 
-        const failed = await tx.payment.update({
-          where: { id: payment.id },
-          data: {
-            status: 'failed',
-            failedAt: new Date(),
-            providerReference:
-              event.providerReference ?? payment.providerReference,
-            providerResponse: event.providerResponse as Prisma.InputJsonValue,
-          },
-        });
+        if (!currencyMatches || !coversExpected) {
+          this.logger.warn(
+            `finalize shortfall for ${payment.reference}: expected ${payment.amountMinor} ${payment.currency}, got ${event.amountMinor} ${event.currency} — holding for reconciliation`,
+          );
 
-        return { payment: failed, transitioned: false };
+          const held = await tx.payment.update({
+            where: { id: payment.id },
+            data: {
+              providerReference:
+                event.providerReference ?? payment.providerReference,
+              providerResponse: event.providerResponse as Prisma.InputJsonValue,
+            },
+          });
+
+          return { payment: held, transitioned: false };
+        }
+
+        if (chargedMinor > payment.amountMinor) {
+          this.logger.warn(
+            `finalize overpayment for ${payment.reference}: expected ${payment.amountMinor} ${payment.currency}, got ${event.amountMinor} — fulfilling`,
+          );
+        }
       }
 
       const updated = await tx.payment.update({
