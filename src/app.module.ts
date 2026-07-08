@@ -38,6 +38,7 @@ import { OrganizerModule } from './modules/organizer/organizer.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PayoutsModule } from './modules/payouts/payouts.module';
 import { PlatformModule } from './modules/platform/platform.module';
+import { PublicFeedModule } from './modules/feed/public-feed.module';
 import { SearchModule } from './modules/search/search.module';
 import { StepUpModule } from './modules/step-up/step-up.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
@@ -81,6 +82,7 @@ import { TicketTransfersModule } from './modules/transfers/ticket-transfers.modu
     AttendeeModule,
     OrganizerModule,
     PlatformModule,
+    PublicFeedModule,
     SearchModule,
     BroadcastsModule,
     CommentsModule,
