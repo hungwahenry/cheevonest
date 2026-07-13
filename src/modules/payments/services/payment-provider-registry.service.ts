@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Env } from '../../../config/env';
 import { PaymentProvider } from '../contracts/payment-provider.interface';
-import { PaystackProvider } from '../providers/paystack.provider';
+import { PaystackProvider } from '../providers/paystack/paystack.provider';
 
 @Injectable()
 export class PaymentProviderRegistry {

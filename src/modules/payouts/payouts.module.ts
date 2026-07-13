@@ -7,6 +7,7 @@ import { BalanceService } from './services/balance.service';
 import { BankResolverService } from './services/bank-resolver.service';
 import { PayoutAccountsService } from './services/payout-accounts.service';
 import { PayoutFeesService } from './services/payout-fees.service';
+import { PayoutsCronsService } from './services/payouts-crons.service';
 import { PayoutsService } from './services/payouts.service';
 
 @Module({
@@ -17,6 +18,7 @@ import { PayoutsService } from './services/payouts.service';
     BalanceService,
     BankResolverService,
     PayoutFeesService,
+    PayoutsCronsService,
     PayoutRules,
     PayoutSerializer,
     TransferSettledListener,

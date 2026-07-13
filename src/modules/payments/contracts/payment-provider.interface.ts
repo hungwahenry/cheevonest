@@ -60,7 +60,7 @@ export interface InitiatedTransfer {
 export interface TransferWebhookEvent {
   reference: string;
   providerReference: string | null;
-  status: 'paid' | 'failed';
+  status: 'paid' | 'failed' | 'reversed';
   failureReason: string | null;
   providerResponse: Record<string, unknown>;
 }
@@ -80,4 +80,5 @@ export interface PaymentProvider {
     request: CreateTransferRecipientRequest,
   ): Promise<string | null>;
   transfer(request: InitiateTransferRequest): Promise<InitiatedTransfer>;
+  verifyTransfer(reference: string): Promise<TransferWebhookEvent | null>;
 }

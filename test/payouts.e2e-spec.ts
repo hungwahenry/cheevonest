@@ -2,8 +2,9 @@ import { createHmac } from 'node:crypto';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { TestingModuleBuilder } from '@nestjs/testing';
-import { PaystackProvider } from '../src/modules/payments/providers/paystack.provider';
+import { PaystackProvider } from '../src/modules/payments/providers/paystack/paystack.provider';
 import { BankResolverService } from '../src/modules/payouts/services/bank-resolver.service';
+import { PayoutsService } from '../src/modules/payouts/services/payouts.service';
 import {
   createTestApp,
   extractOtpCode,
@@ -111,22 +112,34 @@ describe('Payouts (e2e)', () => {
               const event =
                 typeof payload.event === 'string' ? payload.event : '';
 
-              if (!['transfer.success', 'transfer.failed'].includes(event)) {
+              if (
+                ![
+                  'transfer.success',
+                  'transfer.failed',
+                  'transfer.reversed',
+                ].includes(event)
+              ) {
                 return null;
               }
 
               const data = payload.data as Record<string, unknown>;
+              const status =
+                event === 'transfer.success'
+                  ? 'paid'
+                  : event === 'transfer.reversed'
+                    ? 'reversed'
+                    : 'failed';
 
               return {
                 reference: String(data.reference),
                 providerReference: null,
-                status: event === 'transfer.success' ? 'paid' : 'failed',
+                status,
                 failureReason:
-                  event === 'transfer.failed'
-                    ? typeof data.reason === 'string'
+                  status === 'paid'
+                    ? null
+                    : typeof data.reason === 'string'
                       ? data.reason
-                      : 'transfer failed'
-                    : null,
+                      : 'transfer failed',
                 providerResponse: data,
               };
             },
@@ -143,6 +156,14 @@ describe('Payouts (e2e)', () => {
                 providerResponse: {},
               });
             },
+            verifyTransfer: (reference: string) =>
+              Promise.resolve({
+                reference,
+                providerReference: null,
+                status: 'paid',
+                failureReason: null,
+                providerResponse: {},
+              }),
           })
           .overrideProvider(BankResolverService)
           .useValue({
@@ -441,5 +462,64 @@ describe('Payouts (e2e)', () => {
     expect(items.length).toBe(2);
     expect(items.every((item) => item.status === 'paid')).toBe(true);
     expect(items.every((item) => item.organisation.id === orgId)).toBe(true);
+  });
+
+  it('fails a settled payout when the provider reverses it', async () => {
+    const created = await requestPayout(300000).expect(201);
+    const payoutId = (created.body as { data: { id: string } }).data.id;
+
+    const { providerReference } = await ctx.prisma.payout.findUniqueOrThrow({
+      where: { id: payoutId },
+    });
+    const reference = providerReference!;
+
+    await transferWebhook({
+      event: 'transfer.success',
+      data: { id: `tr_${reference}_s`, reference },
+    }).expect(200);
+    expect(
+      (
+        await ctx.prisma.payout.findUniqueOrThrow({ where: { id: payoutId } })
+      ).status,
+    ).toBe('paid');
+
+    await transferWebhook({
+      event: 'transfer.reversed',
+      data: { id: `tr_${reference}_r`, reference, reason: 'bank returned funds' },
+    }).expect(200);
+
+    const reversed = await ctx.prisma.payout.findUniqueOrThrow({
+      where: { id: payoutId },
+    });
+    expect(reversed.status).toBe('failed');
+    expect(reversed.failedReason).toBe('bank returned funds');
+    expect(reversed.paidAt).toBeNull();
+
+    // The reversed amount is available to request again.
+    const balance = await request(server())
+      .get(`${orgPath()}/balance`)
+      .set('Authorization', auth(ownerToken))
+      .expect(200);
+    expect(
+      (balance.body as { data: { available_minor: number } }).data
+        .available_minor,
+    ).toBe(500000);
+  });
+
+  it('recovers a stranded payout by pull-verifying the transfer', async () => {
+    const created = await requestPayout(200000).expect(201);
+    const payoutId = (created.body as { data: { id: string } }).data.id;
+    expect(created.body).toMatchObject({ data: { status: 'processing' } });
+
+    // No webhook is delivered; reconcile pulls the truth from the provider.
+    const payout = await ctx.prisma.payout.findUniqueOrThrow({
+      where: { id: payoutId },
+    });
+    await ctx.app.get(PayoutsService).reconcile(payout);
+
+    const reconciled = await ctx.prisma.payout.findUniqueOrThrow({
+      where: { id: payoutId },
+    });
+    expect(reconciled.status).toBe('paid');
   });
 });

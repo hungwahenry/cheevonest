@@ -3,7 +3,7 @@ import request from 'supertest';
 import { Webhook } from 'svix';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { TestingModuleBuilder } from '@nestjs/testing';
-import { PaystackProvider } from '../src/modules/payments/providers/paystack.provider';
+import { PaystackProvider } from '../src/modules/payments/providers/paystack/paystack.provider';
 import {
   createTestApp,
   extractOtpCode,
