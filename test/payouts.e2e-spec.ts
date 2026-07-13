@@ -330,32 +330,24 @@ describe('Payouts (e2e)', () => {
     expect(tooMuch.body).toMatchObject({ code: 'insufficient_balance' });
   });
 
-  it('runs the provider approval flow end to end', async () => {
+  it('initiates the payout automatically and settles via webhook', async () => {
     const created = await requestPayout(1000000).expect(201);
     const payoutId = (created.body as { data: { id: string } }).data.id;
 
+    // Auto-initiated at request time — no admin approval step.
     expect(created.body).toMatchObject({
-      data: { status: 'requested', amount_minor: 1000000, fees_minor: 2500 },
+      message: 'Payout initiated.',
+      data: { status: 'processing', amount_minor: 1000000, fees_minor: 2500 },
     });
+    expect(transfers.at(-1)?.amountMinor).toBe(997500);
 
     const duplicate = await requestPayout(100000).expect(409);
     expect(duplicate.body).toMatchObject({ code: 'payout_already_in_flight' });
 
-    const approved = await request(server())
-      .post(`/api/v1/admin/payouts/${payoutId}/approve`)
-      .set('Authorization', auth(adminToken))
-      .send({ method: 'provider', note: 'looks good' })
-      .expect(200);
-
-    expect(approved.body).toMatchObject({
-      message: 'Payout approved and transfer initiated.',
-      data: { status: 'processing', transfer_method: 'provider' },
+    const { providerReference } = await ctx.prisma.payout.findUniqueOrThrow({
+      where: { id: payoutId },
     });
-    expect(transfers.at(-1)?.amountMinor).toBe(997500);
-
-    const reference = (
-      approved.body as { data: { provider_reference: string } }
-    ).data.provider_reference;
+    const reference = providerReference!;
 
     await transferWebhook({
       event: 'transfer.failed',
@@ -397,61 +389,32 @@ describe('Payouts (e2e)', () => {
     });
   });
 
-  it('runs the manual approval flow end to end', async () => {
+  it('only allows retry once a payout has failed', async () => {
     const created = await requestPayout(500000).expect(201);
     const payoutId = (created.body as { data: { id: string } }).data.id;
-    const transfersBefore = transfers.length;
+    expect(created.body).toMatchObject({ data: { status: 'processing' } });
 
-    const approved = await request(server())
-      .post(`/api/v1/admin/payouts/${payoutId}/approve`)
-      .set('Authorization', auth(adminToken))
-      .send({ method: 'manual', note: 'paying from GTB app' })
-      .expect(200);
-
-    expect(approved.body).toMatchObject({
-      message: 'Payout approved for manual processing.',
-      data: { status: 'approved', transfer_method: 'manual' },
-    });
-    expect(transfers.length).toBe(transfersBefore);
-
+    // Retry is rejected while the transfer is still processing.
     const retryDenied = await request(server())
       .post(`/api/v1/admin/payouts/${payoutId}/retry`)
       .set('Authorization', auth(adminToken))
       .expect(409);
     expect(retryDenied.body).toMatchObject({ code: 'payout_not_retryable' });
 
-    const paid = await request(server())
-      .post(`/api/v1/admin/payouts/${payoutId}/mark-paid`)
-      .set('Authorization', auth(adminToken))
-      .send({ note: 'sent via bank transfer ref 12345' })
-      .expect(200);
-
-    expect(paid.body).toMatchObject({
-      message: 'Payout marked paid.',
-      data: { status: 'paid', transfer_method: 'manual' },
+    const { providerReference } = await ctx.prisma.payout.findUniqueOrThrow({
+      where: { id: payoutId },
     });
-  });
+    const reference = providerReference!;
 
-  it('rejects requested payouts and re-approving paid ones', async () => {
-    const created = await requestPayout(100000).expect(201);
-    const payoutId = (created.body as { data: { id: string } }).data.id;
+    await transferWebhook({
+      event: 'transfer.success',
+      data: { id: `tr_${reference}_s`, reference },
+    }).expect(200);
 
-    const rejected = await request(server())
-      .post(`/api/v1/admin/payouts/${payoutId}/reject`)
-      .set('Authorization', auth(adminToken))
-      .send({ note: 'suspicious activity' })
-      .expect(200);
-
-    expect(rejected.body).toMatchObject({
-      data: { status: 'rejected', review_notes: 'suspicious activity' },
+    const paid = await ctx.prisma.payout.findUniqueOrThrow({
+      where: { id: payoutId },
     });
-
-    const reApprove = await request(server())
-      .post(`/api/v1/admin/payouts/${payoutId}/approve`)
-      .set('Authorization', auth(adminToken))
-      .send({ method: 'manual' })
-      .expect(409);
-    expect(reApprove.body).toMatchObject({ code: 'payout_not_approvable' });
+    expect(paid.status).toBe('paid');
   });
 
   it('lists payouts for organizers and admins', async () => {
@@ -461,7 +424,7 @@ describe('Payouts (e2e)', () => {
       .expect(200);
     expect(
       (organizerList.body as { data: { items: unknown[] } }).data.items.length,
-    ).toBeGreaterThanOrEqual(3);
+    ).toBeGreaterThanOrEqual(2);
 
     const adminList = await request(server())
       .get(`/api/v1/admin/payouts?status=paid&organisation_id=${orgId}`)

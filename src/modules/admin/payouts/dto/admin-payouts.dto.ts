@@ -7,7 +7,6 @@ import {
   IsString,
   Length,
   Max,
-  MaxLength,
   Min,
 } from 'class-validator';
 import { toNumber } from '../../../../common/validation/transforms';
@@ -56,18 +55,3 @@ export class ListAdminPayoutsDto {
   page?: number;
 }
 
-export class ApprovePayoutDto {
-  @IsIn(['provider', 'manual'])
-  method!: 'provider' | 'manual';
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  note?: string | null;
-}
-
-export class ReviewNoteDto {
-  @IsString()
-  @MaxLength(1000)
-  note!: string;
-}

@@ -137,7 +137,7 @@ export class OrganizerPayoutsController {
       dto.amount_minor,
     );
 
-    return new ApiResult(this.serializer.payout(payout), 'Payout requested.');
+    return new ApiResult(this.serializer.payout(payout), 'Payout initiated.');
   }
 
   @Get('payouts/:payoutId')
