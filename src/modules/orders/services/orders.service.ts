@@ -12,6 +12,7 @@ import type {
   User,
 } from '../../../generated/prisma/client';
 import { lockEventTicket, lockOrder } from '../../../generated/prisma/sql';
+import { LedgerService } from '../../ledger/ledger.service';
 import { OrganisationSuspendedException } from '../../organisations/exceptions/organisation-suspended.exception';
 import { PaymentsService } from '../../payments/services/payments.service';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
@@ -57,6 +58,7 @@ export class OrdersService {
     private readonly systemConfig: SystemConfigService,
     private readonly windowRules: OrderWindowRules,
     private readonly availability: TicketAvailabilityRules,
+    private readonly ledger: LedgerService,
     private readonly emitter: EventEmitter2,
   ) {}
 
@@ -229,23 +231,34 @@ export class OrdersService {
         return null;
       }
 
+      const now = new Date();
+
       await this.issuedTickets.issueForOrder(tx, order, order.items);
 
       await tx.ticketHold.deleteMany({ where: { orderId: order.id } });
 
       await tx.order.update({
         where: { id: order.id },
-        data: { status: 'paid', paidAt: new Date() },
+        data: { status: 'paid', paidAt: now },
       });
 
-      await tx.event.update({
+      const event = await tx.event.update({
         where: { id: order.eventId },
         data: { revenueMinor: { increment: order.subtotalMinor } },
+        select: { organisationId: true },
+      });
+
+      await this.ledger.recordSale(tx, {
+        organisationId: event.organisationId,
+        orderId: order.id,
+        amountMinor: Number(order.subtotalMinor),
+        currency: order.currency,
+        paidAt: now,
       });
 
       const firstSale = await tx.event.updateMany({
         where: { id: order.eventId, firstSaleNotifiedAt: null },
-        data: { firstSaleNotifiedAt: new Date() },
+        data: { firstSaleNotifiedAt: now },
       });
 
       return { orderId: order.id, isFirstSale: firstSale.count > 0 };

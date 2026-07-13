@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LedgerModule } from '../ledger/ledger.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { TicketsModule } from '../tickets/tickets.module';
 import { PaymentSucceededListener } from './listeners/payment-succeeded.listener';
@@ -12,7 +13,7 @@ import { OrdersCronsService } from './services/orders-crons.service';
 import { OrdersService } from './services/orders.service';
 
 @Module({
-  imports: [PaymentsModule, TicketsModule],
+  imports: [LedgerModule, PaymentsModule, TicketsModule],
   providers: [
     OrdersService,
     OrderQuotingService,

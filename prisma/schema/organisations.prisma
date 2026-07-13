@@ -31,6 +31,7 @@ model Organisation {
   subscriptions Subscription[]
   payoutAccount PayoutAccount?
   payouts       Payout[]
+  ledgerEntries LedgerEntry[]
   broadcasts    Broadcast[]
   suppressions  BroadcastSuppression[]
 

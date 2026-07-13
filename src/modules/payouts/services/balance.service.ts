@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import type { Organisation } from '../../../generated/prisma/client';
+import { LedgerService } from '../../ledger/ledger.service';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import { IN_FLIGHT_PAYOUT_STATUSES } from '../payout.constants';
 
@@ -25,30 +26,15 @@ export interface BalanceSummary {
 export class BalanceService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly ledger: LedgerService,
     private readonly systemConfig: SystemConfigService,
   ) {}
 
   async summary(organisation: Organisation): Promise<BalanceSummary> {
     const holdDays = await this.systemConfig.int('payouts.hold_window_days', 2);
-    const cutoff = new Date(Date.now() - holdDays * 86_400_000);
 
-    const [settled, unsettled, inFlight, paidOut, events] = await Promise.all([
-      this.prisma.order.aggregate({
-        where: {
-          status: 'paid',
-          paidAt: { lte: cutoff },
-          event: { organisationId: organisation.id },
-        },
-        _sum: { subtotalMinor: true },
-      }),
-      this.prisma.order.aggregate({
-        where: {
-          status: 'paid',
-          OR: [{ paidAt: null }, { paidAt: { gt: cutoff } }],
-          event: { organisationId: organisation.id },
-        },
-        _sum: { subtotalMinor: true },
-      }),
+    const [earnings, inFlight, paidOut, events] = await Promise.all([
+      this.ledger.earnings(organisation.id),
       this.prisma.payout.aggregate({
         where: {
           organisationId: organisation.id,
@@ -67,15 +53,16 @@ export class BalanceService {
       }),
     ]);
 
-    const settledMinor = Number(settled._sum.subtotalMinor ?? 0n);
-    const unsettledMinor = Number(unsettled._sum.subtotalMinor ?? 0n);
     const inFlightMinor = Number(inFlight._sum.amountMinor ?? 0n);
     const paidOutMinor = Number(paidOut._sum.amountMinor ?? 0n);
 
     return {
       currency: 'NGN',
-      available_minor: Math.max(0, settledMinor - inFlightMinor - paidOutMinor),
-      pending_minor: unsettledMinor + inFlightMinor,
+      available_minor: Math.max(
+        0,
+        earnings.availableMinor - inFlightMinor - paidOutMinor,
+      ),
+      pending_minor: earnings.pendingMinor + inFlightMinor,
       paid_out_minor: paidOutMinor,
       hold_window_days: holdDays,
       has_in_flight_payout: inFlight._count > 0,

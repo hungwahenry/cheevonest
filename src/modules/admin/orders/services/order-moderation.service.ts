@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
 import type { Order } from '../../../../generated/prisma/client';
+import { LedgerService } from '../../../ledger/ledger.service';
 import { PaymentsService } from '../../../payments/services/payments.service';
 import { OrdersService } from '../../../orders/services/orders.service';
 import { IssuedTicketsService } from '../../../tickets/services/issued-tickets.service';
@@ -14,6 +15,7 @@ export class OrderModerationService {
     private readonly prisma: PrismaService,
     private readonly orders: OrdersService,
     private readonly payments: PaymentsService,
+    private readonly ledger: LedgerService,
     private readonly issuedTickets: IssuedTicketsService,
   ) {}
 
@@ -48,6 +50,18 @@ export class OrderModerationService {
         order.eventId,
         order.subtotalMinor,
       );
+
+      const event = await tx.event.findUniqueOrThrow({
+        where: { id: order.eventId },
+        select: { organisationId: true },
+      });
+
+      await this.ledger.recordRefund(tx, {
+        organisationId: event.organisationId,
+        orderId: order.id,
+        amountMinor: Number(order.subtotalMinor),
+        currency: order.currency,
+      });
 
       return tx.order.update({
         where: { id: order.id },

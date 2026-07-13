@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LedgerModule } from '../ledger/ledger.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { TransferSettledListener } from './listeners/transfer-settled.listener';
 import { PayoutRules } from './rules/payout.rules';
@@ -11,7 +12,7 @@ import { PayoutsCronsService } from './services/payouts-crons.service';
 import { PayoutsService } from './services/payouts.service';
 
 @Module({
-  imports: [PaymentsModule],
+  imports: [LedgerModule, PaymentsModule],
   providers: [
     PayoutsService,
     PayoutAccountsService,
