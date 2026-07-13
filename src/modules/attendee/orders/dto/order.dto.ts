@@ -44,7 +44,7 @@ export class CreateOrderDto extends QuoteOrderDto {
   callback_url!: string;
 
   @IsOptional()
-  @IsIn(['paystack', 'flutterwave'])
+  @IsIn(['paystack'])
   provider?: string | null;
 }
 

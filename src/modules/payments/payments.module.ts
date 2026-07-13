@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PaymentReturnController } from './controllers/payment-return.controller';
 import { WebhooksController } from './controllers/webhooks.controller';
-import { FlutterwaveProvider } from './providers/flutterwave.provider';
 import { PaystackProvider } from './providers/paystack.provider';
 import { PaymentProviderRegistry } from './services/payment-provider-registry.service';
 import { PaymentsService } from './services/payments.service';
@@ -12,7 +11,6 @@ import { WebhookIdempotencyService } from './services/webhook-idempotency.servic
   controllers: [WebhooksController, PaymentReturnController],
   providers: [
     PaystackProvider,
-    FlutterwaveProvider,
     PaymentProviderRegistry,
     PaymentsService,
     PurposableRegistry,

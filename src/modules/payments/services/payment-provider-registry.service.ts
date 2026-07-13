@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Env } from '../../../config/env';
 import { PaymentProvider } from '../contracts/payment-provider.interface';
-import { FlutterwaveProvider } from '../providers/flutterwave.provider';
 import { PaystackProvider } from '../providers/paystack.provider';
 
 @Injectable()
@@ -11,11 +10,10 @@ export class PaymentProviderRegistry {
 
   constructor(
     paystack: PaystackProvider,
-    flutterwave: FlutterwaveProvider,
     private readonly config: ConfigService<Env, true>,
   ) {
     this.providers = new Map(
-      [paystack, flutterwave].map((provider) => [provider.name(), provider]),
+      [paystack].map((provider) => [provider.name(), provider]),
     );
   }
 

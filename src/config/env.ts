@@ -49,14 +49,9 @@ const envSchema = z.object({
   DICEBEAR_STYLE: z.string().default('thumbs'),
   DICEBEAR_FORMAT: z.string().default('png'),
 
-  PAYMENTS_DEFAULT_PROVIDER: z
-    .enum(['paystack', 'flutterwave'])
-    .default('paystack'),
+  PAYMENTS_DEFAULT_PROVIDER: z.enum(['paystack']).default('paystack'),
   PAYSTACK_SECRET_KEY: z.string().optional(),
   PAYSTACK_BASE_URL: z.string().default('https://api.paystack.co'),
-  FLUTTERWAVE_SECRET_KEY: z.string().optional(),
-  FLUTTERWAVE_SECRET_HASH: z.string().optional(),
-  FLUTTERWAVE_BASE_URL: z.string().default('https://api.flutterwave.com/v3'),
   PAYMENT_BRIDGE_URL: z.string().optional(),
   APP_DEEP_LINK_SCHEME: z.string().default('cheevo'),
 

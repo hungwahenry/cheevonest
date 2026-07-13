@@ -49,6 +49,6 @@ export class GuestCheckoutDto extends GuestQuoteDto {
   callback_url!: string;
 
   @IsOptional()
-  @IsIn(['paystack', 'flutterwave'])
+  @IsIn(['paystack'])
   provider?: string | null;
 }

@@ -21,6 +21,6 @@ export class ListPaymentsDto {
   status?: PaymentStatus;
 
   @IsOptional()
-  @IsIn(['paystack', 'flutterwave'])
+  @IsIn(['paystack'])
   provider?: string;
 }

@@ -56,28 +56,6 @@ export class WebhooksController {
     return '';
   }
 
-  @Post('flutterwave')
-  @HttpCode(200)
-  async flutterwave(
-    @Req() request: RawBodyRequest<FastifyRequest>,
-    @Headers('verif-hash') signature?: string,
-  ): Promise<string> {
-    const payload = await this.acceptedPayload(
-      'flutterwave',
-      request,
-      signature,
-      (data) => str(data.id ?? data.tx_ref ?? ''),
-    );
-
-    if (payload === null) {
-      return '';
-    }
-
-    await this.dispatch('flutterwave', payload);
-
-    return '';
-  }
-
   private async dispatch(
     providerName: string,
     payload: Record<string, unknown>,
