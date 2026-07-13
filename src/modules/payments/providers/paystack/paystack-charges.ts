@@ -4,6 +4,8 @@ import {
   InitializedPayment,
   InitializePaymentRequest,
   PaymentWebhookEvent,
+  RefundRequest,
+  RefundResult,
   VerifiedPayment,
 } from '../../contracts/payment-provider.interface';
 import { str } from '../../support/json';
@@ -50,6 +52,20 @@ export class PaystackCharges {
       status: this.mapStatus(str(data.status ?? '')),
       amountMinor: Number(data.amount ?? 0),
       currency: (data.currency as Currency) ?? 'NGN',
+      providerResponse: data,
+    };
+  }
+
+  async refund(request: RefundRequest): Promise<RefundResult> {
+    const data = await this.client.post('/refund', {
+      transaction: request.reference,
+      amount: request.amountMinor,
+      currency: request.currency,
+    });
+
+    return {
+      providerReference: data.id !== undefined ? str(data.id) : null,
+      status: str(data.status) === 'processed' ? 'processed' : 'pending',
       providerResponse: data,
     };
   }

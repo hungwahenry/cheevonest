@@ -174,6 +174,39 @@ export class PaymentsService {
     return settled.payment;
   }
 
+  /** Admin override: force a payment to successful and fulfil its purposable. */
+  async markSucceeded(payment: Payment): Promise<Payment> {
+    const updated = await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: { status: 'successful', authorizedAt: new Date() },
+    });
+
+    await this.emitter.emitAsync(
+      PAYMENT_SUCCEEDED,
+      new PaymentSucceededEvent(
+        updated.id,
+        updated.purposableType,
+        updated.purposableId,
+      ),
+    );
+
+    return updated;
+  }
+
+  /** Ask the provider to refund a charge; the payment row is settled by the caller. */
+  async refundWithProvider(
+    payment: Payment,
+    amountMinor?: number,
+  ): Promise<void> {
+    const provider = this.providerFor(payment);
+
+    await provider.refund({
+      reference: payment.reference,
+      amountMinor: amountMinor ?? Number(payment.amountMinor),
+      currency: payment.currency,
+    });
+  }
+
   /** Pull-verify against the provider; refuses transactions that belong to another payment. */
   async reconcile(
     payment: Payment,

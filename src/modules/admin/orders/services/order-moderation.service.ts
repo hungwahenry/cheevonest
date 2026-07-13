@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
 import type { Order } from '../../../../generated/prisma/client';
+import { PaymentsService } from '../../../payments/services/payments.service';
 import { OrdersService } from '../../../orders/services/orders.service';
 import { IssuedTicketsService } from '../../../tickets/services/issued-tickets.service';
 import { OrderNotMarkPayableException } from '../exceptions/order-not-mark-payable.exception';
@@ -12,6 +13,7 @@ export class OrderModerationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly orders: OrdersService,
+    private readonly payments: PaymentsService,
     private readonly issuedTickets: IssuedTicketsService,
   ) {}
 
@@ -24,10 +26,18 @@ export class OrderModerationService {
       throw new PartialRefundUnsupportedException();
     }
 
+    const payment = order.paymentId
+      ? await this.prisma.payment.findUnique({ where: { id: order.paymentId } })
+      : null;
+
+    if (payment?.status === 'successful') {
+      await this.payments.refundWithProvider(payment, Number(order.totalMinor));
+    }
+
     return this.prisma.$transaction(async (tx) => {
-      if (order.paymentId !== null) {
+      if (payment) {
         await tx.payment.update({
-          where: { id: order.paymentId },
+          where: { id: payment.id },
           data: { status: 'refunded', refundedAt: new Date() },
         });
       }

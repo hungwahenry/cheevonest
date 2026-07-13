@@ -7,6 +7,8 @@ import {
   InitiateTransferRequest,
   PaymentProvider,
   PaymentWebhookEvent,
+  RefundRequest,
+  RefundResult,
   TransferWebhookEvent,
   VerifiedPayment,
 } from '../../contracts/payment-provider.interface';
@@ -45,6 +47,10 @@ export class PaystackProvider implements PaymentProvider {
     payload: Record<string, unknown>,
   ): PaymentWebhookEvent | null {
     return this.charges.parseWebhookEvent(payload);
+  }
+
+  refund(request: RefundRequest): Promise<RefundResult> {
+    return this.charges.refund(request);
   }
 
   parseTransferWebhookEvent(

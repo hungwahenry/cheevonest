@@ -33,6 +33,18 @@ export interface PaymentWebhookEvent {
   providerResponse: Record<string, unknown>;
 }
 
+export interface RefundRequest {
+  reference: string;
+  amountMinor: number;
+  currency: Currency;
+}
+
+export interface RefundResult {
+  providerReference: string | null;
+  status: 'pending' | 'processed';
+  providerResponse: Record<string, unknown>;
+}
+
 export interface CreateTransferRecipientRequest {
   name: string;
   accountNumber: string;
@@ -73,6 +85,7 @@ export interface PaymentProvider {
   parseWebhookEvent(
     payload: Record<string, unknown>,
   ): PaymentWebhookEvent | null;
+  refund(request: RefundRequest): Promise<RefundResult>;
   parseTransferWebhookEvent(
     payload: Record<string, unknown>,
   ): TransferWebhookEvent | null;

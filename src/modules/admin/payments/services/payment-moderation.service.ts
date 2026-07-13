@@ -29,10 +29,7 @@ export class PaymentModerationService {
       throw new PaymentAlreadyFinalizedException(payment.status);
     }
 
-    return this.prisma.payment.update({
-      where: { id: payment.id },
-      data: { status: 'successful', authorizedAt: new Date() },
-    });
+    return this.payments.markSucceeded(payment);
   }
 
   async findOrFail(paymentId: string): Promise<Payment> {

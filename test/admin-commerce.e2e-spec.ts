@@ -29,6 +29,7 @@ describe('Admin commerce & content (e2e)', () => {
   let eventId: string;
   let ticketId: string;
   const refs: string[] = [];
+  const refunds: Array<{ reference: string; amountMinor: number }> = [];
 
   const server = () => ctx.app.getHttpServer();
   const a = (t: string) => `Bearer ${t}`;
@@ -128,6 +129,15 @@ describe('Admin commerce & content (e2e)', () => {
           parseTransferWebhookEvent: () => null,
           createTransferRecipient: () => Promise.resolve('RCP'),
           transfer: () => Promise.reject(new Error('x')),
+          verifyTransfer: () => Promise.resolve(null),
+          refund: (req: { reference: string; amountMinor: number }) => {
+            refunds.push({ reference: req.reference, amountMinor: req.amountMinor });
+            return Promise.resolve({
+              providerReference: `RF_${req.reference}`,
+              status: 'processed',
+              providerResponse: {},
+            });
+          },
         }),
     });
     await seedCatalog(ctx.prisma);
@@ -210,6 +220,12 @@ describe('Admin commerce & content (e2e)', () => {
     });
     expect(order.payment?.status).toBe('refunded');
     expect(order.issuedTickets.every((t) => t.status === 'revoked')).toBe(true);
+
+    // The money is actually refunded through the provider, not just booked.
+    expect(refunds.at(-1)).toMatchObject({
+      reference: order.payment?.reference,
+      amountMinor: 1040000,
+    });
 
     const eventAfter = await ctx.prisma.event.findUniqueOrThrow({
       where: { id: eventId },
@@ -409,11 +425,10 @@ describe('Admin commerce & content (e2e)', () => {
         callback_url: 'cheevo:///orders/return',
       })
       .expect(200);
+    const orderId = (created.body as { data: { order: { id: string } } }).data
+      .order.id;
     const payment = await ctx.prisma.payment.findFirstOrThrow({
-      where: {
-        purposableId: (created.body as { data: { order: { id: string } } }).data
-          .order.id,
-      },
+      where: { purposableId: orderId },
     });
 
     const marked = await request(server())
@@ -421,6 +436,14 @@ describe('Admin commerce & content (e2e)', () => {
       .set('Authorization', a(admin))
       .expect(200);
     expect(marked.body).toMatchObject({ data: { status: 'successful' } });
+
+    // Forcing the payment successful fulfils the order.
+    const order = await ctx.prisma.order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: { issuedTickets: true },
+    });
+    expect(order.status).toBe('paid');
+    expect(order.issuedTickets).toHaveLength(1);
 
     const refused = await request(server())
       .post(`/api/v1/admin/payments/${payment.id}/mark-success`)
