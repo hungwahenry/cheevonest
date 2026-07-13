@@ -32,7 +32,7 @@ export class BankResolverService {
       return this.banksCache.banks;
     }
 
-    const params = new URLSearchParams({ country, perPage: '200' });
+    const params = new URLSearchParams({ country, perPage: '1000' });
     const payload = await this.get(`/bank?${params.toString()}`);
 
     if (payload === null) {
