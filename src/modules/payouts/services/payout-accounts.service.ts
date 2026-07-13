@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ulid } from 'ulid';
 import { PrismaService } from '../../../database/prisma.service';
 import type {
@@ -7,6 +8,10 @@ import type {
 } from '../../../generated/prisma/client';
 import { PaymentProviderRegistry } from '../../payments/services/payment-provider-registry.service';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
+import {
+  PAYOUT_ACCOUNT_CHANGED,
+  PayoutAccountChangedEvent,
+} from '../events/payout-account-changed.event';
 import { PayoutRules } from '../rules/payout.rules';
 import { BankResolverService } from './bank-resolver.service';
 
@@ -18,6 +23,7 @@ export class PayoutAccountsService {
     private readonly registry: PaymentProviderRegistry,
     private readonly systemConfig: SystemConfigService,
     private readonly rules: PayoutRules,
+    private readonly emitter: EventEmitter2,
   ) {}
 
   async find(organisationId: string): Promise<PayoutAccount | null> {
@@ -61,11 +67,18 @@ export class PayoutAccountsService {
       verifiedAt: new Date(),
     };
 
-    return this.prisma.payoutAccount.upsert({
+    const account = await this.prisma.payoutAccount.upsert({
       where: { organisationId: organisation.id },
       update: data,
       create: { id: ulid(), organisationId: organisation.id, ...data },
     });
+
+    await this.emitter.emitAsync(
+      PAYOUT_ACCOUNT_CHANGED,
+      new PayoutAccountChangedEvent(organisation.id),
+    );
+
+    return account;
   }
 
   async delete(organisationId: string): Promise<void> {

@@ -522,4 +522,19 @@ describe('Payouts (e2e)', () => {
     });
     expect(reconciled.status).toBe('paid');
   });
+
+  it('alerts admins on payout requests and failures', async () => {
+    const requested = await ctx.prisma.notification.count({
+      where: { type: 'admin.payout_requested' },
+    });
+    expect(requested).toBeGreaterThan(0);
+
+    const failed = await ctx.prisma.notification.count({
+      where: { type: 'admin.payout_failed' },
+    });
+    expect(failed).toBeGreaterThan(0);
+
+    const emailed = ctx.mails.some((mail) => mail.template === 'admin-alert');
+    expect(emailed).toBe(true);
+  });
 });

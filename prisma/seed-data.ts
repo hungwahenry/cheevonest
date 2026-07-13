@@ -55,6 +55,8 @@ export const SYSTEM_CONFIGS: ReadonlyArray<SystemConfigSeed> = [
   { key: 'payouts.transfer_fee_tier_2_minor', group: 'payouts', type: 'int', default: 2500, description: 'Paystack transfer fee for tier-2 payouts (in minor units).', isPublic: true },
   { key: 'payouts.transfer_fee_tier_3_minor', group: 'payouts', type: 'int', default: 5000, description: 'Paystack transfer fee for tier-3 payouts (in minor units).', isPublic: true },
 
+  { key: 'admin.large_order_threshold_minor', group: 'admin', type: 'int', default: 50000000, description: 'Orders at or above this total (minor units) trigger a large-order admin alert.' },
+
   { key: 'search.results_per_group_limit', group: 'search', type: 'int', default: 5, description: 'Results per category in mixed search.', isPublic: true },
   { key: 'search.per_page_default', group: 'search', type: 'int', default: 20, description: 'Default page size for feed / search pagination.', isPublic: true },
   { key: 'search.per_page_max', group: 'search', type: 'int', default: 50, description: 'Max page size for feed / search pagination.', isPublic: true },

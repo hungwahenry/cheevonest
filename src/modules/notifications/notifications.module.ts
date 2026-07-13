@@ -3,6 +3,7 @@ import { MailModule } from '../../integrations/mail/mail.module';
 import { EventsModule } from '../events/events.module';
 import { UsersModule } from '../users/users.module';
 import { NotificationsController } from './controllers/notifications.controller';
+import { AdminAlertsListener } from './listeners/admin-alerts.listener';
 import { BroadcastSentListener } from './listeners/broadcast-sent.listener';
 import { CommentRepliedListener } from './listeners/comment-replied.listener';
 import { EventPublishedListener } from './listeners/event-published.listener';
@@ -40,6 +41,7 @@ import { StartingSoonService } from './services/scheduled/starting-soon.service'
     ReportCreatedListener,
     BroadcastSentListener,
     TicketTransferredListener,
+    AdminAlertsListener,
   ],
   exports: [
     NotifierService,

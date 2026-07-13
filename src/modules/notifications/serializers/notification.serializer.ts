@@ -11,6 +11,7 @@ import { PreferenceCell } from '../services/notification-preferences.service';
 const AUDIENCE_LABELS: Record<NotificationAudience, string> = {
   organizer: 'Organizer',
   attendee: 'Attendee',
+  admin: 'Admin',
 };
 
 @Injectable()

@@ -22,6 +22,10 @@ import { InsufficientBalanceException } from '../exceptions/insufficient-balance
 import { PayoutAccountMissingException } from '../exceptions/payout-account-missing.exception';
 import { PayoutAlreadyInFlightException } from '../exceptions/payout-already-in-flight.exception';
 import {
+  PAYOUT_REQUESTED,
+  PayoutRequestedEvent,
+} from '../events/payout-requested.event';
+import {
   PAYOUT_SETTLED,
   PayoutSettledEvent,
 } from '../events/payout-settled.event';
@@ -103,6 +107,11 @@ export class PayoutsService {
         },
       });
     });
+
+    await this.emitter.emitAsync(
+      PAYOUT_REQUESTED,
+      new PayoutRequestedEvent(payout.id),
+    );
 
     // Push the transfer to the provider immediately — no admin approval step.
     return this.initiateSafely(payout.id);

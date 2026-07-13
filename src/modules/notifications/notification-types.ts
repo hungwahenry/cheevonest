@@ -1,7 +1,7 @@
 export const NOTIFICATION_CHANNELS = ['email', 'push', 'inapp'] as const;
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
 
-export type NotificationAudience = 'organizer' | 'attendee';
+export type NotificationAudience = 'organizer' | 'attendee' | 'admin';
 
 export type NotificationType =
   | 'order.first_sale'
@@ -15,7 +15,14 @@ export type NotificationType =
   | 'attendee.event_starting_soon'
   | 'attendee.new_event_from_subscription'
   | 'attendee.comment_reply'
-  | 'attendee.ticket_transfer_received';
+  | 'attendee.ticket_transfer_received'
+  | 'admin.payout_requested'
+  | 'admin.payout_failed'
+  | 'admin.payout_account_changed'
+  | 'admin.report_created'
+  | 'admin.organisation_created'
+  | 'admin.event_published'
+  | 'admin.large_order';
 
 export interface NotificationTypeMeta {
   audience: NotificationAudience;
@@ -27,6 +34,7 @@ export interface NotificationTypeMeta {
 
 const PUSH_INAPP: NotificationChannel[] = ['push', 'inapp'];
 const ALL: NotificationChannel[] = ['push', 'inapp', 'email'];
+const ADMIN: NotificationChannel[] = ['inapp', 'email'];
 
 export const NOTIFICATION_TYPES: Record<
   NotificationType,
@@ -116,6 +124,55 @@ export const NOTIFICATION_TYPES: Record<
     description: 'When another user transfers one of their tickets to you.',
     defaultChannels: PUSH_INAPP,
     allowedChannels: PUSH_INAPP,
+  },
+  'admin.payout_requested': {
+    audience: 'admin',
+    label: 'Payout requested',
+    description: 'An organiser requested a payout.',
+    defaultChannels: ADMIN,
+    allowedChannels: ADMIN,
+  },
+  'admin.payout_failed': {
+    audience: 'admin',
+    label: 'Payout failed or reversed',
+    description: 'A payout failed or was reversed by the provider.',
+    defaultChannels: ADMIN,
+    allowedChannels: ADMIN,
+  },
+  'admin.payout_account_changed': {
+    audience: 'admin',
+    label: 'Payout account changed',
+    description: 'An organiser added or changed their bank account.',
+    defaultChannels: ADMIN,
+    allowedChannels: ADMIN,
+  },
+  'admin.report_created': {
+    audience: 'admin',
+    label: 'Content reported',
+    description: 'A user reported content for moderation.',
+    defaultChannels: ADMIN,
+    allowedChannels: ADMIN,
+  },
+  'admin.organisation_created': {
+    audience: 'admin',
+    label: 'New organisation',
+    description: 'A new organisation was created.',
+    defaultChannels: ADMIN,
+    allowedChannels: ADMIN,
+  },
+  'admin.event_published': {
+    audience: 'admin',
+    label: 'Event published',
+    description: 'An organiser published an event.',
+    defaultChannels: ADMIN,
+    allowedChannels: ADMIN,
+  },
+  'admin.large_order': {
+    audience: 'admin',
+    label: 'Large order',
+    description: 'An order settled above the large-order threshold.',
+    defaultChannels: ADMIN,
+    allowedChannels: ADMIN,
   },
 };
 

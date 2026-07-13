@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ulid } from 'ulid';
 import { UploadedFile } from '../../../../common/http/uploaded-file';
 import { PrismaService } from '../../../../database/prisma.service';
@@ -16,6 +17,10 @@ import {
 import { UpdateOrganisationDto } from '../dto/update-organisation.dto';
 import { SearchIndexerService } from '../../../search/services/search-indexer.service';
 import { ensureValidImage } from '../../../../common/validation/image.rules';
+import {
+  ORGANISATION_CREATED,
+  OrganisationCreatedEvent,
+} from '../events/organisation-created.event';
 import { OrganisationRules } from '../rules/organisation.rules';
 
 const LOGO_MAX_KB = 4096;
@@ -29,6 +34,7 @@ export class OrganisationManagerService {
     private readonly organisations: OrganisationsService,
     private readonly rules: OrganisationRules,
     private readonly searchIndexer: SearchIndexerService,
+    private readonly emitter: EventEmitter2,
   ) {}
 
   /** One atomic submission: details, logo/cover, socials. The creator becomes Owner. */
@@ -81,6 +87,11 @@ export class OrganisationManagerService {
 
     const created = await this.organisations.loadForResource(organisationId);
     await this.searchIndexer.indexOrganisation(created);
+
+    await this.emitter.emitAsync(
+      ORGANISATION_CREATED,
+      new OrganisationCreatedEvent(organisationId),
+    );
 
     return created;
   }

@@ -14,13 +14,15 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { toBoolean, toNumber } from '../../../common/validation/transforms';
+import type { NotificationAudience as PushAudience } from '../../../generated/prisma/client';
 import {
   NOTIFICATION_CHANNELS,
   NOTIFICATION_TYPE_VALUES,
   type NotificationAudience,
 } from '../notification-types';
 
-const AUDIENCES: NotificationAudience[] = ['organizer', 'attendee'];
+const AUDIENCES: NotificationAudience[] = ['organizer', 'attendee', 'admin'];
+const PUSH_AUDIENCES: PushAudience[] = ['organizer', 'attendee'];
 
 export class AudienceQueryDto {
   @IsIn(AUDIENCES)
@@ -85,8 +87,8 @@ export class RegisterPushTokenDto {
   })
   token!: string;
 
-  @IsIn(AUDIENCES)
-  audience!: NotificationAudience;
+  @IsIn(PUSH_AUDIENCES)
+  audience!: PushAudience;
 
   @IsOptional()
   @IsString()

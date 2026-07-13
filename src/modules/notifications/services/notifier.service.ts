@@ -125,4 +125,16 @@ export class NotifierService {
       message,
     );
   }
+
+  async sendToAdmins(message: NotificationMessage): Promise<void> {
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'admin' },
+      select: { id: true },
+    });
+
+    await this.send(
+      admins.map((admin) => admin.id),
+      message,
+    );
+  }
 }

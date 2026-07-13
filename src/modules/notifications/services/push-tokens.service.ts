@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ulid } from 'ulid';
 import { PrismaService } from '../../../database/prisma.service';
-import { NotificationAudience } from '../notification-types';
+import type { NotificationAudience } from '../../../generated/prisma/client';
 
 @Injectable()
 export class PushTokensService {
