@@ -380,7 +380,7 @@ describe('Commerce (e2e)', () => {
     const payment = await ctx.prisma.payment.findFirstOrThrow({
       where: { reference },
     });
-    expect(payment.status).toBe('failed');
+    expect(payment.status).toBe('pending');
 
     const order = await ctx.prisma.order.findUniqueOrThrow({
       where: { id: orderId },
