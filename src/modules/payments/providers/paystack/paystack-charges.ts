@@ -11,13 +11,6 @@ import {
 import { str } from '../../support/json';
 import { PaystackClient } from './paystack.client';
 
-const CHARGE_EVENT_STATUS: Record<string, PaymentStatus> = {
-  'charge.success': 'successful',
-  'charge.failed': 'failed',
-  'charge.abandoned': 'abandoned',
-  'refund.processed': 'refunded',
-};
-
 @Injectable()
 export class PaystackCharges {
   constructor(private readonly client: PaystackClient) {}
@@ -65,7 +58,7 @@ export class PaystackCharges {
 
     return {
       providerReference: data.id !== undefined ? str(data.id) : null,
-      status: str(data.status) === 'processed' ? 'processed' : 'pending',
+      status: this.mapRefundStatus(str(data.status ?? '')),
       providerResponse: data,
     };
   }
@@ -73,23 +66,45 @@ export class PaystackCharges {
   parseWebhookEvent(
     payload: Record<string, unknown>,
   ): PaymentWebhookEvent | null {
-    const status = CHARGE_EVENT_STATUS[str(payload.event ?? '')];
+    const event = str(payload.event ?? '');
+    const data = (payload.data ?? {}) as Record<string, unknown>;
 
-    if (!status) {
-      return null;
+    if (event === 'charge.success') {
+      return {
+        reference: str(data.reference ?? ''),
+        providerReference: str(data.reference ?? ''),
+        status: 'successful',
+        amountMinor: Number(data.amount ?? 0),
+        currency: (data.currency as Currency) ?? 'NGN',
+        providerResponse: data,
+      };
     }
 
-    const data = (payload.data ?? {}) as Record<string, unknown>;
-    const transaction = (data.transaction ?? {}) as Record<string, unknown>;
+    if (event === 'refund.processed') {
+      return {
+        reference: str(data.transaction_reference ?? ''),
+        providerReference: null,
+        status: 'refunded',
+        amountMinor: Number(data.amount ?? 0),
+        currency: (data.currency as Currency) ?? 'NGN',
+        providerResponse: data,
+      };
+    }
 
-    return {
-      reference: str(transaction.reference ?? data.reference ?? ''),
-      providerReference: str(data.reference ?? transaction.reference ?? ''),
-      status,
-      amountMinor: Number(transaction.amount ?? data.amount ?? 0),
-      currency: ((transaction.currency ?? data.currency) as Currency) ?? 'NGN',
-      providerResponse: data,
-    };
+    return null;
+  }
+
+  private mapRefundStatus(raw: string): RefundResult['status'] {
+    switch (raw) {
+      case 'processed':
+        return 'processed';
+      case 'processing':
+        return 'processing';
+      case 'failed':
+        return 'failed';
+      default:
+        return 'pending';
+    }
   }
 
   private mapStatus(raw: string): PaymentStatus {

@@ -41,7 +41,7 @@ export interface RefundRequest {
 
 export interface RefundResult {
   providerReference: string | null;
-  status: 'pending' | 'processed';
+  status: 'pending' | 'processing' | 'processed' | 'failed';
   providerResponse: Record<string, unknown>;
 }
 

@@ -46,6 +46,13 @@ export class PaystackTransfers {
       reason: request.reason,
     });
 
+    if (str(data.status) === 'otp') {
+      throw new PaymentProviderException(
+        'paystack',
+        'transfer: OTP for transfers is enabled — disable it in the Paystack dashboard',
+      );
+    }
+
     return {
       providerReference: str(
         data.transfer_code,
@@ -81,10 +88,7 @@ export class PaystackTransfers {
       reference: str(data.reference ?? ''),
       providerReference: data.transfer_code ? str(data.transfer_code) : null,
       status,
-      failureReason:
-        status === 'paid'
-          ? null
-          : str(data.reason ?? data.failure_reason ?? '') || null,
+      failureReason: status === 'paid' ? null : str(data.failures) || null,
       providerResponse: data,
     };
   }
@@ -103,10 +107,7 @@ export class PaystackTransfers {
       reference: str(data.reference, reference),
       providerReference: data.transfer_code ? str(data.transfer_code) : null,
       status,
-      failureReason:
-        status === 'paid'
-          ? null
-          : str(data.reason ?? data.failures ?? '') || null,
+      failureReason: status === 'paid' ? null : str(data.failures) || null,
       providerResponse: data,
     };
   }
