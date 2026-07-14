@@ -3,6 +3,7 @@ export * from './order-paid.message';
 export * from './first-sale.message';
 export * from './payout-completed.message';
 export * from './payout-failed.message';
+export * from './payout-rejected.message';
 export * from './comment-flagged.message';
 export * from './event-starting-soon-organizer.message';
 export * from './event-starting-soon-attendee.message';

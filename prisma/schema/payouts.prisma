@@ -1,5 +1,6 @@
 enum PayoutStatus {
   requested
+  pending_review
   approved
   processing
   paid
@@ -18,6 +19,7 @@ model PayoutAccount {
   provider              String    @default("paystack") @db.VarChar(32)
   providerRecipientCode String?   @map("provider_recipient_code")
   verifiedAt            DateTime? @map("verified_at") @db.Timestamptz(6)
+  detailsChangedAt      DateTime? @map("details_changed_at") @db.Timestamptz(6)
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 

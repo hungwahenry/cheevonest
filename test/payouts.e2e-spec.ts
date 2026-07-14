@@ -1,10 +1,11 @@
 import { createHmac } from 'node:crypto';
 import request from 'supertest';
+import { ulid } from 'ulid';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { TestingModuleBuilder } from '@nestjs/testing';
 import { PaystackProvider } from '../src/modules/payments/providers/paystack/paystack.provider';
 import { BankResolverService } from '../src/modules/payouts/services/bank-resolver.service';
-import { PayoutsService } from '../src/modules/payouts/services/payouts.service';
+import { PayoutProcessingService } from '../src/modules/payouts/services/payout-processing.service';
 import {
   createTestApp,
   extractOtpCode,
@@ -65,6 +66,33 @@ describe('Payouts (e2e)', () => {
       .post(`${orgPath()}/payouts`)
       .set('Authorization', auth(ownerToken))
       .send({ amount_minor: amountMinor });
+
+  const setConfig = (key: string, v: number | boolean | string) =>
+    ctx.prisma.systemConfig.update({ where: { key }, data: { value: { v } } });
+
+  const fund = (organisationId: string, amountMinor: number) =>
+    ctx.prisma.ledgerEntry.create({
+      data: {
+        id: ulid(),
+        organisationId,
+        type: 'sale',
+        amountMinor: BigInt(amountMinor),
+        currency: 'NGN',
+        sourceType: 'test',
+        sourceId: ulid(),
+        availableAt: new Date(Date.now() - 60_000),
+      },
+    });
+
+  const balanceAvailable = async (): Promise<number> => {
+    const res = await request(server())
+      .get(`${orgPath()}/balance`)
+      .set('Authorization', auth(ownerToken))
+      .expect(200);
+
+    return (res.body as { data: { available_minor: number } }).data
+      .available_minor;
+  };
 
   beforeAll(async () => {
     process.env.PAYSTACK_SECRET_KEY = PAYSTACK_TEST_SECRET;
@@ -189,6 +217,8 @@ describe('Payouts (e2e)', () => {
       where: { key: 'payouts.hold_window_days' },
       data: { value: { v: 0 } },
     });
+    await setConfig('payouts.review_first_payout', false);
+    await setConfig('payouts.account_change_cooldown_hours', 0);
 
     const run = Date.now().toString(36);
     const category = await ctx.prisma.organisationCategory.findFirstOrThrow();
@@ -280,6 +310,8 @@ describe('Payouts (e2e)', () => {
       where: { key: 'payouts.hold_window_days' },
       data: { value: { v: 2 } },
     });
+    await setConfig('payouts.review_first_payout', true);
+    await setConfig('payouts.account_change_cooldown_hours', 24);
     await ctx.app.close();
   });
 
@@ -515,7 +547,7 @@ describe('Payouts (e2e)', () => {
     const payout = await ctx.prisma.payout.findUniqueOrThrow({
       where: { id: payoutId },
     });
-    await ctx.app.get(PayoutsService).reconcile(payout);
+    await ctx.app.get(PayoutProcessingService).reconcile(payout);
 
     const reconciled = await ctx.prisma.payout.findUniqueOrThrow({
       where: { id: payoutId },
@@ -536,5 +568,132 @@ describe('Payouts (e2e)', () => {
 
     const emailed = ctx.mails.some((mail) => mail.template === 'admin-alert');
     expect(emailed).toBe(true);
+  });
+
+  it('routes an over-threshold payout to review and sends it on approval', async () => {
+    await fund(orgId, 100_000_000);
+    await setConfig('payouts.auto_approve_max_minor', 1_000_000);
+
+    const sentBefore = transfers.length;
+    const created = await requestPayout(2_000_000).expect(201);
+    expect(created.body).toMatchObject({
+      message: 'Payout submitted for review.',
+      data: { status: 'pending_review' },
+    });
+    const payoutId = (created.body as { data: { id: string } }).data.id;
+    expect(transfers.length).toBe(sentBefore);
+
+    const approved = await request(server())
+      .post(`/api/v1/admin/payouts/${payoutId}/approve`)
+      .set('Authorization', auth(adminToken))
+      .expect(200);
+    expect(approved.body).toMatchObject({ data: { status: 'processing' } });
+    expect(transfers.length).toBe(sentBefore + 1);
+
+    const { providerReference } = await ctx.prisma.payout.findUniqueOrThrow({
+      where: { id: payoutId },
+    });
+    const reference = providerReference!;
+    await transferWebhook({
+      event: 'transfer.success',
+      data: { id: `tr_${reference}_s`, reference },
+    }).expect(200);
+    expect(
+      (await ctx.prisma.payout.findUniqueOrThrow({ where: { id: payoutId } }))
+        .status,
+    ).toBe('paid');
+
+    await setConfig('payouts.auto_approve_max_minor', 50_000_000);
+  });
+
+  it('frees the balance and notifies the org when a reviewed payout is rejected', async () => {
+    await setConfig('payouts.auto_approve_max_minor', 1);
+
+    const heldFrom = await balanceAvailable();
+    const created = await requestPayout(1_000_000).expect(201);
+    expect(created.body).toMatchObject({ data: { status: 'pending_review' } });
+    const payoutId = (created.body as { data: { id: string } }).data.id;
+    expect(await balanceAvailable()).toBe(heldFrom - 1_000_000);
+
+    const rejected = await request(server())
+      .post(`/api/v1/admin/payouts/${payoutId}/reject`)
+      .set('Authorization', auth(adminToken))
+      .send({ notes: 'Looks suspicious' })
+      .expect(200);
+    expect(rejected.body).toMatchObject({ data: { status: 'rejected' } });
+
+    const row = await ctx.prisma.payout.findUniqueOrThrow({
+      where: { id: payoutId },
+    });
+    expect(row.reviewNotes).toBe('Looks suspicious');
+    expect(await balanceAvailable()).toBe(heldFrom);
+
+    const notified = await ctx.prisma.notification.count({
+      where: { type: 'payout.rejected' },
+    });
+    expect(notified).toBeGreaterThan(0);
+
+    await setConfig('payouts.auto_approve_max_minor', 50_000_000);
+  });
+
+  it("holds an organisation's first-ever payout for review", async () => {
+    await setConfig('payouts.review_first_payout', true);
+
+    const freshOwner = await signIn(uniqueEmail('payout-first'));
+    const run = Date.now().toString(36);
+    const category = await ctx.prisma.organisationCategory.findFirstOrThrow();
+    const orgRes = await request(server())
+      .post('/api/v1/organizer/organisations')
+      .set('Authorization', auth(freshOwner))
+      .send({
+        name: 'First Payout Org',
+        slug: `first-payout-${run}`,
+        category_id: category.id,
+      })
+      .expect(201);
+    const freshOrgId = (orgRes.body as { data: { id: string } }).data.id;
+
+    await request(server())
+      .put(`/api/v1/organizer/organisations/${freshOrgId}/payout-account`)
+      .set('Authorization', auth(freshOwner))
+      .send({ bank_code: '058', account_number: '0123456789' })
+      .expect(200);
+
+    await fund(freshOrgId, 5_000_000);
+
+    const created = await request(server())
+      .post(`/api/v1/organizer/organisations/${freshOrgId}/payouts`)
+      .set('Authorization', auth(freshOwner))
+      .send({ amount_minor: 1_000_000 })
+      .expect(201);
+    expect(created.body).toMatchObject({
+      message: 'Payout submitted for review.',
+      data: { status: 'pending_review' },
+    });
+
+    await setConfig('payouts.review_first_payout', false);
+  });
+
+  it('blocks payouts during the cooling-off window after a genuine bank change', async () => {
+    await request(server())
+      .put(`${orgPath()}/payout-account`)
+      .set('Authorization', auth(ownerToken))
+      .send({ bank_code: '058', account_number: '9999999999' })
+      .expect(200);
+    await setConfig('payouts.account_change_cooldown_hours', 24);
+
+    const balance = await request(server())
+      .get(`${orgPath()}/balance`)
+      .set('Authorization', auth(ownerToken))
+      .expect(200);
+    expect(
+      (balance.body as { data: { payout_paused_until: string | null } }).data
+        .payout_paused_until,
+    ).toBeTruthy();
+
+    const blocked = await requestPayout(500_000).expect(422);
+    expect(blocked.body).toMatchObject({ code: 'payout_account_cooling_off' });
+
+    await setConfig('payouts.account_change_cooldown_hours', 0);
   });
 });

@@ -14,6 +14,7 @@ import type { PayoutStatus } from '../../../../generated/prisma/client';
 
 const PAYOUT_STATUSES = [
   'requested',
+  'pending_review',
   'approved',
   'processing',
   'paid',
@@ -53,5 +54,12 @@ export class ListAdminPayoutsDto {
   @IsInt()
   @Min(1)
   page?: number;
+}
+
+export class ReviewPayoutDto {
+  @IsOptional()
+  @IsString()
+  @Length(1, 500)
+  notes?: string;
 }
 

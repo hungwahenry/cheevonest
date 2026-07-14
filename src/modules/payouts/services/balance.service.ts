@@ -4,6 +4,7 @@ import type { Organisation } from '../../../generated/prisma/client';
 import { LedgerService } from '../../ledger/ledger.service';
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import { IN_FLIGHT_PAYOUT_STATUSES } from '../payout.constants';
+import { PayoutRules } from '../rules/payout.rules';
 
 export interface BalanceSummary {
   currency: string;
@@ -12,6 +13,7 @@ export interface BalanceSummary {
   paid_out_minor: number;
   hold_window_days: number;
   has_in_flight_payout: boolean;
+  payout_paused_until: string | null;
   per_event: Array<{
     event_id: string;
     title: string;
@@ -28,12 +30,13 @@ export class BalanceService {
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
     private readonly systemConfig: SystemConfigService,
+    private readonly rules: PayoutRules,
   ) {}
 
   async summary(organisation: Organisation): Promise<BalanceSummary> {
     const holdDays = await this.systemConfig.int('payouts.hold_window_days', 2);
 
-    const [earnings, inFlight, paidOut, events] = await Promise.all([
+    const [earnings, inFlight, paidOut, events, account] = await Promise.all([
       this.ledger.earnings(organisation.id),
       this.prisma.payout.aggregate({
         where: {
@@ -51,10 +54,16 @@ export class BalanceService {
         where: { organisationId: organisation.id, revenueMinor: { gt: 0 } },
         orderBy: { endsAt: { sort: 'desc', nulls: 'last' } },
       }),
+      this.prisma.payoutAccount.findUnique({
+        where: { organisationId: organisation.id },
+      }),
     ]);
 
     const inFlightMinor = Number(inFlight._sum.amountMinor ?? 0n);
     const paidOutMinor = Number(paidOut._sum.amountMinor ?? 0n);
+    const pausedUntil = account
+      ? await this.rules.pausedUntil(account)
+      : null;
 
     return {
       currency: 'NGN',
@@ -66,6 +75,7 @@ export class BalanceService {
       paid_out_minor: paidOutMinor,
       hold_window_days: holdDays,
       has_in_flight_payout: inFlight._count > 0,
+      payout_paused_until: pausedUntil?.toISOString() ?? null,
       per_event: events.map((event) => ({
         event_id: event.id,
         title: event.title,

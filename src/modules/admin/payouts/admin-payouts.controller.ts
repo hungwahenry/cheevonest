@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -15,7 +16,10 @@ import { CurrentUser, Roles } from '../../auth/decorators/auth.decorators';
 import { PayoutsService } from '../../payouts/services/payouts.service';
 import { AdminPayoutSerializer } from './admin-payout.serializer';
 import { AdminPayoutsService } from './admin-payouts.service';
-import { ListAdminPayoutsDto } from './dto/admin-payouts.dto';
+import {
+  ListAdminPayoutsDto,
+  ReviewPayoutDto,
+} from './dto/admin-payouts.dto';
 
 @Roles('admin')
 @Controller('admin/payouts')
@@ -67,6 +71,37 @@ export class AdminPayoutsController {
     return new ApiResult(
       this.serializer.payout(await this.adminPayouts.loadOne(retried.id)),
       'Payout transfer re-initiated.',
+    );
+  }
+
+  @Post(':payoutId/approve')
+  @HttpCode(200)
+  async approve(
+    @Param('payoutId') payoutId: string,
+    @CurrentUser() admin: User,
+  ): Promise<ApiResult<unknown>> {
+    const payout = await this.payouts.findOrFail(payoutId);
+    const approved = await this.payouts.approve(payout, admin);
+
+    return new ApiResult(
+      this.serializer.payout(await this.adminPayouts.loadOne(approved.id)),
+      'Payout approved.',
+    );
+  }
+
+  @Post(':payoutId/reject')
+  @HttpCode(200)
+  async reject(
+    @Param('payoutId') payoutId: string,
+    @Body() dto: ReviewPayoutDto,
+    @CurrentUser() admin: User,
+  ): Promise<ApiResult<unknown>> {
+    const payout = await this.payouts.findOrFail(payoutId);
+    const rejected = await this.payouts.reject(payout, admin, dto.notes);
+
+    return new ApiResult(
+      this.serializer.payout(await this.adminPayouts.loadOne(rejected.id)),
+      'Payout rejected.',
     );
   }
 }

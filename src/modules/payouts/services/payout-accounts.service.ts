@@ -40,6 +40,10 @@ export class PayoutAccountsService {
   ): Promise<PayoutAccount> {
     await this.rules.ensureAccountEditable(organisation.id);
 
+    const existing = await this.prisma.payoutAccount.findUnique({
+      where: { organisationId: organisation.id },
+    });
+
     const resolved = await this.resolver.resolve(accountNumber, bankCode);
     const bankName = await this.resolver.bankName(bankCode);
     const providerName = await this.systemConfig.string(
@@ -67,9 +71,14 @@ export class PayoutAccountsService {
       verifiedAt: new Date(),
     };
 
+    const changed =
+      existing !== null &&
+      (existing.accountNumber !== resolved.account_number ||
+        existing.bankCode !== bankCode);
+
     const account = await this.prisma.payoutAccount.upsert({
       where: { organisationId: organisation.id },
-      update: data,
+      update: changed ? { ...data, detailsChangedAt: new Date() } : data,
       create: { id: ulid(), organisationId: organisation.id, ...data },
     });
 

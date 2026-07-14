@@ -137,7 +137,12 @@ export class OrganizerPayoutsController {
       dto.amount_minor,
     );
 
-    return new ApiResult(this.serializer.payout(payout), 'Payout initiated.');
+    const message =
+      payout.status === 'pending_review'
+        ? 'Payout submitted for review.'
+        : 'Payout initiated.';
+
+    return new ApiResult(this.serializer.payout(payout), message);
   }
 
   @Get('payouts/:payoutId')

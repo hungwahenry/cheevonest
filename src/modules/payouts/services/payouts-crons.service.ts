@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { PayoutsService } from './payouts.service';
+import { PayoutProcessingService } from './payout-processing.service';
 
 @Injectable()
 export class PayoutsCronsService {
   private readonly logger = new Logger(PayoutsCronsService.name);
 
-  constructor(private readonly payouts: PayoutsService) {}
+  constructor(private readonly processing: PayoutProcessingService) {}
 
   @Cron('*/10 * * * *')
   async reconcileStuckPayouts(): Promise<void> {
-    const { initiated, reconciled } = await this.payouts.sweepStuck();
+    const { initiated, reconciled } = await this.processing.sweepStuck();
 
     if (initiated + reconciled > 0) {
       this.logger.log(

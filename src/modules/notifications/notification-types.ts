@@ -9,6 +9,7 @@ export type NotificationType =
   | 'event.starting_soon'
   | 'payout.completed'
   | 'payout.failed'
+  | 'payout.rejected'
   | 'comment.flagged'
   | 'broadcast.finished'
   | 'attendee.order_paid'
@@ -72,6 +73,13 @@ export const NOTIFICATION_TYPES: Record<
     audience: 'organizer',
     label: 'Payout failed',
     description: 'Alert if a payout is rejected by the bank.',
+    defaultChannels: PUSH_INAPP,
+    allowedChannels: ALL,
+  },
+  'payout.rejected': {
+    audience: 'organizer',
+    label: 'Payout declined',
+    description: 'Alert if an admin declines a payout you requested.',
     defaultChannels: PUSH_INAPP,
     allowedChannels: ALL,
   },

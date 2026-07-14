@@ -51,11 +51,18 @@ export class AdminAlertsListener {
     if (!payout) return;
 
     const amount = money(payout.amountMinor, payout.currency);
+    const heading = event.pendingReview
+      ? 'Payout awaiting approval'
+      : 'Payout requested';
+    const summary = event.pendingReview
+      ? `${payout.organisation.name} requested a ${amount} payout that needs your approval.`
+      : `${payout.organisation.name} requested a ${amount} payout.`;
+
     await this.notifier.sendToAdmins(
       new AdminAlertMessage(
         'admin.payout_requested',
-        'Payout requested',
-        `${payout.organisation.name} requested a ${amount} payout.`,
+        heading,
+        summary,
         [
           { label: 'Organisation', value: payout.organisation.name },
           { label: 'Amount', value: amount },

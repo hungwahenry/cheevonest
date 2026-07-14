@@ -8,6 +8,7 @@ import { BroadcastSentListener } from './listeners/broadcast-sent.listener';
 import { CommentRepliedListener } from './listeners/comment-replied.listener';
 import { EventPublishedListener } from './listeners/event-published.listener';
 import { OrderPaidListener } from './listeners/order-paid.listener';
+import { PayoutRejectedListener } from './listeners/payout-rejected.listener';
 import { PayoutSettledListener } from './listeners/payout-settled.listener';
 import { ReportCreatedListener } from './listeners/report-created.listener';
 import { TicketTransferredListener } from './listeners/ticket-transferred.listener';
@@ -36,6 +37,7 @@ import { StartingSoonService } from './services/scheduled/starting-soon.service'
     NotificationSerializer,
     OrderPaidListener,
     PayoutSettledListener,
+    PayoutRejectedListener,
     CommentRepliedListener,
     EventPublishedListener,
     ReportCreatedListener,

@@ -28,7 +28,7 @@ export class PayoutSettledListener {
     const message =
       payout.status === 'paid'
         ? new PayoutCompletedMessage(payout)
-        : payout.status === 'failed' || payout.status === 'rejected'
+        : payout.status === 'failed'
           ? new PayoutFailedMessage(payout)
           : null;
 

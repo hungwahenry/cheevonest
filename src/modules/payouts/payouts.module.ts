@@ -8,6 +8,7 @@ import { BalanceService } from './services/balance.service';
 import { BankResolverService } from './services/bank-resolver.service';
 import { PayoutAccountsService } from './services/payout-accounts.service';
 import { PayoutFeesService } from './services/payout-fees.service';
+import { PayoutProcessingService } from './services/payout-processing.service';
 import { PayoutsCronsService } from './services/payouts-crons.service';
 import { PayoutsService } from './services/payouts.service';
 
@@ -15,6 +16,7 @@ import { PayoutsService } from './services/payouts.service';
   imports: [LedgerModule, PaymentsModule],
   providers: [
     PayoutsService,
+    PayoutProcessingService,
     PayoutAccountsService,
     BalanceService,
     BankResolverService,
