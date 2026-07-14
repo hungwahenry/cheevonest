@@ -15,6 +15,8 @@ import {
 } from '../../../generated/prisma/sql';
 import { TicketAlreadyScannedException } from '../exceptions/ticket-already-scanned.exception';
 import { TicketCodeNotFoundException } from '../exceptions/ticket-code-not-found.exception';
+import { TicketExpiredException } from '../exceptions/ticket-expired.exception';
+import { TicketNotYetValidException } from '../exceptions/ticket-not-yet-valid.exception';
 import { TicketRevokedException } from '../exceptions/ticket-revoked.exception';
 import { TicketNotReissuableException } from '../exceptions/ticket-not-reissuable.exception';
 import { TicketWrongEventException } from '../exceptions/ticket-wrong-event.exception';
@@ -61,6 +63,7 @@ export class IssuedTicketsService {
     scanner: User,
   ): Promise<IssuedTicket> {
     return this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       const normalized = code.trim().toUpperCase();
       const locked = await tx.$queryRawTyped(
         lockIssuedTicketByCode(normalized),
@@ -88,22 +91,30 @@ export class IssuedTicketsService {
         );
       }
 
+      const eventTicket = await tx.eventTicket.findUniqueOrThrow({
+        where: { id: ticket.eventTicketId },
+        select: { validFrom: true, validTo: true },
+      });
+
+      if (eventTicket.validFrom !== null && now < eventTicket.validFrom) {
+        throw new TicketNotYetValidException(eventTicket.validFrom.toISOString());
+      }
+
+      if (eventTicket.validTo !== null && now > eventTicket.validTo) {
+        throw new TicketExpiredException(eventTicket.validTo.toISOString());
+      }
+
       return tx.issuedTicket.update({
         where: { id: ticket.id },
         data: {
           status: 'scanned',
-          scannedAt: new Date(),
+          scannedAt: now,
           scannedByUserId: scanner.id,
         },
       });
     });
   }
 
-  /**
-   * Revokes every non-scanned ticket on an order (a refund) and decrements the
-   * sold counters for each — scanned tickets stay counted (the holder attended).
-   * Returns how many were revoked. Runs inside the caller's transaction.
-   */
   async revokeUnscannedForOrder(
     tx: Prisma.TransactionClient,
     orderId: string,

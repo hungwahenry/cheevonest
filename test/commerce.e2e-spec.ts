@@ -452,6 +452,36 @@ describe('Commerce (e2e)', () => {
       .expect(404);
   });
 
+  it('refuses to scan tickets outside their validity window', async () => {
+    const ticket = await ctx.prisma.issuedTicket.findFirstOrThrow({
+      where: { eventId, status: 'valid' },
+    });
+    const scan = (code: string) =>
+      request(server())
+        .post(`/api/v1/organizer/events/${eventId}/issued-tickets/scan`)
+        .set('Authorization', auth(ownerToken))
+        .send({ code });
+
+    await ctx.prisma.eventTicket.update({
+      where: { id: ticket.eventTicketId },
+      data: { validFrom: new Date(Date.now() + 86_400_000), validTo: null },
+    });
+    const early = await scan(ticket.code).expect(422);
+    expect(early.body).toMatchObject({ code: 'ticket_not_yet_valid' });
+
+    await ctx.prisma.eventTicket.update({
+      where: { id: ticket.eventTicketId },
+      data: { validFrom: null, validTo: new Date(Date.now() - 86_400_000) },
+    });
+    const late = await scan(ticket.code).expect(422);
+    expect(late.body).toMatchObject({ code: 'ticket_expired' });
+
+    await ctx.prisma.eventTicket.update({
+      where: { id: ticket.eventTicketId },
+      data: { validFrom: null, validTo: null },
+    });
+  });
+
   it('scans tickets with full guard rails and revoke frees the seat', async () => {
     const ticket = await ctx.prisma.issuedTicket.findFirstOrThrow({
       where: { eventId, status: 'valid' },
