@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
-import type { IssuedTicketStatus } from '../../../generated/prisma/client';
+import type { Event, IssuedTicketStatus } from '../../../generated/prisma/client';
 
 export const MY_TICKET_INCLUDE = {
   event: true,
@@ -66,45 +66,73 @@ export interface CheckInSummary extends CheckInCounts {
 export class TicketListingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async heldBy(
-    userId: string,
-    options: {
-      page: number;
-      perPage: number;
-      status?: IssuedTicketStatus;
-      when?: 'upcoming' | 'past';
-    },
-  ): Promise<TicketPage<MyTicket>> {
-    const where: Prisma.IssuedTicketWhereInput = {
-      holderUserId: userId,
-      ...(options.status ? { status: options.status } : {}),
-      ...(options.when ? { event: eventWhenFilter(options.when) } : {}),
-    };
-
-    const order: Prisma.SortOrder = options.when === 'upcoming' ? 'asc' : 'desc';
-
-    const [total, items] = await this.prisma.$transaction([
-      this.prisma.issuedTicket.count({ where }),
-      this.prisma.issuedTicket.findMany({
-        where,
-        include: MY_TICKET_INCLUDE,
-        orderBy: [
-          { event: { startsAt: { sort: order, nulls: 'last' } } },
-          { createdAt: 'desc' },
-          { id: 'desc' },
-        ],
-        skip: (options.page - 1) * options.perPage,
-        take: options.perPage,
-      }),
-    ]);
-
-    return { items, total };
-  }
-
   async heldOne(ticketId: string): Promise<MyTicket> {
     return this.prisma.issuedTicket.findUniqueOrThrow({
       where: { id: ticketId },
       include: MY_TICKET_INCLUDE,
+    });
+  }
+
+  /** Events the user holds tickets for, each with per-status counts. */
+  async eventsHeldBy(
+    userId: string,
+    options: { page: number; perPage: number; when?: 'upcoming' | 'past' },
+  ): Promise<TicketPage<{ event: Event; counts: CheckInCounts }>> {
+    const where: Prisma.IssuedTicketWhereInput = {
+      holderUserId: userId,
+      ...(options.when ? { event: eventWhenFilter(options.when) } : {}),
+    };
+
+    const grouped = await this.prisma.issuedTicket.groupBy({
+      by: ['eventId', 'status'],
+      where,
+      _count: { _all: true },
+    });
+
+    const countsByEvent = new Map<string, CheckInCounts>();
+    for (const row of grouped) {
+      const entry = countsByEvent.get(row.eventId) ?? {
+        scanned: 0,
+        valid: 0,
+        revoked: 0,
+      };
+      entry[row.status] = row._count._all;
+      countsByEvent.set(row.eventId, entry);
+    }
+
+    const eventIds = [...countsByEvent.keys()];
+    const order: Prisma.SortOrder = options.when === 'upcoming' ? 'asc' : 'desc';
+
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: eventIds } },
+      orderBy: [{ startsAt: { sort: order, nulls: 'last' } }, { id: 'desc' }],
+      skip: (options.page - 1) * options.perPage,
+      take: options.perPage,
+    });
+
+    return {
+      total: eventIds.length,
+      items: events.map((event) => ({
+        event,
+        counts: countsByEvent.get(event.id) ?? {
+          scanned: 0,
+          valid: 0,
+          revoked: 0,
+        },
+      })),
+    };
+  }
+
+  /** A user's tickets for one event, ordered by ticket type then status. */
+  async heldForEvent(userId: string, eventId: string): Promise<MyTicket[]> {
+    return this.prisma.issuedTicket.findMany({
+      where: { holderUserId: userId, eventId },
+      include: MY_TICKET_INCLUDE,
+      orderBy: [
+        { ticket: { sortOrder: 'asc' } },
+        { status: 'asc' },
+        { createdAt: 'desc' },
+      ],
     });
   }
 

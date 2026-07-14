@@ -434,21 +434,54 @@ describe('Commerce (e2e)', () => {
       .expect(404);
 
     const tickets = await request(server())
-      .get('/api/v1/attendee/tickets?status=valid')
+      .get(`/api/v1/attendee/ticket-events/${eventId}/tickets`)
       .set('Authorization', auth(buyerToken))
       .expect(200);
 
     const ticketItems = (
-      tickets.body as {
-        data: { items: Array<{ id: string; event: { id: string } }> };
-      }
-    ).data.items;
+      tickets.body as { data: Array<{ id: string; event: { id: string } }> }
+    ).data;
     expect(ticketItems.length).toBeGreaterThan(0);
     expect(ticketItems[0].event.id).toBe(eventId);
 
     await request(server())
       .get(`/api/v1/attendee/tickets/${ticketItems[0].id}`)
       .set('Authorization', auth(ownerToken))
+      .expect(404);
+  });
+
+  it('groups my tickets by event and lists a single event tickets', async () => {
+    const events = await request(server())
+      .get('/api/v1/attendee/ticket-events?when=upcoming')
+      .set('Authorization', auth(buyerToken))
+      .expect(200);
+    const eventItems = (
+      events.body as {
+        data: {
+          items: Array<{ event: { id: string }; counts: { total: number } }>;
+        };
+      }
+    ).data.items;
+    const mine = eventItems.find((row) => row.event.id === eventId);
+    expect(mine).toBeTruthy();
+    expect(mine!.counts.total).toBeGreaterThan(0);
+
+    const forEvent = await request(server())
+      .get(`/api/v1/attendee/ticket-events/${eventId}/tickets`)
+      .set('Authorization', auth(buyerToken))
+      .expect(200);
+    const tickets = (
+      forEvent.body as {
+        data: Array<{ event_ticket_id: string; event: { id: string } }>;
+      }
+    ).data;
+    expect(tickets.length).toBeGreaterThan(0);
+    expect(tickets.every((ticket) => ticket.event.id === eventId)).toBe(true);
+    expect(tickets[0].event_ticket_id).toBeTruthy();
+
+    await request(server())
+      .get('/api/v1/attendee/ticket-events/00000000000000000000000000/tickets')
+      .set('Authorization', auth(buyerToken))
       .expect(404);
   });
 
