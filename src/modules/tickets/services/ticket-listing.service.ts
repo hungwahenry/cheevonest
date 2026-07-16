@@ -66,6 +66,41 @@ export interface CheckInSummary extends CheckInCounts {
 export class TicketListingService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async heldBy(
+    userId: string,
+    options: {
+      page: number;
+      perPage: number;
+      status?: IssuedTicketStatus;
+      when?: 'upcoming' | 'past';
+    },
+  ): Promise<TicketPage<MyTicket>> {
+    const where: Prisma.IssuedTicketWhereInput = {
+      holderUserId: userId,
+      ...(options.status ? { status: options.status } : {}),
+      ...(options.when ? { event: eventWhenFilter(options.when) } : {}),
+    };
+
+    const order: Prisma.SortOrder = options.when === 'upcoming' ? 'asc' : 'desc';
+
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.issuedTicket.count({ where }),
+      this.prisma.issuedTicket.findMany({
+        where,
+        include: MY_TICKET_INCLUDE,
+        orderBy: [
+          { event: { startsAt: { sort: order, nulls: 'last' } } },
+          { createdAt: 'desc' },
+          { id: 'desc' },
+        ],
+        skip: (options.page - 1) * options.perPage,
+        take: options.perPage,
+      }),
+    ]);
+
+    return { items, total };
+  }
+
   async heldOne(ticketId: string): Promise<MyTicket> {
     return this.prisma.issuedTicket.findUniqueOrThrow({
       where: { id: ticketId },
