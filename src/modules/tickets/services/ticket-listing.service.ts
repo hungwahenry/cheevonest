@@ -66,6 +66,8 @@ export interface CheckInSummary extends CheckInCounts {
 export class TicketListingService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // LEGACY(flat-tickets): backs the flat /attendee/tickets list for old app
+  // bundles. Remove with that route once a native build embeds the new bundle.
   async heldBy(
     userId: string,
     options: {

@@ -17,6 +17,9 @@ export class MyTicketsController {
     private readonly serializer: TicketSerializer,
   ) {}
 
+  // LEGACY(flat-tickets): old app bundles (pre grouped-tickets OTA) still call this
+  // flat list. Remove this route once a native build embeds the grouped-tickets
+  // bundle — along with ListMyTicketsDto and TicketListingService.heldBy.
   @Get()
   async list(
     @Query() dto: ListMyTicketsDto,

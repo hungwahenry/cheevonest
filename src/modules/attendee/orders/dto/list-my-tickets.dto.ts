@@ -3,6 +3,8 @@ import { IsIn, IsInt, IsOptional, Min } from 'class-validator';
 import { toNumber } from '../../../../common/validation/transforms';
 import type { IssuedTicketStatus } from '../../../../generated/prisma/client';
 
+// LEGACY(flat-tickets): DTO for the flat /attendee/tickets list. Delete this file
+// with the route once a native build embeds the grouped-tickets bundle.
 export class ListMyTicketsDto {
   @IsOptional()
   @Transform(toNumber)
