@@ -194,6 +194,10 @@ export class PlatformAnalyticsService {
       openReports,
       pendingPayouts,
       failedPayouts,
+      feesTotal,
+      fees30,
+      earningsTotal,
+      refundAgg,
     ] = await this.prisma.$transaction([
       this.prisma.user.count(),
       this.prisma.user.count({ where: { createdAt: { gte: cutoff30 } } }),
@@ -220,7 +224,35 @@ export class PlatformAnalyticsService {
       }),
       this.prisma.payout.count({ where: { status: 'requested' } }),
       this.prisma.payout.count({ where: { status: 'failed' } }),
+      this.prisma.order.aggregate({
+        where: { status: 'paid' },
+        _sum: { feesMinor: true },
+      }),
+      this.prisma.order.aggregate({
+        where: { status: 'paid', paidAt: { gte: cutoff30 } },
+        _sum: { feesMinor: true },
+      }),
+      this.prisma.order.aggregate({
+        where: { status: 'paid' },
+        _sum: { subtotalMinor: true },
+      }),
+      this.prisma.order.aggregate({
+        where: { status: 'refunded' },
+        _sum: { totalMinor: true, feesMinor: true },
+        _count: { _all: true },
+      }),
     ]);
+
+    const [processing] = await this.prisma.$queryRaw<
+      { all_minor: bigint; d30_minor: bigint }[]
+    >`
+      SELECT
+        COALESCE(SUM((p.provider_response->>'fees')::bigint), 0)::bigint AS all_minor,
+        COALESCE(SUM((p.provider_response->>'fees')::bigint) FILTER (WHERE o.paid_at >= ${cutoff30}), 0)::bigint AS d30_minor
+      FROM orders o
+      JOIN payments p ON p.id = o.payment_id
+      WHERE o.status = 'paid'
+    `;
 
     const orderCounts = await this.prisma.order.groupBy({
       by: ['status'],
@@ -230,6 +262,10 @@ export class PlatformAnalyticsService {
     const byStatus = new Map(
       orderCounts.map((row) => [row.status, row._count._all]),
     );
+
+    const gmvAll = Number(gmvTotal._sum.totalMinor ?? 0n);
+    const feesAll = Number(feesTotal._sum.feesMinor ?? 0n);
+    const processingAll = Number(processing.all_minor);
 
     return {
       users: {
@@ -259,6 +295,22 @@ export class PlatformAnalyticsService {
         total_minor: Number(gmvTotal._sum.totalMinor ?? 0n),
         last_30d_minor: Number(gmv30._sum.totalMinor ?? 0n),
       },
+      platform: {
+        currency: 'NGN',
+        earnings_minor: Number(earningsTotal._sum.subtotalMinor ?? 0n),
+        fees_minor: feesAll,
+        processing_minor: processingAll,
+        profit_minor: feesAll - processingAll,
+        profit_last_30d_minor:
+          Number(fees30._sum.feesMinor ?? 0n) - Number(processing.d30_minor),
+        take_rate: gmvAll > 0 ? feesAll / gmvAll : 0,
+      },
+      refunds: {
+        currency: 'NGN',
+        count: refundAgg._count._all,
+        total_minor: Number(refundAgg._sum.totalMinor ?? 0n),
+        fees_minor: Number(refundAgg._sum.feesMinor ?? 0n),
+      },
       action_items: {
         open_reports: openReports,
         pending_payouts: pendingPayouts,
@@ -272,17 +324,50 @@ export class PlatformAnalyticsService {
     days: number,
   ): Promise<Record<string, unknown>> {
     const cutoff = new Date(Date.now() - days * 86_400_000);
-    const orders = await this.prisma.order.findMany({
-      where: { status: 'paid', paidAt: { gte: cutoff } },
-      select: { paidAt: true, totalMinor: true },
-    });
+    const rows = await this.prisma.$queryRaw<
+      {
+        paid_at: Date;
+        total_minor: bigint;
+        fees_minor: bigint;
+        processing_minor: bigint;
+      }[]
+    >`
+      SELECT
+        o.paid_at,
+        o.total_minor,
+        o.fees_minor,
+        COALESCE((p.provider_response->>'fees')::bigint, 0) AS processing_minor
+      FROM orders o
+      LEFT JOIN payments p ON p.id = o.payment_id
+      WHERE o.status = 'paid' AND o.paid_at >= ${cutoff}
+    `;
 
-    const buckets = new Map<string, { gmv_minor: number; orders: number }>();
-    for (const order of orders) {
-      if (!order.paidAt) continue;
-      const key = bucketKey(order.paidAt, interval);
-      const b = buckets.get(key) ?? { gmv_minor: 0, orders: 0 };
-      b.gmv_minor += Number(order.totalMinor);
+    const buckets = new Map<
+      string,
+      {
+        gmv_minor: number;
+        fees_minor: number;
+        processing_minor: number;
+        profit_minor: number;
+        orders: number;
+      }
+    >();
+    for (const row of rows) {
+      if (!row.paid_at) continue;
+      const key = bucketKey(row.paid_at, interval);
+      const b = buckets.get(key) ?? {
+        gmv_minor: 0,
+        fees_minor: 0,
+        processing_minor: 0,
+        profit_minor: 0,
+        orders: 0,
+      };
+      const fees = Number(row.fees_minor);
+      const processing = Number(row.processing_minor);
+      b.gmv_minor += Number(row.total_minor);
+      b.fees_minor += fees;
+      b.processing_minor += processing;
+      b.profit_minor += fees - processing;
       b.orders += 1;
       buckets.set(key, b);
     }
