@@ -52,6 +52,8 @@ export const SYSTEM_CONFIGS: ReadonlyArray<SystemConfigSeed> = [
   { key: 'payouts.account_change_cooldown_hours', group: 'payouts', type: 'int', default: 24, description: 'Hours after an organiser changes their payout bank account during which payouts are blocked (anti account-takeover). 0 disables.', isPublic: true },
   { key: 'payouts.auto_approve_max_minor', group: 'payouts', type: 'int', default: 50000000, description: 'Payouts above this amount (minor units) require admin approval instead of auto-processing. 0 sends every payout to review.' },
   { key: 'payouts.review_first_payout', group: 'payouts', type: 'bool', default: true, description: "Route an organisation's first-ever payout to admin review regardless of amount." },
+  { key: 'payouts.failure_backoff_base_minutes', group: 'payouts', type: 'int', default: 15, description: 'Base wait (minutes) before an organiser can retry after a failed payout; doubles per consecutive failure up to the max. 0 disables.', isPublic: true },
+  { key: 'payouts.failure_backoff_max_minutes', group: 'payouts', type: 'int', default: 120, description: 'Maximum backoff (minutes) between failed payout retries.', isPublic: true },
   { key: 'payouts.transfer_fee_tier_1_naira', group: 'payouts', type: 'int', default: 5000, description: 'Paystack tier-1 ceiling (amounts ≤ this get the tier-1 transfer fee).', isPublic: true },
   { key: 'payouts.transfer_fee_tier_2_naira', group: 'payouts', type: 'int', default: 50000, description: 'Paystack tier-2 ceiling.', isPublic: true },
   { key: 'payouts.transfer_fee_tier_1_minor', group: 'payouts', type: 'int', default: 1000, description: 'Paystack transfer fee for tier-1 payouts (in minor units).', isPublic: true },

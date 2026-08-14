@@ -59,6 +59,7 @@ export class PayoutsService {
     }
 
     await this.rules.ensureAccountSettled(account);
+    await this.rules.ensureNotBackingOff(organisation.id);
 
     const [summary, feesMinor, needsReview] = await Promise.all([
       this.balance.summary(organisation),

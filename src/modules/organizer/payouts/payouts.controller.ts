@@ -114,7 +114,9 @@ export class OrganizerPayoutsController {
     );
 
     return new Paginated(
-      result.items.map((payout) => this.serializer.payout(payout)),
+      result.items.map((payout) =>
+        this.serializer.payout(payout, { redact: true }),
+      ),
       page,
       perPage,
       result.total,
@@ -142,7 +144,10 @@ export class OrganizerPayoutsController {
         ? 'Payout submitted for review.'
         : 'Payout initiated.';
 
-    return new ApiResult(this.serializer.payout(payout), message);
+    return new ApiResult(
+      this.serializer.payout(payout, { redact: true }),
+      message,
+    );
   }
 
   @Get('payouts/:payoutId')
@@ -156,6 +161,6 @@ export class OrganizerPayoutsController {
 
     const payout = await this.payouts.findScoped(organisation.id, payoutId);
 
-    return this.serializer.payout(payout);
+    return this.serializer.payout(payout, { redact: true });
   }
 }

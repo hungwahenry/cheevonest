@@ -1,9 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import type { Payout, PayoutAccount } from '../../../generated/prisma/client';
 
+/** Shown to organisers instead of raw provider errors, which are platform-side. */
+const GENERIC_FAILURE = "This payout couldn't be completed. Please try again later.";
+
 @Injectable()
 export class PayoutSerializer {
-  payout(payout: Payout): Record<string, unknown> {
+  /**
+   * `redact` hides provider internals from organisers: the raw failure reason
+   * becomes a generic message, and review notes surface only for rejections
+   * (the one case written for the organiser).
+   */
+  payout(payout: Payout, { redact = false } = {}): Record<string, unknown> {
     return {
       id: payout.id,
       amount_minor: Number(payout.amountMinor),
@@ -14,8 +22,13 @@ export class PayoutSerializer {
       bank_name: payout.bankName,
       account_number: payout.accountNumber,
       account_name: payout.accountName,
-      failed_reason: payout.failedReason,
-      review_notes: payout.reviewNotes,
+      failed_reason: redact
+        ? payout.status === 'failed'
+          ? GENERIC_FAILURE
+          : null
+        : payout.failedReason,
+      review_notes:
+        redact && payout.status !== 'rejected' ? null : payout.reviewNotes,
       requested_at: payout.requestedAt.toISOString(),
       approved_at: payout.approvedAt?.toISOString() ?? null,
       paid_at: payout.paidAt?.toISOString() ?? null,

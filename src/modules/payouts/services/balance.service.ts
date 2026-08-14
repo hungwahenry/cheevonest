@@ -14,6 +14,7 @@ export interface BalanceSummary {
   hold_window_days: number;
   has_in_flight_payout: boolean;
   payout_paused_until: string | null;
+  payout_retry_after: string | null;
   per_event: Array<{
     event_id: string;
     title: string;
@@ -61,9 +62,10 @@ export class BalanceService {
 
     const inFlightMinor = Number(inFlight._sum.amountMinor ?? 0n);
     const paidOutMinor = Number(paidOut._sum.amountMinor ?? 0n);
-    const pausedUntil = account
-      ? await this.rules.pausedUntil(account)
-      : null;
+    const [pausedUntil, retryAfter] = await Promise.all([
+      account ? this.rules.pausedUntil(account) : null,
+      this.rules.backoffUntil(organisation.id),
+    ]);
 
     return {
       currency: 'NGN',
@@ -76,6 +78,7 @@ export class BalanceService {
       hold_window_days: holdDays,
       has_in_flight_payout: inFlight._count > 0,
       payout_paused_until: pausedUntil?.toISOString() ?? null,
+      payout_retry_after: retryAfter?.toISOString() ?? null,
       per_event: events.map((event) => ({
         event_id: event.id,
         title: event.title,

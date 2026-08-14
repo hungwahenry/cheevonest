@@ -5,6 +5,7 @@ import { FeatureFlagsService } from '../../platform/system-config/feature-flags.
 import { SystemConfigService } from '../../platform/system-config/system-config.service';
 import { PayoutAccountCoolingOffException } from '../exceptions/payout-account-cooling-off.exception';
 import { PayoutAccountLockedException } from '../exceptions/payout-account-locked.exception';
+import { PayoutBackingOffException } from '../exceptions/payout-backing-off.exception';
 import { PayoutNotRetryableException } from '../exceptions/payout-not-retryable.exception';
 import { PayoutNotReviewableException } from '../exceptions/payout-not-reviewable.exception';
 import { PayoutNotSettleableException } from '../exceptions/payout-not-settleable.exception';
@@ -82,6 +83,61 @@ export class PayoutRules {
   async ensureAccountSettled(account: PayoutAccount): Promise<void> {
     if (await this.pausedUntil(account)) {
       throw new PayoutAccountCoolingOffException();
+    }
+  }
+
+  /**
+   * Escalating cooldown after consecutive failed payouts, so a stuck transfer
+   * (e.g. provider float) can't be hammered. Doubles per failure up to the cap.
+   */
+  async backoffUntil(organisationId: string): Promise<Date | null> {
+    const baseMinutes = await this.systemConfig.int(
+      'payouts.failure_backoff_base_minutes',
+      15,
+    );
+
+    if (baseMinutes <= 0) {
+      return null;
+    }
+
+    const recent = await this.prisma.payout.findMany({
+      where: { organisationId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { status: true, failedAt: true, createdAt: true },
+    });
+
+    let consecutive = 0;
+    for (const payout of recent) {
+      if (payout.status !== 'failed') {
+        break;
+      }
+      consecutive += 1;
+    }
+
+    if (consecutive === 0) {
+      return null;
+    }
+
+    const maxMinutes = await this.systemConfig.int(
+      'payouts.failure_backoff_max_minutes',
+      120,
+    );
+    const waitMinutes = Math.min(
+      baseMinutes * 2 ** (consecutive - 1),
+      maxMinutes,
+    );
+    const last = recent[0].failedAt ?? recent[0].createdAt;
+    const readyAt = new Date(last.getTime() + waitMinutes * 60_000);
+
+    return readyAt > new Date() ? readyAt : null;
+  }
+
+  async ensureNotBackingOff(organisationId: string): Promise<void> {
+    const readyAt = await this.backoffUntil(organisationId);
+
+    if (readyAt) {
+      throw new PayoutBackingOffException(readyAt);
     }
   }
 
