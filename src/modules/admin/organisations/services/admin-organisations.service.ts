@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
 import { Prisma } from '../../../../generated/prisma/client';
+import { IN_FLIGHT_PAYOUT_STATUSES } from '../../../payouts/payout.constants';
+import { BalanceService } from '../../../payouts/services/balance.service';
 
 export const ADMIN_ORG_INCLUDE = {
   category: true,
@@ -12,7 +14,10 @@ export type AdminOrganisation = Prisma.OrganisationGetPayload<{
 
 @Injectable()
 export class AdminOrganisationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly balance: BalanceService,
+  ) {}
 
   async page(options: {
     page: number;
@@ -100,8 +105,38 @@ export class AdminOrganisationsService {
       }),
     ]);
 
+    const [summary, payoutBreakdown] = await Promise.all([
+      this.balance.summary(organisation),
+      this.prisma.payout.groupBy({
+        by: ['status'],
+        where: { organisationId },
+        orderBy: { status: 'asc' },
+        _count: { _all: true },
+        _sum: { amountMinor: true },
+      }),
+    ]);
+
+    const inFlightStatuses: readonly string[] = IN_FLIGHT_PAYOUT_STATUSES;
+    const inFlightMinor = payoutBreakdown
+      .filter((row) => inFlightStatuses.includes(row.status))
+      .reduce((sum, row) => sum + Number(row._sum.amountMinor ?? 0n), 0);
+    const payoutCounts = Object.fromEntries(
+      payoutBreakdown.map((row) => [row.status, row._count._all]),
+    );
+
     return {
       organisation,
+      balance: {
+        currency: summary.currency,
+        available_minor: summary.available_minor,
+        on_hold_minor: Math.max(0, summary.pending_minor - inFlightMinor),
+        in_flight_minor: inFlightMinor,
+        paid_out_minor: summary.paid_out_minor,
+        has_in_flight_payout: summary.has_in_flight_payout,
+        payout_retry_after: summary.payout_retry_after,
+        payout_paused_until: summary.payout_paused_until,
+        payout_counts: payoutCounts,
+      },
       stats: {
         // counter caches where they exist, live aggregate otherwise
         events_count: organisation.eventsCount,

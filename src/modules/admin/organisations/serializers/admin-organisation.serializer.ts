@@ -31,6 +31,7 @@ export class AdminOrganisationSerializer {
 
   async detail(data: {
     organisation: AdminOrganisation;
+    balance: Record<string, unknown>;
     stats: Record<string, number>;
     members: Member[];
     eventsRecent: Event[];
@@ -44,6 +45,7 @@ export class AdminOrganisationSerializer {
 
     return {
       ...this.core(data.organisation),
+      balance: data.balance,
       stats: data.stats,
       members: data.members.map((member) => ({
         ...this.refs.user(member.user),
