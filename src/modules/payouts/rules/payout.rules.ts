@@ -7,6 +7,7 @@ import { PayoutAccountCoolingOffException } from '../exceptions/payout-account-c
 import { PayoutAccountLockedException } from '../exceptions/payout-account-locked.exception';
 import { PayoutNotRetryableException } from '../exceptions/payout-not-retryable.exception';
 import { PayoutNotReviewableException } from '../exceptions/payout-not-reviewable.exception';
+import { PayoutNotSettleableException } from '../exceptions/payout-not-settleable.exception';
 import { PayoutsDisabledException } from '../exceptions/payouts-disabled.exception';
 import { IN_FLIGHT_PAYOUT_STATUSES } from '../payout.constants';
 
@@ -46,6 +47,12 @@ export class PayoutRules {
   ensureReviewable(payout: Payout): void {
     if (payout.status !== 'pending_review') {
       throw new PayoutNotReviewableException(payout.status);
+    }
+  }
+
+  ensureManuallySettleable(payout: Payout): void {
+    if (payout.status !== 'failed') {
+      throw new PayoutNotSettleableException(payout.status);
     }
   }
 

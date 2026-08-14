@@ -20,6 +20,10 @@ import {
   PAYOUT_REQUESTED,
   PayoutRequestedEvent,
 } from '../events/payout-requested.event';
+import {
+  PAYOUT_SETTLED,
+  PayoutSettledEvent,
+} from '../events/payout-settled.event';
 import { PayoutRules } from '../rules/payout.rules';
 import { BalanceService } from './balance.service';
 import { PayoutFeesService } from './payout-fees.service';
@@ -154,6 +158,33 @@ export class PayoutsService {
     });
 
     return this.processing.initiate(payout.id);
+  }
+
+  /** Closes out a failed payout that was paid to the organiser outside the platform. */
+  async settleOffPlatform(
+    payout: Payout,
+    admin: User,
+    notes: string,
+  ): Promise<Payout> {
+    this.rules.ensureManuallySettleable(payout);
+
+    const settled = await this.prisma.payout.update({
+      where: { id: payout.id },
+      data: {
+        status: 'paid',
+        paidAt: new Date(),
+        transferMethod: 'manual',
+        reviewNotes: notes,
+        reviewedByUserId: admin.id,
+      },
+    });
+
+    await this.emitter.emitAsync(
+      PAYOUT_SETTLED,
+      new PayoutSettledEvent(settled.id),
+    );
+
+    return settled;
   }
 
   async findOrFail(payoutId: string): Promise<Payout> {

@@ -63,3 +63,9 @@ export class ReviewPayoutDto {
   notes?: string;
 }
 
+export class SettlePayoutDto {
+  @IsString()
+  @Length(1, 500)
+  notes!: string;
+}
+

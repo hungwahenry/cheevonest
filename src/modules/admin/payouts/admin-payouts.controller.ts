@@ -14,11 +14,13 @@ import { Paginated } from '../../../common/responses/paginated';
 import type { User } from '../../../generated/prisma/client';
 import { CurrentUser, Roles } from '../../auth/decorators/auth.decorators';
 import { PayoutsService } from '../../payouts/services/payouts.service';
+import { AuditAction } from '../audit/audit-action.decorator';
 import { AdminPayoutSerializer } from './admin-payout.serializer';
 import { AdminPayoutsService } from './admin-payouts.service';
 import {
   ListAdminPayoutsDto,
   ReviewPayoutDto,
+  SettlePayoutDto,
 } from './dto/admin-payouts.dto';
 
 @Roles('admin')
@@ -61,6 +63,7 @@ export class AdminPayoutsController {
 
   @Post(':payoutId/retry')
   @HttpCode(200)
+  @AuditAction('payouts.retry')
   async retry(
     @Param('payoutId') payoutId: string,
     @CurrentUser() admin: User,
@@ -74,8 +77,30 @@ export class AdminPayoutsController {
     );
   }
 
+  @Post(':payoutId/settle')
+  @HttpCode(200)
+  @AuditAction('payouts.settle_off_platform')
+  async settle(
+    @Param('payoutId') payoutId: string,
+    @Body() dto: SettlePayoutDto,
+    @CurrentUser() admin: User,
+  ): Promise<ApiResult<unknown>> {
+    const payout = await this.payouts.findOrFail(payoutId);
+    const settled = await this.payouts.settleOffPlatform(
+      payout,
+      admin,
+      dto.notes,
+    );
+
+    return new ApiResult(
+      this.serializer.payout(await this.adminPayouts.loadOne(settled.id)),
+      'Payout marked as settled off-platform.',
+    );
+  }
+
   @Post(':payoutId/approve')
   @HttpCode(200)
+  @AuditAction('payouts.approve')
   async approve(
     @Param('payoutId') payoutId: string,
     @CurrentUser() admin: User,
@@ -91,6 +116,7 @@ export class AdminPayoutsController {
 
   @Post(':payoutId/reject')
   @HttpCode(200)
+  @AuditAction('payouts.reject')
   async reject(
     @Param('payoutId') payoutId: string,
     @Body() dto: ReviewPayoutDto,
