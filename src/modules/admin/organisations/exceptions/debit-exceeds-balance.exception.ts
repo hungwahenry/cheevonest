@@ -1,11 +1,11 @@
 import { ApiException } from '../../../../common/exceptions/api.exception';
 
 export class DebitExceedsBalanceException extends ApiException {
-  constructor(availableMinor: number) {
+  constructor(debitableMinor: number) {
     super(
-      'Debit exceeds the available balance.',
+      "Debit exceeds the organiser's available and held balance.",
       422,
-      { available_minor: availableMinor },
+      { debitable_minor: debitableMinor },
       'debit_exceeds_balance',
     );
   }

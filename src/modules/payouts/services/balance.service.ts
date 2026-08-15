@@ -67,13 +67,17 @@ export class BalanceService {
       this.rules.backoffUntil(organisation.id),
     ]);
 
+    // A debit can push matured earnings negative; carry that deficit into the
+    // held bucket so the balance stays net-correct instead of hiding it.
+    const rawAvailable =
+      earnings.availableMinor - inFlightMinor - paidOutMinor;
+
     return {
       currency: 'NGN',
-      available_minor: Math.max(
-        0,
-        earnings.availableMinor - inFlightMinor - paidOutMinor,
-      ),
-      pending_minor: earnings.pendingMinor + inFlightMinor,
+      available_minor: Math.max(0, rawAvailable),
+      pending_minor:
+        Math.max(0, earnings.pendingMinor + Math.min(0, rawAvailable)) +
+        inFlightMinor,
       paid_out_minor: paidOutMinor,
       hold_window_days: holdDays,
       has_in_flight_payout: inFlight._count > 0,
