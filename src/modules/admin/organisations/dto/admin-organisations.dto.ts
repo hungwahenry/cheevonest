@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -51,5 +52,19 @@ export class ChangeOwnerDto {
 export class DeleteOrganisationDto {
   @IsString()
   @MaxLength(1000)
+  reason!: string;
+}
+
+export class AdjustBalanceDto {
+  @IsIn(['credit', 'debit'])
+  direction!: 'credit' | 'debit';
+
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  amount_minor!: number;
+
+  @IsString()
+  @Length(1, 500)
   reason!: string;
 }

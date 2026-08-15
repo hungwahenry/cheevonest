@@ -12,6 +12,7 @@ model LedgerEntry {
   currency       Currency        @default(NGN)
   sourceType     String          @map("source_type") @db.VarChar(32)
   sourceId       String          @map("source_id") @db.Char(26)
+  note           String?
   availableAt    DateTime        @map("available_at") @db.Timestamptz(6)
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
 

@@ -15,6 +15,7 @@ import { AuditAction } from '../../audit/audit-action.decorator';
 import { AuditSink } from '../../audit/set-audit-target.decorator';
 import type { AuditSinkFn } from '../../audit/set-audit-target.decorator';
 import {
+  AdjustBalanceDto,
   ChangeOwnerDto,
   DeleteOrganisationDto,
   ListOrganisationsDto,
@@ -22,6 +23,7 @@ import {
 } from '../dto/admin-organisations.dto';
 import { AdminOrganisationSerializer } from '../serializers/admin-organisation.serializer';
 import { AdminOrganisationsService } from '../services/admin-organisations.service';
+import { OrganisationBalanceService } from '../services/organisation-balance.service';
 import { OrganisationModerationService } from '../services/organisation-moderation.service';
 
 @Roles('admin')
@@ -30,6 +32,7 @@ export class AdminOrganisationsController {
   constructor(
     private readonly organisations: AdminOrganisationsService,
     private readonly moderation: OrganisationModerationService,
+    private readonly balances: OrganisationBalanceService,
     private readonly serializer: AdminOrganisationSerializer,
   ) {}
 
@@ -123,6 +126,37 @@ export class AdminOrganisationsController {
     return new ApiResult(
       this.serializer.row({ ...updated, category: null }),
       'Owner changed.',
+    );
+  }
+
+  @Post(':id/balance/adjust')
+  @HttpCode(200)
+  @AuditAction('organisations.adjust_balance')
+  async adjustBalance(
+    @Param('id') id: string,
+    @Body() dto: AdjustBalanceDto,
+    @AuditSink() audit: AuditSinkFn,
+  ): Promise<ApiResult<unknown>> {
+    const organisation = await this.moderation.findOrFail(id);
+    const summary = await this.balances.adjust(
+      organisation,
+      dto.direction,
+      dto.amount_minor,
+      dto.reason,
+    );
+
+    audit({
+      targetType: 'organisation',
+      targetId: organisation.id,
+      payload: { direction: dto.direction, amount_minor: dto.amount_minor },
+      reason: dto.reason,
+    });
+
+    return new ApiResult(
+      summary,
+      dto.direction === 'credit'
+        ? 'Balance credited.'
+        : 'Balance debited.',
     );
   }
 

@@ -22,6 +22,13 @@ export interface RefundInput {
   currency: Currency;
 }
 
+export interface AdjustmentInput {
+  organisationId: string;
+  amountMinor: number;
+  currency: Currency;
+  note: string;
+}
+
 export interface Earnings {
   availableMinor: number;
   pendingMinor: number;
@@ -74,6 +81,23 @@ export class LedgerService {
         sourceType: 'order',
         sourceId: input.orderId,
         availableAt: sale?.availableAt ?? new Date(),
+      },
+    });
+  }
+
+  /** Manual admin credit (positive) or debit (negative), available immediately. */
+  async recordAdjustment(input: AdjustmentInput): Promise<void> {
+    await this.prisma.ledgerEntry.create({
+      data: {
+        id: ulid(),
+        organisationId: input.organisationId,
+        type: 'adjustment',
+        amountMinor: BigInt(input.amountMinor),
+        currency: input.currency,
+        sourceType: 'admin_adjustment',
+        sourceId: ulid(),
+        note: input.note,
+        availableAt: new Date(),
       },
     });
   }
